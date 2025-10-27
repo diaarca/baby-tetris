@@ -5,18 +5,18 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.example</groupId>
-    <artifactId>cplex-project</artifactId>
+    <artifactId>tetris-project</artifactId>
     <version>1.0-SNAPSHOT</version>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <cplex.home>/Applications/CPLEX_Studio2211</cplex.home>
+        <!-- <cplex.home>/Applications/CPLEX_Studio2211</cplex.home> -->
     </properties>
 
+    <!--
     <dependencies>
-        <!-- CPLEX dependencies -->
         <dependency>
             <groupId>cplex</groupId>
             <artifactId>cplex</artifactId>
@@ -32,4 +32,5 @@
             <systemPath>${cplex.home}/cpoptimizer/lib/ILOG.CP.jar</systemPath>
         </dependency>
     </dependencies>
+    -->
 </project>

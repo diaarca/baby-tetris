@@ -1,9 +1,9 @@
 import java.util.ArrayList;
 
 public class Field {
-    public boolean[][] grid;
-    public int width;
-    public int height;
+    private boolean[][] grid;
+    private int width;
+    private int height;
 
     public Field(int width, int height) {
         this.width = width;
@@ -13,25 +13,33 @@ public class Field {
 
     public boolean[][] getGrid() { return this.grid; }
 
+    public int getWidth() { return this.width; }
+
+    public int getHeight() { return this.height; }
+
     private boolean isAvailable(int line, int column) {
-        if (line < 0 || line >= this.grid.length) return false;
-        if (column < 0 || column >= this.grid[0].length) return false;
+        if (line < 0 || line >= this.grid.length)
+            return false;
+        if (column < 0 || column >= this.grid[0].length)
+            return false;
         return !this.grid[line][column];
     }
-    
+
     public boolean isAvailable(Tromino t, int line, int column, int rotation) {
         int[][] offsets = t.getOffsets(rotation);
         for (int[] off : offsets) {
             int l = line + off[0];
             int c = column + off[1];
-            if (!isAvailable(l, c)) return false;
+            if (!isAvailable(l, c))
+                return false;
         }
         return true;
     }
     /**
      * Place a tromino at (line, column) using the given rotation.
-     * Rotation semantics are provided by each Tromino subclass via getOffsets(rotation).
-     * Returns true if placement succeeded, false on collision or out-of-bounds.
+     * Rotation semantics are provided by each Tromino subclass via
+     * getOffsets(rotation). Returns true if placement succeeded, false on
+     * collision or out-of-bounds.
      */
     public boolean addTromino(Tromino t, int line, int column, int rotation) {
         int[][] offsets = t.getOffsets(rotation);

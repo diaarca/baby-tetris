@@ -7,6 +7,7 @@
 #include "../hdr/State.h"
 #include "../hdr/Tromino.h"
 #include "../hdr/Action.h"
+#include <Game.h>
 
 int main(int argc, char **argv) {
     std::string configPath = (argc > 1) ? argv[1] : "config.txt";
@@ -28,32 +29,35 @@ int main(int argc, char **argv) {
     }
     std::cout << "]\n";
 
-    Field field(3,4);
-    State state(field, std::make_unique<IPiece>());
-    field = state.getField();
-    for (int l = 0; l < field.getHeight(); ++l) {
-        for (int c = 0; c < field.getWidth(); ++c) {
-            std::cout << (field.getGrid()[l][c] ? '*' : '.');
-        }
-        std::cout << '\n';
-    }
-    auto actions = state.getAvailableActions();
-    std::cout << actions.size() << " possible actions\n";
-    for (auto &a : actions) {
-        std::cout << "possible action at (" << a.getPosition().getX() << ", "
-                  << a.getPosition().getY() << ") with rotation "
-                  << a.getRotation() << "\n";
-    }
-    if (!actions.empty()) {
-        state = state.applyAction(actions[0]);
-        field = state.getField();
-        for (int l = 0; l < field.getHeight(); ++l) {
-            for (int c = 0; c < field.getWidth(); ++c) {
-                std::cout << (field.getGrid()[l][c] ? '*' : '.');
-            }
-            std::cout << '\n';
-        }
-        std::cout << "State evaluation: " << state.evaluate(config) << '\n';
-    }
+    Game game(config, 4,4);
+    game.play();
     return 0;
+    // Field field(4,4);
+    // State state(field, std::make_unique<IPiece>());
+    // field = state.getField();
+    // for (int l = 0; l < field.getHeight(); ++l) {
+    //     for (int c = 0; c < field.getWidth(); ++c) {
+    //         std::cout << (field.getGrid()[l][c] ? '*' : '.');
+    //     }
+    //     std::cout << '\n';
+    // }
+    // auto actions = state.getAvailableActions();
+    // std::cout << actions.size() << " possible actions\n";
+    // for (auto &a : actions) {
+    //     std::cout << "possible action at (" << a.getPosition().getX() << ", "
+    //               << a.getPosition().getY() << ") with rotation "
+    //               << a.getRotation() << "\n";
+    // }
+    // if (!actions.empty()) {
+    //     state = state.applyAction(actions[0]);
+    //     field = state.getField();
+    //     for (int l = 0; l < field.getHeight(); ++l) {
+    //         for (int c = 0; c < field.getWidth(); ++c) {
+    //             std::cout << (field.getGrid()[l][c] ? '*' : '.');
+    //         }
+    //         std::cout << '\n';
+    //     }
+    //     std::cout << "State evaluation: " << state.evaluate(config) << '\n';
+    //}
+    //return 0;
 }

@@ -1,3 +1,7 @@
-#include "../hdr/Action.h"
+#include "Action.h"
 
-// header-only
+Action::Action(Point p, int r) : position(p), rotation(r) {}
+
+Point Action::getPosition() { return position; }
+
+int Action::getRotation() { return rotation; }

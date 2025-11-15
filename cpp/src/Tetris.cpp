@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
     }
     std::cout << "]\n";
 
-    Field field(3,4);
+    Field field(4,4);
     State state(field, std::make_unique<IPiece>());
     field = state.getField();
     for (int l = 0; l < field.getHeight(); ++l) {

@@ -18,6 +18,7 @@ class Field
     ~Field();
     int getWidth();
     int getHeight();
+    std::vector<std::vector<bool>> getGrid();
     bool isAvailable(int line, int column);
     bool isAvailable(const Tromino& t, int line, int column, int rotation);
     bool addTromino(const Tromino& t, int line, int column, int rotation);

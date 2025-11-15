@@ -7,6 +7,7 @@ Field::Field(int w, int h) : width(w), height(h)
 
 int Field::getWidth() { return width; }
 int Field::getHeight() { return height; }
+std::vector<std::vector<bool>> Field::getGrid() { return grid; }
 
 bool Field::isAvailable(int line, int column)
 {

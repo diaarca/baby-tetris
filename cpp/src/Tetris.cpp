@@ -34,7 +34,8 @@ int main(int argc, char** argv)
     }
     std::cout << "]\n";
 
-    Game game(config, 4,4);
+    Field field(4,4);
+    Game game(config,field);
     game.play();
     return 0;
     // Field field(4,4);

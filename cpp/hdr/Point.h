@@ -1,23 +1,18 @@
-#ifndef TETRIS_POINT_H
-#define TETRIS_POINT_H
-
+#pragma once
 #include <ostream>
 
-struct Point {
-    int x;
-    int y;
-    Point() : x(0), y(0) {}
-    Point(int x_, int y_) : x(x_), y(y_) {}
-    int getX() const { return x; }
-    void setX(int v) { x = v; }
-    int getY() const { return y; }
-    void setY(int v) { y = v; }
-    bool operator==(const Point &o) const { return x == o.x && y == o.y; }
+class Point
+{
+  private:
+    int x_;
+    int y_;
+
+  public:
+    Point(int x, int y) : x_(x), y_(y) {};
+
+    int getX() const { return x_; };
+    int getY() const { return y_; };
+
+    bool operator==(const Point& o);
+    friend std::ostream& operator<<(std::ostream& os, const Point& p);
 };
-
-inline std::ostream &operator<<(std::ostream &os, const Point &p) {
-    os << "Point{" << "x=" << p.x << ", y=" << p.y << "}";
-    return os;
-}
-
-#endif // TETRIS_POINT_H

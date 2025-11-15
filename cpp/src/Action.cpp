@@ -1,3 +1,1 @@
-#include "../hdr/Action.h"
-
-// header-only
+#include "Action.h"

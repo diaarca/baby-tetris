@@ -1,30 +1,35 @@
-#include <iostream>
-#include <fstream>
-#include <vector>
+#include "Action.h"
+#include "Field.h"
+#include "State.h"
+#include "Tromino.h"
 #include <array>
 #include <cstdlib>
-#include "../hdr/Field.h"
-#include "../hdr/State.h"
-#include "../hdr/Tromino.h"
-#include "../hdr/Action.h"
+#include <fstream>
+#include <iostream>
+#include <vector>
 #include <Game.h>
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv)
+{
     std::string configPath = (argc > 1) ? argv[1] : "config.txt";
-    std::array<int,5> config{};
+    std::array<int, 5> config{};
     std::ifstream in(configPath);
-    if (!in) {
+    if (!in)
+    {
         std::cerr << "Failed to open config file '" << configPath << "'\n";
         return 1;
     }
-    for (int i = 0; i < 5; ++i) {
-        if (!(in >> config[i])) {
+    for (int i = 0; i < 5; ++i)
+    {
+        if (!(in >> config[i]))
+        {
             std::cerr << "Config must contain at least 5 ints\n";
             return 1;
         }
     }
     std::cout << "Loaded config: [";
-    for (int i = 0; i < 5; ++i) {
+    for (int i = 0; i < 5; ++i)
+    {
         std::cout << config[i] << (i + 1 < 5 ? ", " : "");
     }
     std::cout << "]\n";

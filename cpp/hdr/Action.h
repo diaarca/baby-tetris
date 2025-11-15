@@ -1,15 +1,17 @@
-#ifndef TETRIS_ACTION_H
-#define TETRIS_ACTION_H
+#pragma once
 
 #include "Point.h"
 
-struct Action {
-    Point position;
-    int rotation;
-    Action() : position(), rotation(0) {}
-    Action(Point p, int r) : position(p), rotation(r) {}
-    Point getPosition() const { return position; }
-    int getRotation() const { return rotation; }
-};
+class Action
+{
+  private:
+    Point position_;
+    int rotation_;
 
-#endif // TETRIS_ACTION_H
+  public:
+    Action(Point position, int rotation)
+        : position_(position), rotation_(rotation) {};
+
+    Point getPosition() const { return position_; };
+    int getRotation() const { return rotation_; };
+};

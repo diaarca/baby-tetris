@@ -1,7 +1,5 @@
 #include "Tromino.h"
 
-int IPiece::rotationCount() const { return 2; }
-
 std::vector<Offset> IPiece::getOffsets(int rotation) const
 {
     int r = ((rotation % 2) + 2) % 2;
@@ -14,8 +12,6 @@ std::vector<Offset> IPiece::getOffsets(int rotation) const
         return {{0, 0}, {1, 0}, {2, 0}}; // vertical
     }
 }
-
-int LPiece::rotationCount() const { return 4; }
 
 std::vector<Offset> LPiece::getOffsets(int rotation) const
 {

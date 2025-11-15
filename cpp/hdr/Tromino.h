@@ -1,5 +1,4 @@
-#ifndef TETRIS_TROMINO_H
-#define TETRIS_TROMINO_H
+#pragma once
 
 #include <array>
 #include <vector>
@@ -17,15 +16,13 @@ class Tromino
 class IPiece : public Tromino
 {
   public:
-    int rotationCount() const override;
+    int rotationCount() const override { return 2; };
     std::vector<Offset> getOffsets(int rotation) const override;
 };
 
 class LPiece : public Tromino
 {
   public:
-    int rotationCount() const override;
+    int rotationCount() const override { return 4; };
     std::vector<Offset> getOffsets(int rotation) const override;
 };
-
-#endif // TETRIS_TROMINO_H

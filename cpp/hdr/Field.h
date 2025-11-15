@@ -1,5 +1,4 @@
-#ifndef TETRIS_FIELD_H
-#define TETRIS_FIELD_H
+#pragma once
 
 #include "Point.h"
 #include "Tromino.h"
@@ -9,21 +8,28 @@
 class Field
 {
   private:
-    int width;
-    int height;
-    std::vector<std::vector<bool>> grid;
+    int width_;
+    int height_;
+    std::vector<std::vector<bool>> grid_;
 
   public:
-    Field(int w, int h);
-    ~Field();
-    int getWidth();
-    int getHeight();
-    std::vector<std::vector<bool>> getGrid();
+    // constructors
+    Field(int width, int height) : width_(width), height_(height)
+    {
+        grid_.assign(height_, std::vector<bool>(width_, false));
+    };
+    Field(std::vector<std::vector<bool>> g)
+        : width_(g[0].size()), height_(g.size()), grid_(g) {};
+
+    // getters
+    int getWidth() const { return width_; };
+    int getHeight() const { return height_; };
+    std::vector<std::vector<bool>> getGrid() const { return grid_; };
+
+    // other methods
     bool isAvailable(int line, int column);
     bool isAvailable(const Tromino& t, int line, int column, int rotation);
     bool addTromino(const Tromino& t, int line, int column, int rotation);
     std::vector<Point> getEmptyPositions();
     Field clone();
 };
-
-#endif // TETRIS_FIELD_H

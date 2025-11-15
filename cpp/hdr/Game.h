@@ -4,19 +4,30 @@
 #include "Field.h"
 #include "State.h"
 #include "Tromino.h"
+#include <memory>
 
-struct Game {
-    State state;
-    int score;
-    Game(const std::array<int,5> &config, int height, int width)
-        : state(Field(width, height), std::make_unique<IPiece>()), score(0) {
-        // choose first tromino randomly
-        if ((rand() / (double)RAND_MAX) < 0.5) {
-            state = State(Field(width, height), std::make_unique<IPiece>());
-        } else {
-            state = State(Field(width, height), std::make_unique<LPiece>());
-        }
-    }
-};
+// class Game
+// {
+//   private:
+//     State state;
+//     int score;
+//
+//   public:
+//     Game(const std::array<int, 5>& config, int height, int width) : score(0)
+//     {
+//
+//         // choose first tromino randomly
+//         Tromino* t;
+//         if ((rand() / (double)RAND_MAX) < 0.5)
+//         {
+//             t = std::make_unique<IPiece>();
+//         }
+//         else
+//         {
+//             t = std::make_unique<LPiece>();
+//         }
+//         state(new State(Field(width, height), t));
+//     }
+// };
 
 #endif // TETRIS_GAME_H

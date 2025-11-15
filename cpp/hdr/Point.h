@@ -14,5 +14,5 @@ class Point
     int getY() const { return y_; };
 
     bool operator==(const Point& o);
-    std::ostream& operator<<(std::ostream& os);
+    friend std::ostream& operator<<(std::ostream& os, const Point& p);
 };

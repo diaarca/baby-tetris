@@ -34,6 +34,9 @@ int main(int argc, char** argv)
     std::cout << "]\n";
 
     Field field(4, 4);
+    field.addTromino(*std::make_unique<IPiece>(), 1, 1, 0);
+    field.addTromino(*std::make_unique<IPiece>(), 1, 0, 1);
+
     State state(field, std::make_unique<IPiece>());
     field = state.getField();
     for (int l = 0; l < field.getHeight(); ++l)
@@ -44,9 +47,10 @@ int main(int argc, char** argv)
         }
         std::cout << '\n';
     }
-    auto actions = state.getAvailableActions();
+
+    std::vector<Action> actions = state.getAvailableActions();
     std::cout << actions.size() << " possible actions\n";
-    for (auto& a : actions)
+    for (Action& a : actions)
     {
         std::cout << "possible action at (" << a.getPosition().getX() << ", "
                   << a.getPosition().getY() << ") with rotation "
@@ -66,5 +70,6 @@ int main(int argc, char** argv)
         }
         std::cout << "State evaluation: " << state.evaluate(config) << '\n';
     }
+
     return 0;
 }

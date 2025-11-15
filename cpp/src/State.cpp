@@ -26,34 +26,57 @@ std::vector<Point> State::placementPositions()
 std::vector<Action> State::getAvailableActions()
 {
     std::vector<Action> possibleActions;
-    std::vector<Point> placementPosition = placementPositions();
+    std::vector<Point> placementPos = placementPositions();
     std::vector<Point> emptyPositions = field_.getEmptyPositions();
 
     for (Point& p : emptyPositions)
     {
-        bool added = false; // flag to break out to the next p
-        for (int r = 0; r < nextTromino_->rotationCount() && !added; ++r)
+        for (int r = 0; r < nextTromino_->rotationCount(); ++r)
         {
             if (!field_.isAvailable(*nextTromino_, p.getX(), p.getY(), r))
                 continue;
+
             std::vector<Offset> offsets = nextTromino_->getOffsets(r);
+            bool allBlocksAccessible = true;
+            bool isInPlacementPos = false;
+
             for (Offset& off : offsets)
             {
                 Point candidate(p.getX() + off[0], p.getY() + off[1]);
-                for (Point& pp : placementPosition)
+
+                // Check if the candidate is in placementPositions
+                for (Point& pp : placementPos)
                 {
                     if (pp == candidate)
                     {
-                        possibleActions.emplace_back(p, r);
-                        added = true;
-                        break; // breaks out of placementPosition loop
+                        isInPlacementPos = true;
+                        break;
                     }
                 }
-                if (added)
-                    break; // breaks out of offsets loop
+
+                // Check if the column above the candidate is empty up to the
+                // top
+                bool columnClear = true;
+                for (int l = 0; l < candidate.getX(); ++l)
+                {
+                    if (field_.getGrid()[l][candidate.getY()])
+                    {
+                        columnClear = false;
+                        break;
+                    }
+                }
+                if (!columnClear)
+                {
+                    allBlocksAccessible = false;
+                    break;
+                }
             }
+
+            if (allBlocksAccessible && isInPlacementPos)
+                possibleActions.emplace_back(p, r);
         }
     }
+
     return possibleActions;
 }
 

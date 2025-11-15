@@ -5,8 +5,8 @@ bool Point::operator==(const Point& p)
     return x_ == p.getX() && y_ == p.getY();
 }
 
-std::ostream& Point::operator<<(std::ostream& os)
+std::ostream& operator<<(std::ostream& os, const Point& p)
 {
-    os << "Point{" << "x=" << x_ << ", y=" << y_ << "}";
+    os << "(" << p.x_ << ", " << p.y_ << ")";
     return os;
 }

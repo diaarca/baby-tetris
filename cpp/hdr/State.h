@@ -6,6 +6,7 @@
 #include <array>
 #include <memory>
 #include <vector>
+#include <iostream>
 
 class State
 {

@@ -76,7 +76,6 @@ std::vector<Action> State::getAvailableActions()
                 possibleActions.emplace_back(p, r);
         }
     }
-
     return possibleActions;
 }
 

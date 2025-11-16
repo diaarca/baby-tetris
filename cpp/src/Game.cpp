@@ -10,18 +10,29 @@ void Game:: printField() {
         }
         std::cout << '\n';
     }
-}   
+}  
+
+// void Game:: printGrid(std::vector<std::vector<bool>>  grid) {
+//     Field field = state.getField();
+//     for (int l = 0; l < field.getHeight(); ++l) {
+//         for (int c = 0; c < field.getWidth(); ++c) {
+//             std::cout << (grid[l][c] ? '*' : '.');
+//         }
+//         std::cout << '\n';
+//     }
+// }   
 void Game:: play() {
         // Game loop
         int lines = 0;
-        std::cout << "Initial Field:\n";    
+        std::cout << "Initial Field:\n";   
+        std::cout << "Initial piece: " << typeid(state.getNextTromino()).name() << "\n"; 
         printField();
         std::cout << "Starting game...\n";
         while (state.getAvailableActions().size() > 0) {
             auto actions = state.getAvailableActions();
             if (! actions.empty()) {
-                // first action for now
-                state = state.applyAction(actions[0]);
+                // random action for now
+                state = state.applyAction(actions[rand() % actions.size()]);
                 score = state.evaluate(config);
                 lines = completeLine();
                 if (lines > 0) {
@@ -36,6 +47,7 @@ void Game:: play() {
 //returns number of completed lines
 int Game::completeLine() {
     Field field = state.getField();
+    std::vector<std::vector<bool>> grid = field.getGrid();    
     int removeCount = 0;
     //check if one line is full
     for (int r = 0; r < field.getHeight(); ++r) {
@@ -45,22 +57,21 @@ int Game::completeLine() {
         }
         if (isComplete) {
             printField();
-            std::cout << "Completed line: " << r << "\n";
+            std::cout << "Completed line index: " << r << "\n";
             //remove line
-            
             for(int c = 0; c < field.getWidth(); ++c) {
-                field.getGrid()[r][c] = false;
+                grid[r][c] = false;
             }
             removeCount++;
             //move all lines above down
             for(int row = r; row > 0; --row) {
                 for(int c = 0; c < field.getWidth(); ++c) {
-                    field.getGrid()[row][c] = field.getGrid()[row-1][c];
+                    grid[row][c] = grid[row-1][c];
                 }
             }
             //clear top line
             for(int c = 0; c < field.getWidth(); ++c) {
-                field.getGrid()[0][c] = false;
+                grid[0][c] = false;
             }
         }
     }
@@ -73,6 +84,7 @@ int Game::completeLine() {
         } else if (dynamic_cast<LPiece*>(&state.getNextTromino())) {
             newTromino = std::make_unique<LPiece>();
         }
+        field.setGrid(grid);
         state = State(field, std::move(newTromino));
         // state = State(field, std::make_unique<Tromino>(state.getNextTromino()));
     }

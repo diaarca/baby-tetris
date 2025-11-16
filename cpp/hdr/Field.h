@@ -30,6 +30,7 @@ class Field
     bool isAvailable(int line, int column);
     bool isAvailable(const Tromino& t, int line, int column, int rotation);
     bool addTromino(const Tromino& t, int line, int column, int rotation);
+    void setGrid(const std::vector<std::vector<bool>>& g) { grid_ = g; }
     std::vector<Point> getEmptyPositions();
     Field clone();
 };

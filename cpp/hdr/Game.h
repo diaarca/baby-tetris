@@ -40,5 +40,6 @@ class Game{
         void play();
         int completeLine();
         void printField();
+        // void printGrid(std::vector<std::vector<bool>>  grid);
 
 };

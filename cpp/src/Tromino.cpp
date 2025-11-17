@@ -28,3 +28,16 @@ std::vector<Offset> LPiece::getOffsets(int rotation) const
         return {{0, 0}, {0, 1}, {1, 1}}; // missing bottom-left
     }
 }
+
+// Override print for IPiece
+void IPiece::print(std::ostream& os) const { os << "IPiece"; }
+
+// Override print for LPiece
+void LPiece::print(std::ostream& os) const { os << "LPiece"; }
+
+// Implement operator<< for Tromino
+std::ostream& operator<<(std::ostream& os, const Tromino& piece)
+{
+    piece.print(os);
+    return os;
+}

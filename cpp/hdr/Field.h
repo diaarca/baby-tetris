@@ -4,6 +4,7 @@
 #include "Tromino.h"
 #include <memory>
 #include <vector>
+#include <ostream>
 
 class Field
 {
@@ -33,4 +34,5 @@ class Field
     void setGrid(const std::vector<std::vector<bool>>& g) { grid_ = g; }
     std::vector<Point> getEmptyPositions();
     Field clone();
+    friend std::ostream& operator<<(std::ostream& os, const Field& f);
 };

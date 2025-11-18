@@ -23,5 +23,6 @@ class State
     Tromino& getNextTromino() const { return *nextTromino_; }
     std::vector<Action> getAvailableActions();
     State applyAction(Action& action);
-    int evaluate(std::array<int, 5>& config);
+    int evaluate(std::array<int, 3>& config);
+    friend std::ostream& operator<<(std::ostream& os, const State& s);
 };

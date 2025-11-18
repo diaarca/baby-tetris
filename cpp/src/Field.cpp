@@ -55,3 +55,17 @@ Field Field::clone()
     Field clone(grid_);
     return clone;
 }
+
+std::ostream& operator<<(std::ostream& os, const Field& f)
+{
+
+    for (int l = 0; l < f.getHeight(); ++l)
+    {
+        for (int c = 0; c < f.getWidth(); ++c)
+        {
+            os << (f.getGrid()[l][c] ? '*' : '.');
+        }
+        os << '\n';
+    }
+    return os;
+}

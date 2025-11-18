@@ -1,53 +1,43 @@
 #include "Game.h"
 
-void Game::printField()
+Game::Game(const std::array<int, 3>& config, Field& field)
+    : state(field, std::make_unique<IPiece>()), score(0), config(config)
 {
-    Field field = state.getField();
-    for (int l = 0; l < field.getHeight(); ++l)
+    if ((rand() / (double)RAND_MAX) < 0.5)
     {
-        for (int c = 0; c < field.getWidth(); ++c)
-        {
-            std::cout << (field.getGrid()[l][c] ? '*' : '.');
-        }
-        std::cout << '\n';
+        state = State(field, std::make_unique<LPiece>());
     }
 }
 
-// void Game:: printGrid(std::vector<std::vector<bool>>  grid) {
-//     Field field = state.getField();
-//     for (int l = 0; l < field.getHeight(); ++l) {
-//         for (int c = 0; c < field.getWidth(); ++c) {
-//             std::cout << (grid[l][c] ? '*' : '.');
-//         }
-//         std::cout << '\n';
-//     }
-// }
 void Game::play()
 {
     // Game loop
-    int lines = 0;
-    std::cout << "Initial Field:\n";
-    std::cout << "Initial piece: " << state.getNextTromino() << "\n";
-    printField();
+    int lines, i;
+    std::vector<Action> actions;
+    lines = i = 0;
+    std::cout << "Initial State:\n" << state << std::endl;
     std::cout << "Starting game...\n";
-    while (state.getAvailableActions().size() > 0)
+
+    while ((actions = state.getAvailableActions()).size() > 0)
     {
-        auto actions = state.getAvailableActions();
         if (!actions.empty())
         {
             // random action for now
-            state = state.applyAction(actions[rand() % actions.size()]);
-            score = state.evaluate(config);
-            lines = completeLine();
-            if (lines > 0)
+            Action a = actions[rand() % actions.size()];
+            std::cout << "Action number " << i << std::endl;
+            state = state.applyAction(a);
+            std::cout << state;
+            score += state.evaluate(config);
+            if ((lines = completeLine()) > 0)
             {
-                score += pow(lines, 2); // for now; after pass the lines to eval
+                std::cout << "Action completed " << lines << " lines\n";
+                std::cout << "New board:\n" << state.getField();
             }
-            printField();
-            std::cout << "Current score: " << score << "\n";
+            std::cout << "Current score: " << score << "\n\n";
         }
+        i++;
     }
-    std::cout << "Game Over! Completed lines: " << lines << "\n";
+    std::cout << "Game Over! Global score: " << score << "\n";
 }
 // returns number of completed lines
 int Game::completeLine()
@@ -69,8 +59,7 @@ int Game::completeLine()
         }
         if (isComplete)
         {
-            printField();
-            std::cout << "Completed line index: " << r << "\n";
+            // std::cout << state.getField();
             // remove line
             for (int c = 0; c < field.getWidth(); ++c)
             {
@@ -106,8 +95,6 @@ int Game::completeLine()
         }
         field.setGrid(grid);
         state = State(field, std::move(newTromino));
-        // state = State(field,
-        // std::make_unique<Tromino>(state.getNextTromino()));
     }
     return removeCount;
 }

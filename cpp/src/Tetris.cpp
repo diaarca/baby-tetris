@@ -12,14 +12,14 @@
 int main(int argc, char** argv)
 {
     std::string configPath = (argc > 1) ? argv[1] : "config.txt";
-    std::array<int, 5> config{};
+    std::array<int, 3> config{};
     std::ifstream in(configPath);
     if (!in)
     {
         std::cerr << "Failed to open config file '" << configPath << "'\n";
         return 1;
     }
-    for (int i = 0; i < 5; ++i)
+    for (int i = 0; i < 3; ++i)
     {
         if (!(in >> config[i]))
         {
@@ -28,11 +28,11 @@ int main(int argc, char** argv)
         }
     }
     std::cout << "Loaded config: [";
-    for (int i = 0; i < 5; ++i)
+    for (int i = 0; i < 3; ++i)
     {
-        std::cout << config[i] << (i + 1 < 5 ? ", " : "");
+        std::cout << config[i] << (i + 1 < 3 ? ", " : "");
     }
-    std::cout << "]\n";
+    std::cout << "]\n\n";
 
     Field field(4,4);
     Game game(config,field);

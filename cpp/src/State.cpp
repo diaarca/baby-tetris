@@ -94,10 +94,9 @@ State State::applyAction(Action& action)
     return State(newField, std::move(newNext));
 }
 
-int State::evaluate(std::array<int, 5>& config)
+int State::evaluate(std::array<int, 3>& config)
 {
     int completedLines = 0;
-    int gapNumber = 0;
     std::vector<std::vector<bool>> grid = field_.getGrid();
     int rows = field_.getHeight();
     int cols = field_.getWidth();
@@ -118,19 +117,6 @@ int State::evaluate(std::array<int, 5>& config)
             completedLines++;
     }
 
-    // Count gaps
-    for (int c = 0; c < cols; ++c)
-    {
-        bool foundFilled = false;
-        for (int r = 0; r < rows; ++r)
-        {
-            if (grid[r][c])
-                foundFilled = true;
-            else if (foundFilled)
-                gapNumber++;
-        }
-    }
-
     int score = 0;
     switch (completedLines)
     {
@@ -147,19 +133,11 @@ int State::evaluate(std::array<int, 5>& config)
         break;
     }
 
-    switch (gapNumber)
-    {
-    case 0:
-        break;
-    case 1:
-        score += config[3];
-        break;
-    case 2:
-        score += config[4];
-        break;
-    default:
-        score += config[4];
-        break;
-    }
     return score;
+}
+
+std::ostream& operator<<(std::ostream& os, const State& s) {
+    os << "Next Piece: " << s.getNextTromino() << "\n";
+    os << "Current Grid:\n" << s.getField();
+    return os;
 }

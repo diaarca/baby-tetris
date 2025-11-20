@@ -1,4 +1,5 @@
 #include "Game.h"
+#include <vector>
 
 Game::Game(const std::array<int, 3>& config, Field& field)
     : state(field, std::make_unique<IPiece>()), score(0), config(config)
@@ -9,7 +10,7 @@ Game::Game(const std::array<int, 3>& config, Field& field)
     }
 }
 
-void Game::play()
+void Game::playRandom()
 {
     // Game loop
     int lines, i;
@@ -39,6 +40,7 @@ void Game::play()
     }
     std::cout << "Game Over! Global score: " << score << "\n";
 }
+
 // returns number of completed lines
 int Game::completeLine()
 {

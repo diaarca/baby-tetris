@@ -23,20 +23,20 @@ std::vector<Point> State::placementPositions()
     return positions;
 }
 
-std::vector<Action> State::getAvailableActions()
+std::vector<Action> State::getAvailableActions() // n3
 {
     std::vector<Action> possibleActions;
-    std::vector<Point> placementPos = placementPositions();
-    std::vector<Point> emptyPositions = field_.getEmptyPositions();
+    std::vector<Point> placementPos = placementPositions(); // n2
+    std::vector<Point> emptyPositions = field_.getEmptyPositions(); // n2
 
-    for (Point& p : emptyPositions)
+    for (Point& p : emptyPositions) // n2
     {
-        for (int r = 0; r < nextTromino_->rotationCount(); ++r)
+        for (int r = 0; r < nextTromino_->rotationCount(); ++r) // cst
         {
-            if (!field_.isAvailable(*nextTromino_, p.getX(), p.getY(), r))
+            if (!field_.isAvailable(*nextTromino_, p.getX(), p.getY(), r)) // 1
                 continue;
 
-            std::vector<Offset> offsets = nextTromino_->getOffsets(r);
+            std::vector<Offset> offsets = nextTromino_->getOffsets(r); // 1
             bool allBlocksAccessible = true;
             bool isInPlacementPos = false;
 
@@ -45,7 +45,7 @@ std::vector<Action> State::getAvailableActions()
                 Point candidate(p.getX() + off[0], p.getY() + off[1]);
 
                 // Check if the candidate is in placementPositions
-                for (Point& pp : placementPos)
+                for (Point& pp : placementPos) // n
                 {
                     if (pp == candidate)
                     {
@@ -57,7 +57,7 @@ std::vector<Action> State::getAvailableActions()
                 // Check if the column above the candidate is empty up to the
                 // top
                 bool columnClear = true;
-                for (int l = 0; l < candidate.getX(); ++l)
+                for (int l = 0; l < candidate.getX(); ++l) // n
                 {
                     if (field_.getGrid()[l][candidate.getY()])
                     {

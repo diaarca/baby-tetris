@@ -13,6 +13,8 @@ class Tromino
     virtual std::vector<Offset> getOffsets(int rotation) const = 0;
     virtual int rotationCount() const { return 4; }
     virtual void print(std::ostream& os) const = 0; // pure virtual print method
+    virtual bool isIPiece() const { return false; }
+    virtual bool isLPiece() const { return false; }
 };
 
 // Declare operator<< for Tromino
@@ -24,6 +26,7 @@ class IPiece : public Tromino
     int rotationCount() const override { return 2; };
     std::vector<Offset> getOffsets(int rotation) const override;
     void print(std::ostream& os) const override;
+    bool isIPiece() const override { return true; }
 };
 
 class LPiece : public Tromino
@@ -32,4 +35,5 @@ class LPiece : public Tromino
     int rotationCount() const override { return 4; };
     std::vector<Offset> getOffsets(int rotation) const override;
     void print(std::ostream& os) const override;
+    bool isLPiece() const override { return true; }
 };

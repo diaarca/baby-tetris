@@ -129,7 +129,7 @@ size_t MDP::stateIndex(const State& s) const
 
 void MDP::playPolicy(Game& game, std::vector<Action> policy)
 {
-    int lines, i;
+    int lines, i, gain;
     int maxAction = 1000;
     lines = i = 0;
     // std::cout << "Initial State:\n" << game.getState() << std::endl;
@@ -144,13 +144,18 @@ void MDP::playPolicy(Game& game, std::vector<Action> policy)
         game.setState(game.getState().applyAction(a));
         // std::cout << game.getState();
 
-        game.setScore(game.getScore() + game.getState().evaluate(config_));
-        if ((lines = game.completeLine()) > 0)
+        gain = game.getState().evaluate(config_);
+        auto it = std::find(std::begin(config_), std::end(config_), gain);
+        lines = std::distance(std::begin(config_), it) + 1;
+
+        game.setScore(game.getScore() + gain);
+        if (lines > 0)
         {
             // std::cout << "Action completed " << lines << " lines\n";
         }
+        game.setState(game.getState().completeLines());
         std::cout << "New board:\n" << game.getState().getField();
-        // std::cout << "Current score: " << game.getScore() << "\n\n";
+        std::cout << "Current score: " << game.getScore() << "\n\n";
         i++;
         if (i > maxAction)
             break;

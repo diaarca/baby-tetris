@@ -16,7 +16,6 @@ class Game
   public:
     Game(const std::array<int, 3>& config, Field& field);
     void playRandom();
-    int completeLine();
     State& getState() { return state; };
     int getScore() { return score; };
     std::array<int, 3> getConfig() { return config; };

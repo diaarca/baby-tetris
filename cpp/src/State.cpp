@@ -26,7 +26,7 @@ std::vector<Point> State::placementPositions()
 std::vector<Action> State::getAvailableActions() // n3
 {
     std::vector<Action> possibleActions;
-    std::vector<Point> placementPos = placementPositions(); // n2
+    std::vector<Point> placementPos = placementPositions();         // n2
     std::vector<Point> emptyPositions = field_.getEmptyPositions(); // n2
 
     for (Point& p : emptyPositions) // n2
@@ -136,7 +136,71 @@ int State::evaluate(std::array<int, 3>& config)
     return score;
 }
 
-std::ostream& operator<<(std::ostream& os, const State& s) {
+// returns number of completed lines
+State State::completeLines()
+{
+    std::vector<std::vector<bool>> grid = field_.getGrid();
+    int removeCount = 0;
+    // check if one line is full
+    for (int r = 0; r < field_.getHeight(); ++r)
+    {
+        bool isComplete = true;
+        for (int c = 0; c < field_.getWidth(); ++c)
+        {
+            if (!field_.getGrid()[r][c])
+            {
+                isComplete = false;
+                break;
+            }
+        }
+        if (isComplete)
+        {
+            // std::cout << state.getField();
+            // remove line
+            for (int c = 0; c < field_.getWidth(); ++c)
+            {
+                grid[r][c] = false;
+            }
+            removeCount++;
+            // move all lines above down
+            for (int row = r; row > 0; --row)
+            {
+                for (int c = 0; c < field_.getWidth(); ++c)
+                {
+                    grid[row][c] = grid[row - 1][c];
+                }
+            }
+            // clear top line
+            for (int c = 0; c < field_.getWidth(); ++c)
+            {
+                grid[0][c] = false;
+            }
+        }
+    }
+
+    State newState = clone();
+
+    // the state after all line removals
+    if (removeCount)
+        newState.getField().setGrid(grid);
+
+    return newState;
+}
+
+State State::clone()
+{
+    std::unique_ptr<Tromino> newTromino;
+    if (dynamic_cast<const IPiece*>(nextTromino_.get()) != nullptr)
+        newTromino = std::make_unique<IPiece>();
+    else
+        newTromino = std::make_unique<LPiece>();
+
+    Field f = field_.clone();
+    return State(std::move(f), std::move(newTromino));
+}
+
+std::ostream& operator<<(std::ostream& os, const State& s)
+{
     os << "Next Piece: " << s.getNextTromino() << "\n";
     os << "Current Grid:\n" << s.getField();
     return os;

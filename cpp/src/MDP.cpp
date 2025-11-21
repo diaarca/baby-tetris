@@ -157,5 +157,5 @@ void MDP::playPolicy(Game& game, std::vector<Action> policy)
     }
     std::cout << game.getState().getField();
     std::cout << "Game Over! Global score: " << game.getScore() << " in " << i
-              << "actions \n";
+              << " actions \n";
 }

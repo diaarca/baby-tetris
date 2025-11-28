@@ -54,7 +54,7 @@ int main(int argc, char** argv)
     State s0(initialField, std::move(initialPiece));
 
     MDP mdp(0.5, field.getWidth(), field.getHeight(), std::move(s0), config);
-    std::vector<Action> policy = mdp.valueIteration(0.1, 100, 0.6);
+    std::vector<Action> policy = mdp.valueIteration(0.01, 100, 0.6);
 
     mdp.playPolicy(game, policy);
     // game.playRandom();

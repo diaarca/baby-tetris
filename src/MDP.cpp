@@ -23,7 +23,8 @@ MDP::valueIteration(double eps, int maxIteration, double lambda)
             {
                 State sPrime = s.applyAction(a);
                 // newVal = 1/2 * (sPrime.evaluate() + lambda *
-                // V[stateIndex(sPrime)]); newVal += 1/2 * (sPrime.evaluate() +
+                // V[stateIndex(sPrime)]);
+                // newVal += 1/2 * (sPrime.evaluate() +
                 // lambda * V[stateIndex(sPrime)]); avoid for proba because 1/2
                 // for each Piece for now
                 newVal =
@@ -44,6 +45,12 @@ MDP::valueIteration(double eps, int maxIteration, double lambda)
         if (delta < eps)
             break;
     }
+    int sum = 0;
+    for (int i = 0; i < nbState; i++) {
+        sum += V[i];
+    }
+    std::cout << "average over final V "
+              << sum / nbState;
     return A;
 }
 

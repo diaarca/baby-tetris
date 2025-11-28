@@ -5,6 +5,7 @@
 #include "State.h"
 #include <cmath>
 #include <vector>
+#include <unordered_set>
 
 class MDP
 {

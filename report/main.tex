@@ -1,0 +1,536 @@
+\documentclass[12pt, letterpaper]{article}
+\usepackage[top=0.3in, bottom=0.3in, left=0.8in, right=0.8in, headheight=15pt, footskip=10pt]{geometry} % Ensure enough space for headers/footers
+\usepackage[hidelinks]{hyperref}
+\usepackage{graphicx}
+\usepackage{multicol}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage[utf8]{inputenc}
+
+\setlength{\parindent}{2cm}
+\pagestyle{plain} % Use plain page style for all pages
+
+\newcommand{\code}[1]{\textbf{\textit{\texttt{#1}}}}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2
+}
+
+\lstset{style=mystyle}
+
+\title{Game Project Report}
+\author{CIVADE Thomas, ERGIN Seçkin Yağmur \\ and GROUSSON Dylan}
+\date{\today}
+
+\begin{document}
+\setcounter{page}{1} % Explicitly set the page number to start from 1
+\maketitle
+\thispagestyle{plain} % Ensure page numbers are shown on the title page
+\begin{center}
+    \textcolor{blue}{\url{https://github.com/Luminosaa/IDS-ERGIN-CIVADE}}
+\end{center}
+\section{Deployment}
+To deploy the game, RabbitMQ needs to be installed and running. Additionally, 
+Maven must be installed. Once RabbitMQ is up and Maven is set up, the game must be compiled by 
+running the command: \code{\textbf{mvn package}}. \\
+To start the game server, a chief server or a normal server needs to be launched:\\
+\textbf{Chief server:} \code{java -jar game/target/Server-jar-with-dependencies.jar chief}\\
+\textbf{Normal server:} \code{java -jar game/target/Server-jar-with-dependencies.jar chief} \\
+A client can only join the game if a chief server is active, the client application can be started by 
+executing the following command:\\
+\textbf{Graphic client:}  \code{java -jar game/target/GraphicalClient-jar-with-dependencies.jar [player name]}\\
+\textbf{Normal client:}  \code{java -jar game/target/Client-jar-with-dependencies.jar [player name]}\\\
+\section{Architecture}
+\begin{multicols}{2}
+	\begin{figure}[H]
+		\center
+		\includegraphics[width=0.5\textwidth]{images/architecture.png}
+		\caption{Our game system architecture}
+	\end{figure}
+	\columnbreak
+	\begin{figure}[H]
+        \vspace{0.05\textwidth}
+        \center
+		\includegraphics[width=0.4\textwidth]{images/game.png}
+		\caption{How we represent it}
+	\end{figure}
+\end{multicols}
+
+\subsection{Server}
+Servers communicate with each other using RabbitMQ message queues.
+Each server is responsible for managing a specific section of the game grid which is represented as a \code{Map<String, Set<Point>>}
+where the key is the server’s queue name, and the value is the coordinates managed by the server.
+Players are tracked in a \code{Map<String, Point>}, where the key is the player's unique identifier (queue name),
+and the value is the player's current position on the grid.
+One server acts as the chief server and manages the architecture, handling server start/stop events
+and maintaining the list of active servers (serverArchitecture).\\
+\textbf{Players}\\
+Each server is responsible for managing the players in its assigned section.
+When a player logs in, if there is available space, the chief server assigns them to a random server.
+otherwise, it rejects the login. On logout, the server removes the player and notifies all 
+other servers to update their records.
+The servers also track the players existance and positions, updates them as they move within the grid.\\
+\textbf{Movement}\\
+For each move, servers calculate the new coordinates and check for collision between players by comparing their coordinates.
+If a player moves within the same server’s area and there’s no collision, the server updates and shares the new position 
+with all players and other servers. If there’s a collision, the move is rejected. For moves across server, 
+the player is moved to the new server and the information about the player and the new position is sent to the new server.\\ 
+\textbf{Hello}\\
+When a player moves next to another player, the server notifies both players.
+If a move is made to the boundary of a server, it checks with the neighboring server if there is a player on its boundary
+next to it's player. If there is, the neighboring server notifiese its player and notifies the other server, which leads 
+to other server notifying its player. 
+\subsection{Client}
+The client establishes a RabbitMQ connection and channel to communicate with servers,
+it listens for messages on its receive\textunderscore queue which is the client’s unique queue name using a DeliverCallback.
+To keep a track of the players, the client maintains a map where the key is the player's unique identifier (queue name),
+and the value is the player's current position on the grid.
+The client also keeps a local copy of the server architecture, represented as a map where each key is a server’s queue name,
+and the value is the set of points it manages on the grid.\\
+\textbf{Login/Logout}\\
+To join the game, the client contacts the chief server, which responds with success or failure. 
+When client disconnects, it sends a logout message and closes its connection.\\
+\textbf{Movement}\\
+The client reads movement commands (UP, DOWN, LEFT, RIGHT), sends them to the server and waits for the server’s message.
+Based on the message, it updates the player’s position, handles server switches, or shows an error if the move is invalid.\\
+\subsection {Dynamic Server Management}
+In the game, servers can become unavailable at any time. When this happens, the server sends a message to notify the client of the change. 
+The client then updates its server map and adjusts the player’s position accordingly. Additionally, the client listens for validation messages, 
+confirming that the player has successfully moved to the new server. Throughout this process, both the client and server manage 
+the player's movement and update their respective maps to reflect the new server state.\\
+\subsection{Message}
+Message is a class used to encapsulate the data and topics for communication between clients and servers, where topics represent the type of
+message and data represents the payload, which can be any object. For the data to be sent over the RabbitMQ queues, the message class includes
+methods to convert itself to and from a byte array. \\
+\section{Implementation}
+You will see here how messages are treated by the both client and server nodes,
+we invite you to see the Appendix~\ref{appendix:impl} for more details about the
+implementation (formalized as discussed in the courses).
+
+\subsection{Server}
+\begin{itemize}
+	\item \code{LOGIN}:
+	      When a player tries to log in, if a free position is found, the server
+	      assigns it and replies with \code{LOGIN\textunderscore SUCCES} and
+	      \code{UPDATE\textunderscore SERVER\textunderscore ARCHITECTURE}. It
+	      also broadcasts \code{ASK\textunderscore FOR\textunderscore}
+	      \code{PLAYERS} and \code{UPDATE\textunderscore PLAYERS} to servers and
+	      players. Otherwise, it replies with \code{LOGIN\textunderscore}
+	      \code{ERROR}.
+
+	\item \code{MOVE}:
+	      If the player requests a movement to a valid position within the
+	      current server's area, the server updates the player's position and
+	      sends \code{HELLO} to nearby players. If the target is in another
+	      server, it sends \code{CROSS\textunderscore SERVER\textunderscore
+		      MOVEMENT}. If the move is invalid (occupied or out of bounds), it
+	      replies with \code{INVALID\textunderscore MOVEMENT}.
+
+	\item \code{HELLO}:
+	      Sent between nearby players to signal mutual visibility or proximity.
+	      This message is broadcast to all players involved.
+
+	\item \code{LOGOUT}:
+	      When a player logs out, it is removed from the local server list, and
+	      \code{NOTIFY\textunderscore LOGOUT} is broadcast to both players and
+	      servers to keep states synchronized.
+
+	\item \code{NOTIFY\textunderscore LOGOUT}:
+	      On receiving this, other servers remove the player and notify their
+	      own clients with \code{NOTIFY\textunderscore LOGOUT}.
+
+	\item \code{ASK\textunderscore FOR\textunderscore PLAYERS}:
+	      Another server requests the local player list. The current server
+	      responds with \code{UPDATE\textunderscore PLAYERS} containing its
+	      player list.
+
+	\item \code{UPDATE\textunderscore PLAYERS}:
+	      Carries an updated list of players and is broadcast to all local
+	      players to synchronize their views.
+
+	\item \code{CROSS\textunderscore SERVER\textunderscore MOVEMENT}:
+	      Used when a player moves from one server's area to another. If the
+	      destination is free and valid, the player is added, and both origin
+	      and player receive \code{VALID\textunderscore CROSS\textunderscore
+		      SERVER\textunderscore MOVEMENT}. Otherwise, the origin receives
+	      \code{INVALID\textunderscore CROSS\textunderscore
+		      SERVER\textunderscore} \code{MOVEMENT}.
+
+	\item \code{CROSS\textunderscore SERVER\textunderscore HELLO}:
+	      Sent when a player's movement reveals neighbors in another server.
+	      Triggers mutual \code{HELLO} messages between cross-server players.
+
+	\item \code{VALID\textunderscore CROSS\textunderscore SERVER\textunderscore
+		      MOVEMENT}:
+	      Confirms that a player has successfully moved into the destination
+	      server. The origin server then removes the player from its local list.
+
+	\item \code{INVALID\textunderscore CROSS\textunderscore
+		      SERVER\textunderscore MOVEMENT}:
+	      The movement failed due to conflicts (e.g., occupied position), so the
+	      origin informs the player using \code{INVALID\textunderscore
+		      MOVEMENT}.
+
+	\item \code{UPDATE\textunderscore SERVER\textunderscore ARCHITECTURE}:
+	      Updates the server's view of which server handles which positions.
+	      Players no longer within the local server's region are moved using
+	      \code{ADD\textunderscore PLAYER} and notified via
+	      \code{SWITCH\textunderscore SERVER}.
+
+	\item \code{ADD\textunderscore PLAYER}:
+	      Inserts a player at a given position into the receiving server's
+	      player list after migration due to architecture change.
+
+	\item \code{SWITCH\textunderscore CHIEF}:
+	      Changes the leader server (chief), assigning it management of specific
+	      players or regions, typically for fault tolerance or dynamic
+	      rebalancing.
+\end{itemize}
+
+\subsection{Client}
+\begin{itemize}
+	\item \code{LOGIN\textunderscore ERROR}
+	      Triggered when login fails. The client prints an error message and
+	      immediately exits the application.
+
+	\item \code{LOGIN\textunderscore SUCCESS}
+	      The login was successful. The client stores the queue (i.e.,
+	      communication interface) of the server it connected to.
+
+	\item \code{UPDATE\textunderscore PLAYERS}
+	      Received from the server to synchronize the local list of visible
+	      players. The client updates its map view accordingly with
+	      \code{displayMap()}.
+
+	\item \code{HELLO}
+	      Informs the client that two players are close to each other. The
+	      message is printed in a human-readable format showing which player
+	      greets the other.
+
+	\item \code{VALID\textunderscore CROSS\textunderscore SERVER\textunderscore
+		      MOVEMENT}
+	      Confirms a successful server-to-server movement. The client updates
+	      its server queue and position map, then refreshes the displayed game
+	      state.
+
+	\item \code{NOTIFY\textunderscore LOGOUT}
+	      Tells the client that a player has disconnected. The player is removed
+	      from the local view and the map is refreshed.
+
+	\item \code{INVALID\textunderscore MOVEMENT}
+	      Indicates that a movement request was invalid (e.g., blocked or
+	      out-of-bounds). The client simply prints an error message.
+
+	\item \code{SWITCH\textunderscore SERVER}
+	      Instructs the client to update its target server queue, typically
+	      following a region change or server reassignment.
+
+	\item \code{UPDATE\textunderscore ARCHITECTURE}
+	      Updates the client’s view of the global server architecture. This new
+	      information is visualized via \code{displayMap()}.
+
+\end{itemize}
+
+\section{Conculsion}
+To conclude, this project was very fun for all of us since it gave us the
+opportunity to exploit all our knowledge  in the field of distributed systems.
+It was still quite challenging when dealing with dying server nodes that need to
+be handled properly by other nodes (regain node area and players).
+
+\newpage
+\appendix
+\label{appendix:impl}
+\section{Some Conventions}
+The name for our queues are the same as the name of the entity, for example:
+the server "server1" can receive messages by sending messages on the queue named
+"server1" as well.
+\section{Server Implementation}
+\subsection{Declarations}
+\begin{lstlisting}
+CommItf in;
+Topic_t LOGIN, MOVE, LOGOUT, NOTIFY_LOGOUT, ASK_FOR_PLAYERS, UPDATE_PLAYERS,
+    INVALID_MOVEMENT, CROSS_SERVER_MOVEMENT, VALID_CROSS_SERVER_MOVEMENT,
+    INVALID_CROSS_SERVER_MOVEMENT, INVALID_CROSS_SERVER_ARCHITECTURE,
+    ADD_PLAYER, LOGIN_ERROR, LOGIN_SUCCES SWITCH_SERVER, SWITCH_CHIEF;
+Data_t ByteArray
+Message_t <Topic_t, Data_t>;
+Tuple_t (x, y);
+
+// The list of the players currently handled in the server's node
+players = <String, Point>[];
+// The current server architecture, mapping the server node names with the
+// positions that it handle
+serverArch = <String, Point[]>[];
+\end{lstlisting}
+\subsection{Rules}
+\subsubsection{\code{LOGIN} topic}
+\begin{lstlisting}
+in ? <LOGIN, d> =>
+    player = d,
+    pos = randomFreePos(),
+    if (pos):
+        players.set(<player, pos>),
+        player ! <LOGIN_SUCCES, in>,
+        player ! <UPDATE_SERVER_ARCHITECTURE, serverArch>,
+        broadcastServers(<ASK_FOR_PLAYERS, in>),
+        broadcastServers(<UPDATE_PLAYERS, players>),
+        broadcastPlayers(<UPDATE_PLAYERS, players>);
+    else:
+        player ! <LOGIN_ERROR, null>;
+\end{lstlisting}
+\subsubsection{\code{MOVE} topic}
+\begin{lstlisting}
+in ? <MOVE, d> =>
+    move = d,
+    player = move.getPlayer(),
+    currPos = players[player],
+    newPos = computePos(currPos, move.getDir()),
+    currServerArea = serverArch[in],
+    if (newPos in currServerArea):
+        // movement handled by the current node
+        if (newPoint in players.getValues()):
+            // already a player on the desired position
+            player ! <INVALID_MOVEMENT, null>;
+        else:
+            // the desired position is available
+            players.set(<player, newPos>),
+            aroundPos = getArroundPlayerPos(player),
+            for pos in aroundPos:
+                if pos in currServerArea:
+                    // near position in current node
+                    if pos in players:
+                        // there is a player arround the moving one
+                        aroundPlayer = findPlayerAtPos(pos),
+                        player ! <HELLO, (player, aroundPlayer)>,
+                        aroundPlayer ! <HELLO, (player, aroundPlayer)>,
+                else:
+                    nextNode = getNodeFromPos(pos),
+                    if (nextNode):
+                        // pos is handled by another node
+                        crossServerMove = crossServerMovement(in, nextNode,
+                            player, pos),
+                        nextNode ! <CROSS_SERVER_HELLO, crossServerMove>,
+            broadcastServers(<UPDATE_PLAYERS, players>),
+            broadcastPlayers(<UPDATE_PLAYERS, players>);
+    else:
+        // movement getting the player out of the node scope
+        nextNode = getNodeFromPos(newPos),
+        if (newServer):
+            // player movement getting in another server
+            crossServerMove = crossServerMovement(in, nextNode, player, newPos),
+            nextNode ! <CROSS_SERVER_MOVEMENT, crossServerMove>;
+        else:
+            // player movement getting out of bounds
+            player ! <INVALID_MOVEMENT, null>;
+\end{lstlisting}
+\subsubsection{\code{HELLO} topic}
+\begin{lstlisting}
+in ? <HELLO, d> =>
+    broadcastPlayers(d);
+\end{lstlisting}
+\subsubsection{\code{LOGOUT} topic}
+\begin{lstlisting}
+in ? <LOGOUT, d> =>
+    player = d,
+    players.remove(player),
+    broadcastPlayers(<NOTIFY_LOGOUT, player>),
+    broadcastServers(<NOTIFY_LOGOUT, player>);
+\end{lstlisting}
+\subsubsection{\code{NOTIFY\textunderscore LOGOUT} topic}
+\begin{lstlisting}
+in ? <NOTIFY_LOGOUT, d> =>
+    player = d,
+    players.remove(player),
+    broadcastPlayers(<NOTIFY_LOGOUT, d>);
+\end{lstlisting}
+\subsubsection{\code{ASK\textunderscore FOR\textunderscore PLAYERS} topic}
+\begin{lstlisting}
+in ? <ASK_FOR_PLAYERS, d> =>
+    queue = d,
+    queue ! <UPDATE_PLAYERS, playerList()>;
+\end{lstlisting}
+\subsubsection{\code{UPDATE\textunderscore PLAYERS} topic}
+\begin{lstlisting}
+in ? <UPDATE_PLAYERS, d> =>
+    broadcastPlayers(<UPATE_PLAYERS, d>);
+\end{lstlisting}
+\subsubsection{\code{CROSS\textunderscore SERVER\textunderscore MOVEMENT} topic}
+\begin{lstlisting}
+in ? <CROSS_SERVER_MOVEMENT, d> =>
+    crossServerMove = d,
+    currServerArea = serverArch[in],
+    newPos = crossServerMove.newPos,
+    fromServer = crossServerMove.fromServer,
+    toServer = crossServerMove.toServer,
+    if newPos in currServerArea:
+        if newPos in players:
+            // the wanted position is already taken by another player
+            fromServer ! <INVALID_CROSS_SERVER_MOVEMENT, crossServerMove>;
+        else:
+            // the wanted position is available
+            players.set(<player, newPos>),
+            aroundPos = getArroundPlayerPos(player),
+            for pos in aroundPos:
+                if pos in players:
+                    // near position handle a player
+                    aroundPlayer = findPlayerAtPos(pos),
+                    toServer ! <HELLO, (player, aroundPlayer)>,
+                    aroundPlayer ! <HELLO, (player, aroundPlayer)>,
+            fromServer ! <VALID_CROSS_SERVER_MOVEMENT, crossServerMove>,
+            player ! <VALID_CROSS_SERVER_MOVEMENT, crossServerMove>,
+            broadcastServers(<UPDATE_PLAYERS, players>),
+            broadcastPlayers(<UPDATE_PLAYERS, players>);
+    else:
+        // the node doesn't handle the desired position
+        fromServer ! <INVALID_CROSS_SERVER_MOVEMENT, crossServerMove>;
+\end{lstlisting}
+\subsubsection{\code{CROSS\textunderscore SERVER\textunderscore HELLO} topic}
+\begin{lstlisting}
+in ? <CROSS_SERVER_HELLO, d> =>
+    crossServerMove = d,
+    newPos = crossServerMove.newPos,
+    fromServer = crossServerMove.fromServer,
+    if newPos in players:
+        player = crossServerMove.player,
+        aroundPlayer = findPlayerAtPos(newPos),
+        fromServer ! <HELLO, (player, aroundPlayer)>,
+        aroundPlayer ! <HELLO, (player, aroundPlayer)>;
+\end{lstlisting}
+\subsubsection{\code{VALID\textunderscore CROSS\textunderscore
+		SERVER\textunderscore MOVEMENT} topic}
+\begin{lstlisting}
+in ? <VALID_CROSS_SERVER_MOVEMENT, d> =>
+    crossServerMove= d,
+    removePlayer(crossServerMove.player;
+\end{lstlisting}
+\subsubsection{\code{INVALID\textunderscore CROSS\textunderscore
+		SERVER\textunderscore MOVEMENT} topic}
+\begin{lstlisting}
+in ? <INVALID_CROSS_SERVER_MOVEMENT, d> =>
+    crossServerMove = d,
+    crossServerMove.player ! <INVALID_MOVEMENT, null>;
+\end{lstlisting}
+\subsubsection{\code{UPDATE\textunderscore SERVER\textunderscore ARCHITECTURE}
+	topic}
+\begin{lstlisting}
+in ? <UPDATE_SERVER_ARCHITECTURE, d> =>
+    serverArch = d,
+    currServerArea = serverArch[in],
+    broadcastPlayers(d),
+    playersToRemove = getPlayersToRemove(),
+    for p in playersToRemove:
+        pos = players[p],
+        nextNode = getNodeFromPos(pos),
+        nextNode ! <ADD_PLAYER, (p, pos)>,
+        p ! <SWITCH_SERVER, nextNode>,
+        players.remove(p);
+\end{lstlisting}
+\subsubsection{\code{ADD\textunderscore PLAYER} topic}
+\begin{lstlisting}
+in ? <ADD_PLAYER, d> =>
+    player, position = d
+    player.set(<player, position);
+\end{lstlisting}
+\subsubsection{\code{SWITCH\textunderscore CHIEF} topic}
+\begin{lstlisting}
+in ? <SWITCH_CHIEF, d> =>
+    - getting the current chief server cells/players
+    - becomming the chief node until it dies;
+\end{lstlisting}
+
+\section{Client Implementation}
+\subsection{Declarations}
+\begin{lstlisting}
+CommItf in, serverQueue;
+Topic_t NOTIFY_LOGOUT, UPDATE_PLAYERS, INVALID_MOVEMENT,
+    VALID_CROSS_SERVER_MOVEMENT, LOGIN_ERROR, LOGIN_SUCCESS, SWITCH_SERVER,
+    UPDATE_ARCHITECTURE;
+Data_t ByteArray
+Message_t <Topic_t, Data>;
+
+// The list of the players currently handled in the server's node
+players = <String, Point>[];
+// The current server architecture, mapping the server node names with the
+// positions that it handle
+serverArch = <String, Point[]>[];
+\end{lstlisting}
+\subsection{Rules}
+\subsubsection{\code{LOGIN\textunderscore ERROR} topic}
+\begin{lstlisting}
+in ? <LOGIN_ERROR, d> =>
+    print("Login error"),
+    exit(1);
+\end{lstlisting}
+\subsubsection{\code{LOGIN\textunderscore SUCCES} topic}
+\begin{lstlisting}
+in ? <LOGIN_SUCCESS, d> =>
+    serverQueue = d;
+\end{lstlisting}
+\subsubsection{\code{UPDATE\textunderscore PLAYERS} topic}
+\begin{lstlisting}
+in ? <UPDATE_PLAYERS, d> =>
+    serverPlayers = d,
+    players = serverPlayers,
+    displayMap();
+\end{lstlisting}
+\subsubsection{\code{HELLO} topic}
+\begin{lstlisting}
+in ? <HELLO, d> =>
+    (player1, player2) = d,
+    print(player1 + "says hello to " + player2);
+\end{lstlisting}
+\subsubsection{\code{VALID\textunderscore CROSS\textunderscore
+		SERVER\textunderscore MOVEMENT} topic}
+\begin{lstlisting}
+in ? <VALID_CROSS_SERVER_MOVEMENT, d> =>
+    crossServerMove = d,
+    serverQueue = crossServerMove.toServer,
+    players.set(crossServerMove.player, crossServerMove.newPos)
+    displayMap();
+\end{lstlisting}
+\subsubsection{\code{NOTIFY\textunderscore LOGOUT} topic}
+\begin{lstlisting}
+in ? <NOTIFY_LOGOUT, d> =>
+    client = d,
+    removePlayer(client),
+    displayMap();
+\end{lstlisting}
+\subsubsection{\code{INVALID\textunderscore MOVEMENT} topic}
+\begin{lstlisting}
+in ? <INVALID_MOVEMENT, d> =>
+    print("Invalid movement");
+\end{lstlisting}
+\subsubsection{\code{SWITCH\textunderscore SERVER} topic}
+\begin{lstlisting}
+in ? <SWITCH_SERVER, d> =>
+    nextNode = d,
+    serverQueue = nextNode;
+\end{lstlisting}
+\subsubsection{\code{UPDATE\textunderscore ARCHITECTURE} topic}
+\begin{lstlisting}
+in ? <UPDATE_ARCHITECTURE, d> =>
+    serverArch = d,
+    displayMap();
+\end{lstlisting}
+\end{document}

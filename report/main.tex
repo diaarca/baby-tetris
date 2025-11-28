@@ -1,15 +1,16 @@
 \documentclass[12pt, letterpaper]{article}
-\usepackage[top=0.3in, bottom=0.3in, left=0.8in, right=0.8in, headheight=15pt, footskip=10pt]{geometry} % Ensure enough space for headers/footers
+\usepackage[top=0.6in, bottom=0.6in, left=0.8in, right=0.8in, headheight=15pt, footskip=10pt]{geometry} % Ensure enough space for headers/footers
 \usepackage[hidelinks]{hyperref}
 \usepackage{graphicx}
 \usepackage{multicol}
 \usepackage{listings}
 \usepackage{xcolor}
 \usepackage{float}
+\usepackage{amsmath}
 \usepackage[utf8]{inputenc}
 \usepackage{amsmath}
 
-\setlength{\parindent}{2cm}
+\setlength{\parindent}{.45cm}
 \pagestyle{plain} % Use plain page style for all pages
 
 \newcommand{\code}[1]{\textbf{\textit{\texttt{#1}}}}
@@ -41,7 +42,7 @@
 \lstset{style=mystyle}
 
 \title{Baby Tetris First Part Report}
-\author{ERGIN Seçkin Yağmur \\ GROUSSON Dylan}
+\author{ERGIN Seçkin Yağmur and GROUSSON Dylan}
 \date{\today}
 
 \begin{document}
@@ -49,6 +50,7 @@
 \maketitle
 \thispagestyle{plain} % Ensure page numbers are shown on the title page
 \section{Question 1: Discounted MDP For Player}
+\label{sec:question1}
 % The objective of this part is to choose the optimal policy for the "player" in the 
 % Baby Tetris game as a discounted Markov Decision Process (MDP), with the goal of finding 
 % a policy that maximizes the expected cumulative discounted reward over time.
@@ -84,5 +86,74 @@ V(s) = \max_{a \in A} \sum_{s' \in S} P(s' | s, a) \cdot \left( R(s, a, s') + \l
 \]
 Value iteration is better suited for maximizing the expected discounted reward 
 since it computes the optimal value then extracts the policy and easier to implement
-\section{Game Structure}
+\newpage
+\subsection{Implementation}
+\subsubsection{Main Architecture}
+\quad Based on the our design choices from Section~\ref{sec:question1}, we
+decided to use an object oriented architecture (C++) for our implementation.
+\par For our structure we have declared 7 classes:
+\begin{enumerate}
+    \item \code{Point}: classical point (x,y) class used for grid coordinates
+    \item \code{Field}: the class that contain a boolean grid s.t. grid[i][j] =
+        1 if the corresponding cell is fill in the field
+    \item \code{Tromino}: the class that correspond to the baby Tetris pieces
+        (I Piece or L Piece)
+    \item \code{State}: the class that contain both a field grid and an
+        incoming Tromino
+    \item \code{Action}: that represent an action choosable on a given state
+        (combination for placement and rotation of an incoming Tromino)
+    \item \code{Game}: the class that contain the configuration (completed lines
+        scores), the current state and score of a baby Tetris game (the
+        configuration is loaded from a file : \code{config.txt})
+    \item \code{MDP}: the class that all the necessary methods in order to
+        compute the value iteration over a game
+\end{enumerate}
+
+Now that we overviewed the global implementation architecture, we will describe
+our implementation choices.
+\subsubsection{Implementation Choices}
+\begin{itemize}
+    \item \textbf{Piece teleported to their final position}: in order to make
+        the number of intermediate states when choosing an action, we compute on
+        a state all available actions on this state, then according to the
+        policy we make a choice over these actions and we teleport the incoming
+        piece in the current state directly to its final position (with the
+        right rotation)
+    \item \textbf{Reward Function}: The reward function as defined in
+        Section~\ref{sec:question1} take both the current state $s$ and an
+        available action $a_s$. Here since we can calculate the available
+        actions, we can know in which state $s'$ we're going to arrive and we
+        can compute directly in $s'$ the number of completed lines before remove
+        them right to the game. Then we abstract the reward function by counting
+        the number of complete lines in the resulting state
+    \item \textbf{Game Ending}: According to the subject, the game should end
+        whenever a piece exceed the height limit of the grid. Again there, we
+        can compute all available actions on a given state, since we cannot
+        place a Tromino outside the grid, such an action will not appear in the
+        set of available actions. Then the game end when there is no available
+        action for the current game
+        state
+    \item \textbf{Max Iteration}: Since the value iteration isn't an exact
+        method, if we fix an $\epsilon$ which is too small, we may iterate for a
+        very long moment. For this reason we fix a maximum number of iteration
+        for the expected value improvement, then we always a value iteration
+        which compute in a reasonable time even if the expected value vector is
+        less qualitative than the $\epsilon$ margin we fixed
+\end{itemize}
+
+\subsubsection{Incoming Improvement}
+\quad For now we compute naively the value iteration algorithm on all state
+combinations, which represents
+\[
+    = 2^{\text{gridHeight} * \text{gridWidth}} * \text{nbOfTrominoTypes} \\
+    = 2^{4*4} * 2 \\
+    = 2^{17} \\
+    = 131072
+\]
+states. In the near future we want to considerably reduce this number by
+computing the value iteration only an states that are reachable from a given
+starting state $s_0$. For this purpose, we will make use of a Breadth First
+Search algorithm which will explore iteratively all reachable states from the
+current one.
+
 \end{document}

@@ -6,6 +6,7 @@
 #include <cmath>
 #include <vector>
 #include <unordered_set>
+#include <numeric>
 
 class MDP
 {

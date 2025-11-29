@@ -3,7 +3,7 @@
 #include "Game.h"
 #include <sstream>
 
-#define MAX_ACTION 100
+#define MAX_ACTION 10000
 
 class MDP
 {

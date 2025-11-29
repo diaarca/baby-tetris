@@ -88,7 +88,7 @@ State State::applyAction(Action& action)
 
     // choose new random tromino
     std::unique_ptr<Tromino> newNext;
-    if ((rand() / (double)RAND_MAX) < 0.5)
+    if ((rand() / (double)RAND_MAX) < PROBA_I_PIECE)
         newNext = std::make_unique<IPiece>();
     else
         newNext = std::make_unique<LPiece>();

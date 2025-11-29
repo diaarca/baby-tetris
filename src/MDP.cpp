@@ -68,7 +68,7 @@ MDP::valueIteration(double eps, int maxIteration, double lambda)
     return A;
 }
 
-std::vector<State> MDP::generateAllStates() const
+std::vector<State> MDP::generateAllStates()
 {
     int cells = width_ * height_;
     if (cells < 0)
@@ -110,7 +110,7 @@ std::vector<State> MDP::generateAllStates() const
     return states;
 }
 
-size_t MDP::stateIndex(const State& s) const
+size_t MDP::stateIndex(State& s)
 {
     int cells = width_ * height_;
     if (cells < 0 || cells >= 64)
@@ -150,8 +150,8 @@ size_t MDP::stateIndex(const State& s) const
 
 void MDP::playPolicy(Game& game, std::vector<Action> policy)
 {
-    int lines, i, gain;
-    int maxAction = 100000;
+    int lines, i, gain, maxAction;
+    maxAction = 1000;
     lines = i = 0;
     // std::cout << "Initial State:\n" << game.getState() << std::endl;
     // std::cout << "Starting game...\n";

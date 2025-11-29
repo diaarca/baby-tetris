@@ -1,8 +1,10 @@
 CC = clang++
 CFLAGS = -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g
+
 SRCDIR = src
 OBJDIR = obj
 BINDIR = bin
+
 SOURCES = $(wildcard $(SRCDIR)/*.cpp)
 OBJECTS = $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SOURCES))
 TARGET = $(BINDIR)/tetris

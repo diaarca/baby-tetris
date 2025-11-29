@@ -1,25 +1,26 @@
-#include "Action.h"
-#include "Field.h"
-#include "State.h"
-#include "Tromino.h"
-#include <array>
+#include <MDP.h>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
-#include <vector>
-// #include <Game.h>
-#include <MDP.h>
 
-int main(int argc, char** argv)
+#define WIDTH 4
+#define HEIGHT 4
+#define CONFIG_PATH "config.txt"
+#define EPSILON 0.00000001
+#define MAX_IT 100
+#define LAMBDA 0.1
+
+using namespace std;
+
+int main()
 {
     srand((time(NULL) & 0xFFFF));
 
-    std::string configPath = (argc > 1) ? argv[1] : "config.txt";
     std::array<int, 3> config{};
-    std::ifstream in(configPath);
+    std::ifstream in(CONFIG_PATH);
     if (!in)
     {
-        std::cerr << "Failed to open config file '" << configPath << "'\n";
+        std::cerr << "Failed to open config file '" << CONFIG_PATH << "'\n";
         return 1;
     }
     for (int i = 0; i < 3; ++i)
@@ -37,26 +38,24 @@ int main(int argc, char** argv)
     }
     std::cout << "]\n\n";
 
-    Field field(4, 4);
+    Field field(WIDTH, HEIGHT);
     Game game(config, field);
 
-    // Don't move the game's internal state into the MDP — that would
-    // leave `game.state` in a moved-from state with a null
-    // `nextTromino_`, causing a segfault when `game.getState()` is
-    // accessed later. Instead, build a fresh State copying the
-    // Field and recreating the next piece type.
     Field initialField = game.getState().getField();
     std::unique_ptr<Tromino> initialPiece;
+
     if (dynamic_cast<IPiece*>(&game.getState().getNextTromino()) != nullptr)
         initialPiece = std::make_unique<IPiece>();
     else
         initialPiece = std::make_unique<LPiece>();
+
     State s0(initialField, std::move(initialPiece));
 
-    MDP mdp(0.5, field.getWidth(), field.getHeight(), std::move(s0), config);
-    std::vector<Action> policy = mdp.valueIteration(0.00000001, 1000, 0.1);
+    MDP mdp(field.getWidth(), field.getHeight(), std::move(s0),
+            config);
+    std::vector<Action> policy = mdp.valueIteration(EPSILON, MAX_IT, LAMBDA);
 
     mdp.playPolicy(game, policy);
-    // game.playRandom();
+
     return 0;
 }

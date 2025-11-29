@@ -1,16 +1,16 @@
 #include "MDP.h"
 
 std::vector<Action>
-MDP::valueIteration(double eps, int maxIteration, double lambda)
+MDP::valueIteration(double epsilon, int maxIteration, double lambda)
 {
     std::vector<State> S = generateAllStates();
     int nbState = S.size();
     std::vector<Action> A(nbState); // policy
     std::vector<double> V(nbState); // value vector (expected value)
     std::vector<double> VPrime(nbState);
-    double delta;
+    double delta = DBL_MAX;
 
-    for (int i = 0; i < maxIteration; i++)
+    for (int i = 0; i < maxIteration && delta > epsilon; i++)
     {
         delta = 0.0;
         for (int j = 0; j < nbState; j++)
@@ -52,11 +52,7 @@ MDP::valueIteration(double eps, int maxIteration, double lambda)
             V[j] = VPrime[j];
         }
 
-        std::cout << "Iteration i = " << i << " and delta = " << delta
-                  << std::endl;
-
-        if (delta < eps)
-            break;
+        std::cout << "i = " << i << " and delta = " << delta << std::endl;
     }
 
     double sum = 0;

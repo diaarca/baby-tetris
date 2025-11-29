@@ -93,7 +93,7 @@ V(s) = \max_{a \in A} \sum_{s' \in S} P(s' | s, a) \cdot \left( R(s, a, s') + \l
 \]
 Value iteration is better suited for maximizing the expected discounted reward 
 since it computes the optimal value then extracts the policy and easier to implement
-\newpage
+
 \subsection{Implementation}
 \subsubsection{Main Architecture}
 \quad Based on the our design choices from Section~\ref{sec:question1}, we
@@ -167,23 +167,21 @@ For each execution we will measure:
     \item the execution time of the said execution
 \end{enumerate}
 
+\newpage
 \subsubsection{Executions}
 \label{sec:executions}
 \begin{paracol}{2}
     \begin{lstlisting}[title=height: 4 and $\lambda$: 0.1]
-    ./bin/tetris
-    Loaded config: [1, 3, 6]
-
     All constants:
     width = 4, height = 4, probaIPiece = 0.5, maxGameAction = 10000
     epsilon = 1e-08, maxIteration = 100, lambda = 0.1
 
-    Iteration i = 0 and delta = 6
-    Iteration i = 1 and delta = 0.6
-    Iteration i = 2 and delta = 0.06
-    Iteration i = 3 and delta = 0.00525
-    Iteration i = 4 and delta = 0.00045
-    Iteration i = 5 and delta = 0
+    i = 0 and delta = 6
+    i = 1 and delta = 0.6
+    i = 2 and delta = 0.06
+    i = 3 and delta = 0.00525
+    i = 4 and delta = 0.00045
+    i = 5 and delta = 0
 
     average over final V 0.412926
     ....
@@ -198,21 +196,16 @@ For each execution we will measure:
 
   	\switchcolumn
     \begin{lstlisting}[title=height: 4 and $\lambda$: 0.4]
-    ./bin/tetris
-    Loaded config: [1, 3, 6]
-
     All constants:
     width = 4, height = 4, probaIPiece = 0.5, maxGameAction = 10000
     epsilon = 1e-08, maxIteration = 100, lambda = 0.4
 
-    Iteration i = 0 and delta = 6
-    Iteration i = 1 and delta = 2.4
-    Iteration i = 2 and delta = 0.96
-    Iteration i = 3 and delta = 0.336
-    Iteration i = 4 and delta = 0.1152
-    Iteration i = 5 and delta = 0
-
-
+    i = 0 and delta = 6
+    i = 1 and delta = 2.4
+    i = 2 and delta = 0.96
+    i = 3 and delta = 0.336
+    i = 4 and delta = 0.1152
+    i = 5 and delta = 0
 
     average over final V 0.473608
     ***.
@@ -225,23 +218,19 @@ For each execution we will measure:
     \end{lstlisting}
 \end{paracol}
 
-\newpage
 \begin{paracol}{2}
     \begin{lstlisting}[title=height: 5 and $\lambda$: 0.1]
-    ./bin/tetris
-    Loaded config: [1, 3, 6]
-
     All constants:
     width = 4, height = 5, probaIPiece = 0.5, maxGameAction = 10000
     epsilon = 1e-08, maxIteration = 100, lambda = 0.1
 
-    Iteration i = 0 and delta = 6
-    Iteration i = 1 and delta = 0.6
-    Iteration i = 2 and delta = 0.06
-    Iteration i = 3 and delta = 0.006
-    Iteration i = 4 and delta = 0.00058125
-    Iteration i = 5 and delta = 3.1875e-05
-    Iteration i = 6 and delta = 0
+    i = 0 and delta = 6
+    i = 1 and delta = 0.6
+    i = 2 and delta = 0.06
+    i = 3 and delta = 0.006
+    i = 4 and delta = 0.00058125
+    i = 5 and delta = 3.1875e-05
+    i = 6 and delta = 0
 
     average over final V 0.462044
     ....
@@ -256,20 +245,17 @@ For each execution we will measure:
 
     \switchcolumn
     \begin{lstlisting}[title=height: 5 and $\lambda$: 0.9]
-    ./bin/tetris
-    Loaded config: [1, 3, 6]
-
     All constants:
     width = 4, height = 5, probaIPiece = 0.5, maxGameAction = 10000
     epsilon = 1e-08, maxIteration = 100, lambda = 0.9
 
-    Iteration i = 0 and delta = 6
-    Iteration i = 1 and delta = 5.4
-    Iteration i = 2 and delta = 4.86
-    Iteration i = 3 and delta = 4.374
-    Iteration i = 4 and delta = 3.81358
-    Iteration i = 5 and delta = 1.88219
-    Iteration i = 6 and delta = 0
+    i = 0 and delta = 6
+    i = 1 and delta = 5.4
+    i = 2 and delta = 4.86
+    i = 3 and delta = 4.374
+    i = 4 and delta = 3.81358
+    i = 5 and delta = 1.88219
+    i = 6 and delta = 0
 
     average over final V 0.676855
     ....
@@ -307,7 +293,6 @@ the exact same improvement, the average expected gain $V$ cannot be really
 discussed here since there is a huge part of states that aren't reachable in
 practice.
 
-\newpage
 Finally, we can remark that the value iteration algorithm choice described in
 Section~\ref{sec:question1} was pretty relevant because we converge very quickly
 to the optimal policy (at the last iteration, $\Delta$ is always equal to $0$).

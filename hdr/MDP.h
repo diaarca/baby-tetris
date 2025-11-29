@@ -2,6 +2,7 @@
 
 #include "Game.h"
 #include <sstream>
+#include <float.h>
 
 #define MAX_ACTION 10000
 

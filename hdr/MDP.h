@@ -1,11 +1,8 @@
 #pragma once
 
 #include "Game.h"
-#include <algorithm>
-#include <cmath>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
+
+#define MAX_ACTION 10000
 
 class MDP
 {

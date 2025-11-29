@@ -31,8 +31,9 @@ MDP::valueIteration(double eps, int maxIteration, double lambda)
                 rewards[k] = 0;
                 for (State& sPrime : s.genAllStatesFromAction(actions[k]))
                 {
-                    rewards[k] += 0.5 * (sPrime.evaluate(config_) +
-                                             lambda * V[stateIndex(sPrime)]);
+                    rewards[k] +=
+                        PROBA_I_PIECE * (sPrime.evaluate(config_) +
+                                         lambda * V[stateIndex(sPrime)]);
                 }
             }
             VPrime[j] = *std::max_element(rewards.begin(), rewards.end());
@@ -51,11 +52,11 @@ MDP::valueIteration(double eps, int maxIteration, double lambda)
             V[j] = VPrime[j];
         }
 
-        if (delta < eps)
-            break;
-
         std::cout << "Iteration i = " << i << " and delta = " << delta
                   << std::endl;
+
+        if (delta < eps)
+            break;
     }
 
     double sum = 0;
@@ -63,7 +64,7 @@ MDP::valueIteration(double eps, int maxIteration, double lambda)
     {
         sum += V[i];
     }
-    std::cout << "average over final V " << sum / nbState << std::endl;
+    std::cout << "\naverage over final V " << sum / nbState << std::endl;
 
     return A;
 }
@@ -150,18 +151,17 @@ size_t MDP::stateIndex(State& s)
 
 void MDP::playPolicy(Game& game, std::vector<Action> policy)
 {
-    int lines, i, gain, maxAction;
-    maxAction = 1000;
+    int lines, i, gain;
     lines = i = 0;
     // std::cout << "Initial State:\n" << game.getState() << std::endl;
     // std::cout << "Starting game...\n";
 
-    while (game.getState().getAvailableActions().size() > 0)
+    while (game.getState().getAvailableActions().size() > 0 && i < MAX_ACTION)
     {
         Action a = policy[stateIndex(game.getState())];
 
         // std::cout << "Action number " << i << std::endl;
-        std::cout << game.getState().getNextTromino();
+        // std::cout << game.getState().getNextTromino();
         game.setState(game.getState().applyAction(a));
         // std::cout << game.getState();
 
@@ -175,13 +175,12 @@ void MDP::playPolicy(Game& game, std::vector<Action> policy)
             // std::cout << "Action completed " << lines << " lines\n";
         }
         game.setState(game.getState().completeLines());
-        std::cout << "New board:\n" << game.getState().getField();
-        std::cout << "Current score: " << game.getScore() << "\n\n";
+        // std::cout << "New board:\n" << game.getState().getField();
+        // std::cout << "Current score: " << game.getScore() << "\n\n";
+
         i++;
-        if (i > maxAction)
-            break;
     }
     std::cout << game.getState().getField();
-    std::cout << "Game Over! Global score: " << game.getScore() << " in " << i
+    std::cout << "\nGame Over! Global score: " << game.getScore() << " in " << i
               << " actions \n";
 }

@@ -36,5 +36,5 @@ class State
     int evaluate(std::array<int, 3>& config);
     State completeLines();
 
-    friend std::ostream& operator<<(std::ostream& os, const State& s);
+    friend std::ostream& operator<<(std::ostream& os, State& s);
 };

@@ -1,5 +1,4 @@
 #include "State.h"
-#include <vector>
 
 std::vector<Point> State::placementPositions()
 {
@@ -221,7 +220,7 @@ State State::clone()
     return State(std::move(f), std::move(newTromino));
 }
 
-std::ostream& operator<<(std::ostream& os, const State& s)
+std::ostream& operator<<(std::ostream& os, State& s)
 {
     os << "Next Piece: " << s.getNextTromino() << "\n";
     os << "Current Grid:\n" << s.getField();

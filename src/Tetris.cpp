@@ -8,14 +8,14 @@
 #define CONFIG_PATH "config.txt"
 #define EPSILON 0.00000001
 #define MAX_IT 100
-#define LAMBDA 0.1
-
-using namespace std;
+#define LAMBDA 0.7
 
 int main()
 {
+    // initialize pseudo random generator
     srand((time(NULL) & 0xFFFF));
 
+    // parsing the "config.txt" file in order to parametrize the reward function
     std::array<int, 3> config{};
     std::ifstream in(CONFIG_PATH);
     if (!in)
@@ -38,23 +38,25 @@ int main()
     }
     std::cout << "]\n\n";
 
+    // initializing the game and the MDP to compute the optimal policy
     Field field(WIDTH, HEIGHT);
     Game game(config, field);
 
-    Field initialField = game.getState().getField();
-    std::unique_ptr<Tromino> initialPiece;
-
-    if (dynamic_cast<IPiece*>(&game.getState().getNextTromino()) != nullptr)
-        initialPiece = std::make_unique<IPiece>();
-    else
-        initialPiece = std::make_unique<LPiece>();
-
-    State s0(initialField, std::move(initialPiece));
-
-    MDP mdp(field.getWidth(), field.getHeight(), std::move(s0),
+    MDP mdp(field.getWidth(), field.getHeight(), game.getState().clone(),
             config);
+
+    std::cout << "All constants:" << std::endl
+              << "width = " << WIDTH << ", height = " << HEIGHT
+              << ", probaIPiece = " << PROBA_I_PIECE
+              << ", maxGameAction = " << MAX_ACTION << std::endl
+              << "epsilon = " << EPSILON << ", maxIteration = " << MAX_IT
+              << ", lambda = " << LAMBDA << std::endl
+              << std::endl;
+
+    // compute the optimal policy using the value iteration algorithm
     std::vector<Action> policy = mdp.valueIteration(EPSILON, MAX_IT, LAMBDA);
 
+    // play the computed policy on the game
     mdp.playPolicy(game, policy);
 
     return 0;

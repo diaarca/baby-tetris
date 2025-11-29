@@ -2,13 +2,14 @@
 \usepackage[top=0.6in, bottom=0.6in, left=0.8in, right=0.8in, headheight=15pt, footskip=10pt]{geometry} % Ensure enough space for headers/footers
 \usepackage[hidelinks]{hyperref}
 \usepackage{graphicx}
-\usepackage{multicol}
 \usepackage{listings}
 \usepackage{xcolor}
 \usepackage{float}
 \usepackage{amsmath}
 \usepackage[utf8]{inputenc}
 \usepackage{amsmath}
+\usepackage{paracol}
+\usepackage{vwcol}
 
 \setlength{\parindent}{.45cm}
 \pagestyle{plain} % Use plain page style for all pages
@@ -24,7 +25,7 @@
     backgroundcolor=\color{backcolour},
     commentstyle=\color{codegreen},
     keywordstyle=\color{magenta},
-    numberstyle=\tiny\color{codegray},
+    numberstyle=\tiny\color{white},
     stringstyle=\color{codepurple},
     basicstyle=\ttfamily\footnotesize,
     breakatwhitespace=false,
@@ -49,21 +50,24 @@
 \setcounter{page}{1} % Explicitly set the page number to start from 1
 \maketitle
 \thispagestyle{plain} % Ensure page numbers are shown on the title page
+
+\begin{center}
+    \textcolor{blue}{\url{https://github.com/diaarca/baby-tetris/}}
+\end{center}
+
 \section{Question 1: Discounted MDP For Player}
 \label{sec:question1}
-% The objective of this part is to choose the optimal policy for the "player" in the 
-% Baby Tetris game as a discounted Markov Decision Process (MDP), with the goal of finding 
-% a policy that maximizes the expected cumulative discounted reward over time.
-\quad The objective of this part is to choose the optimal policy that maximizes 
+\quad The objective of this part is to choose the optimal policy that maximizes
 the expected cumulative discounted reward over time for the "player".
 {\renewcommand\labelitemi{}
-\begin {itemize} 
-    \item \textbf{States}\\ 
-        The state is represented by the current configuration of the grid, and the next 
-        piece to be placed.\\
+\begin {itemize}
+    \item \textbf{States}\\
+        The state is represented by the current configuration of the grid, and
+        the next piece to be placed.\\
         $S := (\text{current~grid},\ \text{next~piece~to~place})$
     \item \textbf{Actions}\\
-        The actions correspond to a position and orientation to place the piece on the grid.\\
+        The actions correspond to a position and orientation to place the piece
+        on the grid.\\
         $A := (\text{position},\ \text{orientation})$
     \item \textbf{Transition Function}\\
         The transition function is defined as
@@ -96,7 +100,7 @@ decided to use an object oriented architecture (C++) for our implementation.
 \begin{enumerate}
     \item \code{Point}: classical point (x,y) class used for grid coordinates
     \item \code{Field}: the class that contain a boolean grid s.t. grid[i][j] =
-        1 if the corresponding cell is fill in the field
+        1 if the corresponding cell is full in the field
     \item \code{Tromino}: the class that correspond to the baby Tetris pieces
         (I Piece or L Piece)
     \item \code{State}: the class that contain both a field grid and an
@@ -142,19 +146,146 @@ our implementation choices.
         less qualitative than the $\epsilon$ margin we fixed
 \end{itemize}
 
-\subsubsection{Incoming Improvement}
+\subsection{Results}
+\quad Here, we will present multiple examples of execution of our
+implementation. In these executions we will use fixed values for:
+$\text{width} = 4$, $\epsilon = 0.00000001$, $\text{maxIteration} = 100$,
+$\text{probaIPiece} = 0.5$ and $\text{maxGameAction} = 10000$. Note that we
+fixed our $\epsilon$ that low to be as close to the optimal policy as possible
+and that our algorithm is in any case bounded in time by the $maxIteration$. In
+contrary, we will make evolve: the height $\in \{4, 5\}$ and the discount factor
+$\lambda \in [0, 1]$.
+
+For each execution we will observe:
+\begin{enumerate}
+    \item the iterations of the value iteration algorithm
+    \item the average expected gain of the optimal policy
+    \item the final score either at the end of the game or if we reach the
+        maximum number of actions
+    \item the execution time of the said execution
+\end{enumerate}
+
+\subsubsection{Executions}
+\begin{paracol}{2}
+    \begin{lstlisting}[caption=height: 4 and $\lambda$: 0.1]
+    ./bin/tetris
+    Loaded config: [1, 3, 6]
+
+    All constants:
+    width = 4, height = 4, probaIPiece = 0.5, maxGameAction = 10000
+    epsilon = 1e-08, maxIteration = 100, lambda = 0.1
+
+    Iteration i = 0 and delta = 6
+    Iteration i = 1 and delta = 0.6
+    Iteration i = 2 and delta = 0.06
+    Iteration i = 3 and delta = 0.00525
+    Iteration i = 4 and delta = 0.00045
+    Iteration i = 5 and delta = 0
+
+    average over final V 0.412926
+    ....
+    ....
+    ....
+    ....
+
+    Game Over! Global score: 7861 in 10000 actions
+    \end{lstlisting}
+
+
+  	\switchcolumn
+    \begin{lstlisting}[caption=height: 4 and $\lambda$: 0.3]
+    ./bin/tetris
+    Loaded config: [1, 3, 6]
+
+    All constants:
+    width = 4, height = 4, probaIPiece = 0.5, maxGameAction = 10000
+    epsilon = 1e-08, maxIteration = 100, lambda = 0.3
+
+    Iteration i = 0 and delta = 6
+    Iteration i = 1 and delta = 1.8
+    Iteration i = 2 and delta = 0.54
+    Iteration i = 3 and delta = 0.14175
+    Iteration i = 4 and delta = 0.03645
+    Iteration i = 5 and delta = 0
+
+    average over final V 0.452512
+    ***.
+    **..
+    *.**
+    *.**
+
+    Game Over! Global score: 1500 in 1897 actions
+    \end{lstlisting}
+\end{paracol}
+
+\newpage
+\begin{paracol}{2}
+    \begin{lstlisting}[caption=height: 4 and $\lambda$: 0.5]
+    ./bin/tetris
+    Loaded config: [1, 3, 6]
+
+    All constants:
+    width = 4, height = 4, probaIPiece = 0.5, maxGameAction = 10000
+    epsilon = 1e-08, maxIteration = 100, lambda = 0.5
+
+    Iteration i = 0 and delta = 6
+    Iteration i = 1 and delta = 3
+    Iteration i = 2 and delta = 1.5
+    Iteration i = 3 and delta = 0.65625
+    Iteration i = 4 and delta = 0.28125
+    Iteration i = 5 and delta = 0
+
+    average over final V 0.495819
+    ***.
+    ..**
+    ***.
+    ***.
+
+    Game Over! Global score: 1406 in 1665 actions
+    \end{lstlisting}
+
+    \switchcolumn
+
+    \begin{lstlisting}[caption=height: 4 and $\lambda$: 0.7]
+    ./bin/tetris
+    Loaded config: [1, 3, 6]
+
+    All constants:
+    width = 4, height = 4, probaIPiece = 0.5, maxGameAction = 10000
+    epsilon = 1e-08, maxIteration = 100, lambda = 0.7
+
+    Iteration i = 0 and delta = 6
+    Iteration i = 1 and delta = 4.2
+    Iteration i = 2 and delta = 2.94
+    Iteration i = 3 and delta = 1.80075
+    Iteration i = 4 and delta = 1.08045
+    Iteration i = 5 and delta = 0
+
+    average over final V 0.544145
+    ***.
+    .***
+    ***.
+    ***.
+
+    Game Over! Global score: 373 in 444 actions
+    \end{lstlisting}
+
+\end{paracol}
+
+
+\subsection{Incoming Improvement}
 \quad For now we compute naively the value iteration algorithm on all state
 combinations, which represents
-\[
-    = 2^{\text{gridHeight} * \text{gridWidth}} * \text{nbOfTrominoTypes} \\
-    = 2^{4*4} * 2 \\
-    = 2^{17} \\
-    = 131072
-\]
-states. In the near future we want to considerably reduce this number by
-computing the value iteration only an states that are reachable from a given
-starting state $s_0$. For this purpose, we will make use of a Breadth First
-Search algorithm which will explore iteratively all reachable states from the
-current one.
+\begin{align*}
+    &= 2^{\text{gridHeight} * \text{gridWidth}} * \text{nbOfTrominoTypes} \\
+    &= 2^{4*4} * 2 \\
+    &= 2^{17} \\
+    &= 131072
+\end{align*}
+states in the smallest ($4\times 4$) version of the game. In the near future we
+want to considerably reduce this number by computing the value iteration only an
+states that are reachable from a given starting state $s_0$. For this purpose,
+we will make use of a Breadth First Search algorithm which will explore
+iteratively all reachable states from the current one.
 
 \end{document}

@@ -32,6 +32,7 @@ class State
     Tromino& getNextTromino() const { return *nextTromino_; }
     std::vector<Action> getAvailableActions();
     State applyAction(Action& action);
+    std::vector<State> genAllStatesFromAction(Action& action);
     int evaluate(std::array<int, 3>& config);
     State completeLines();
     State clone();

@@ -54,7 +54,7 @@
 % The objective of this part is to choose the optimal policy for the "player" in the 
 % Baby Tetris game as a discounted Markov Decision Process (MDP), with the goal of finding 
 % a policy that maximizes the expected cumulative discounted reward over time.
-The objective of this part is to choose the optimal policy that maximizes 
+\quad The objective of this part is to choose the optimal policy that maximizes 
 the expected cumulative discounted reward over time for the "player".
 {\renewcommand\labelitemi{}
 \begin {itemize} 
@@ -72,13 +72,14 @@ the expected cumulative discounted reward over time for the "player".
         piece to place, and considering our state representation, and our assumption 
         of uniform distribution between the pieces, each transition has an equal probability of $1/2$.
     \item \textbf{Reward Function and Discount Factor}\\
-        The reward function is defined as the number of lines cleared after placing the piece, 
+        The reward function is computed based on the number of lines cleared after placing the piece, 
         and a discount factor $\lambda$ is used to weigh future rewards.\\
         $R(s, a, s') := \text{number~of~lines~cleared}$ and $\lambda \in [0, 1]$ 
 \end{itemize} 
 }
+
 \subsection{Finding Optimal Policy}
-We use the value iteration method to find the optimal policy that maximizes 
+\quad We use the value iteration method to find the optimal policy that maximizes 
 the expected rewards, iteratively updating the value function for each state 
 based on the Bellman equation until it converges to the optimal value (margin $\epsilon$).
 \[

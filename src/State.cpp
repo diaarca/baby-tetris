@@ -1,4 +1,5 @@
 #include "State.h"
+#include <vector>
 
 std::vector<Point> State::placementPositions()
 {
@@ -92,6 +93,27 @@ State State::applyAction(Action& action)
     else
         newNext = std::make_unique<LPiece>();
     return State(newField, std::move(newNext));
+}
+
+std::vector<State> State::genAllStatesFromAction(Action& action)
+{
+    Field newField1 = field_.clone();
+    Field newField2 = field_.clone();
+
+    newField1.addTromino(*nextTromino_, action.getPosition().getX(),
+                         action.getPosition().getY(), action.getRotation());
+
+    newField2.addTromino(*nextTromino_, action.getPosition().getX(),
+                         action.getPosition().getY(), action.getRotation());
+
+    std::unique_ptr<Tromino> next1 = std::make_unique<IPiece>();
+    std::unique_ptr<Tromino> next2 = std::make_unique<LPiece>();
+
+    std::vector<State> res;
+    res.reserve(2);
+    res.emplace_back(std::move(newField1), std::move(next1));
+    res.emplace_back(std::move(newField2), std::move(next2));
+    return res;
 }
 
 int State::evaluate(std::array<int, 3>& config)

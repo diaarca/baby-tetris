@@ -1,56 +1,70 @@
 #include "MDP.h"
-#include <iostream>
 
 std::vector<Action>
 MDP::valueIteration(double eps, int maxIteration, double lambda)
 {
     std::vector<State> S = generateAllStates();
     int nbState = S.size();
-    std::vector<Action> A(nbState);
-    std::vector<int> V(nbState); // value vector (expected value)
-    int newVal;
-
+    std::vector<Action> A(nbState); // policy
+    std::vector<double> V(nbState); // value vector (expected value)
+    std::vector<double> VPrime(nbState);
     double delta;
+
     for (int i = 0; i < maxIteration; i++)
     {
         delta = 0.0;
-        std::vector<int> VPrime(nbState); // value vector' (expected value)
-
         for (int j = 0; j < nbState; j++)
         {
+            VPrime[j] = 0;
             State& s = S[j];
-            for (Action& a : s.getAvailableActions())
-            {
-                State sPrime = s.applyAction(a);
-                // newVal = 1/2 * (sPrime.evaluate() + lambda *
-                // V[stateIndex(sPrime)]);
-                // newVal += 1/2 * (sPrime.evaluate() +
-                // lambda * V[stateIndex(sPrime)]); avoid for proba because 1/2
-                // for each Piece for now
-                newVal =
-                    sPrime.evaluate(config_) + lambda * V[stateIndex(sPrime)];
+            std::vector<Action> actions = s.getAvailableActions();
 
-                if (newVal > VPrime[j])
+            int nbActions = actions.size();
+
+            std::vector<double> rewards(nbActions);
+
+            if (nbActions == 0)
+                continue;
+
+            for (int k = 0; k < nbActions; k++)
+            {
+                rewards[k] = 0;
+                for (State& sPrime : s.genAllStatesFromAction(actions[k]))
                 {
-                    // 2* for the 2 possibles s' from s using a (IPiece, LPiece)
-                    VPrime[j] = newVal;
-                    A[j] = a;
+                    rewards[k] += 0.5 * (sPrime.evaluate(config_) +
+                                             lambda * V[stateIndex(sPrime)]);
                 }
             }
-            delta = (VPrime[j] - V[j]) > delta ? (VPrime[j] - V[j]) : delta;
-            // std::cout << "action: " << A[j] << std::endl;
+            VPrime[j] = *std::max_element(rewards.begin(), rewards.end());
+
+            for (int k = 0; k < nbActions; k++)
+            {
+                if (VPrime[j] == rewards[k])
+                {
+                    A[j] = actions[k];
+                    break;
+                }
+            }
+
+            delta = std::max(delta, abs(VPrime[j] - V[j]));
+
+            V[j] = VPrime[j];
         }
-        V = VPrime;
 
         if (delta < eps)
             break;
+
+        std::cout << "Iteration i = " << i << " and delta = " << delta
+                  << std::endl;
     }
-    int sum = 0;
-    for (int i = 0; i < nbState; i++) {
+
+    double sum = 0;
+    for (int i = 0; i < nbState; i++)
+    {
         sum += V[i];
     }
-    std::cout << "average over final V "
-              << sum / nbState;
+    std::cout << "average over final V " << sum / nbState << std::endl;
+
     return A;
 }
 
@@ -137,7 +151,7 @@ size_t MDP::stateIndex(const State& s) const
 void MDP::playPolicy(Game& game, std::vector<Action> policy)
 {
     int lines, i, gain;
-    int maxAction = 1000;
+    int maxAction = 100000;
     lines = i = 0;
     // std::cout << "Initial State:\n" << game.getState() << std::endl;
     // std::cout << "Starting game...\n";

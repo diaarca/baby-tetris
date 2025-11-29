@@ -1,3 +1,5 @@
-target/**
 bin/
 obj/
+comands.json
+compile_commands.json
+.cache/

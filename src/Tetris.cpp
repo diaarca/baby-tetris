@@ -8,7 +8,7 @@
 #define CONFIG_PATH "config.txt"
 #define EPSILON 0.00000001
 #define MAX_IT 100
-#define LAMBDA 0.9
+#define LAMBDA 0.1
 
 int main()
 {

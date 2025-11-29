@@ -1,5 +1,8 @@
 CC = clang++
-CFLAGS = -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g
+
+DEPFLAGS = -MMD -MP
+
+CFLAGS = -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g $(DEPFLAGS)
 
 SRCDIR = src
 OBJDIR = obj
@@ -16,6 +19,8 @@ $(TARGET): $(OBJECTS) | $(BINDIR)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp | $(OBJDIR)
 	$(CC) $(CFLAGS) -c $< -o $@
+
+-include $(OBJECTS:.o=.d)
 
 $(OBJDIR):
 	mkdir -p $(OBJDIR)

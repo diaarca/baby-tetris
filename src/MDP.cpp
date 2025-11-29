@@ -1,5 +1,4 @@
 #include "MDP.h"
-#include <sstream>
 
 std::vector<Action>
 MDP::valueIteration(double eps, int maxIteration, double lambda)
@@ -152,10 +151,8 @@ size_t MDP::stateIndex(State& s)
 
 void MDP::playPolicy(Game& game, std::vector<Action> policy)
 {
-    int lines, i, gain;
-    lines = i = 0;
-    // std::cout << "Initial State:\n" << game.getState() << std::endl;
-    // std::cout << "Starting game...\n";
+    int i, gain;
+    i = 0;
 
     while (game.getState().getAvailableActions().size() > 0 && i < MAX_ACTION)
     {
@@ -218,19 +215,15 @@ void MDP::playPolicy(Game& game, std::vector<Action> policy)
         }
 
         gain = placed.evaluate(config_);
-        auto it = std::find(std::begin(config_), std::end(config_), gain);
-        lines = std::distance(std::begin(config_), it) + 1;
 
         game.setScore(game.getScore() + gain);
-        if (lines > 0)
-        {
-            // std::cout << "Action completed " << lines << " lines\n";
-        }
+
         game.setState(std::move(after));
         std::cout << "Current score: " << game.getScore() << "\n\n";
 
         i++;
     }
+
     std::cout << game.getState().getField();
     std::cout << "\nGame Over! Global score: " << game.getScore() << " in " << i
               << " actions \n";

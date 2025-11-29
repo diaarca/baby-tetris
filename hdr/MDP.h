@@ -1,8 +1,9 @@
 #pragma once
 
 #include "Game.h"
+#include <sstream>
 
-#define MAX_ACTION 10000
+#define MAX_ACTION 100
 
 class MDP
 {

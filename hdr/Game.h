@@ -1,8 +1,6 @@
 #pragma once
 
 #include "State.h"
-#include <cmath>
-#include <vector>
 
 class Game
 {

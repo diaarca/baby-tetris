@@ -47,6 +47,9 @@
 \date{\today}
 
 \begin{document}
+
+\tableofcontents
+
 \setcounter{page}{1} % Explicitly set the page number to start from 1
 \maketitle
 \thispagestyle{plain} % Ensure page numbers are shown on the title page
@@ -156,7 +159,7 @@ and that our algorithm is in any case bounded in time by the $maxIteration$. In
 contrary, we will make evolve: the height $\in \{4, 5\}$ and the discount factor
 $\lambda \in [0, 1]$.
 
-For each execution we will observe:
+For each execution we will measure:
 \begin{enumerate}
     \item the iterations of the value iteration algorithm
     \item the average expected gain of the optimal policy
@@ -166,8 +169,9 @@ For each execution we will observe:
 \end{enumerate}
 
 \subsubsection{Executions}
+\label{sec:executions}
 \begin{paracol}{2}
-    \begin{lstlisting}[caption=height: 4 and $\lambda$: 0.1]
+    \begin{lstlisting}[title=height: 4 and $\lambda$: 0.1]
     ./bin/tetris
     Loaded config: [1, 3, 6]
 
@@ -185,95 +189,166 @@ For each execution we will observe:
     average over final V 0.412926
     ....
     ....
-    ....
-    ....
+    **..
+    **..
 
-    Game Over! Global score: 7861 in 10000 actions
+    Game Over! Global score: 7849 in 10000 actions 
+    make run  3.02s user 0.08s system 92% cpu 3.340 total
     \end{lstlisting}
 
 
   	\switchcolumn
-    \begin{lstlisting}[caption=height: 4 and $\lambda$: 0.3]
+    \begin{lstlisting}[title=height: 4 and $\lambda$: 0.4]
     ./bin/tetris
     Loaded config: [1, 3, 6]
 
     All constants:
     width = 4, height = 4, probaIPiece = 0.5, maxGameAction = 10000
-    epsilon = 1e-08, maxIteration = 100, lambda = 0.3
+    epsilon = 1e-08, maxIteration = 100, lambda = 0.4
 
     Iteration i = 0 and delta = 6
-    Iteration i = 1 and delta = 1.8
-    Iteration i = 2 and delta = 0.54
-    Iteration i = 3 and delta = 0.14175
-    Iteration i = 4 and delta = 0.03645
+    Iteration i = 1 and delta = 2.4
+    Iteration i = 2 and delta = 0.96
+    Iteration i = 3 and delta = 0.336
+    Iteration i = 4 and delta = 0.1152
     Iteration i = 5 and delta = 0
 
-    average over final V 0.452512
+
+
+    average over final V 0.473608
     ***.
     **..
     *.**
     *.**
 
-    Game Over! Global score: 1500 in 1897 actions
+    Game Over! Global score: 225 in 285 actions 
+    make run  2.93s user 0.08s system 93% cpu 3.237 total
     \end{lstlisting}
 \end{paracol}
 
 \newpage
 \begin{paracol}{2}
-    \begin{lstlisting}[caption=height: 4 and $\lambda$: 0.5]
+    \begin{lstlisting}[title=height: 5 and $\lambda$: 0.1]
     ./bin/tetris
     Loaded config: [1, 3, 6]
 
     All constants:
-    width = 4, height = 4, probaIPiece = 0.5, maxGameAction = 10000
-    epsilon = 1e-08, maxIteration = 100, lambda = 0.5
+    width = 4, height = 5, probaIPiece = 0.5, maxGameAction = 10000
+    epsilon = 1e-08, maxIteration = 100, lambda = 0.1
 
     Iteration i = 0 and delta = 6
-    Iteration i = 1 and delta = 3
-    Iteration i = 2 and delta = 1.5
-    Iteration i = 3 and delta = 0.65625
-    Iteration i = 4 and delta = 0.28125
-    Iteration i = 5 and delta = 0
+    Iteration i = 1 and delta = 0.6
+    Iteration i = 2 and delta = 0.06
+    Iteration i = 3 and delta = 0.006
+    Iteration i = 4 and delta = 0.00058125
+    Iteration i = 5 and delta = 3.1875e-05
+    Iteration i = 6 and delta = 0
 
-    average over final V 0.495819
-    ***.
-    ..**
-    ***.
-    ***.
+    average over final V 0.462044
+    ....
+    ....
+    ....
+    ...*
+    .***
 
-    Game Over! Global score: 1406 in 1665 actions
+    Game Over! Global score: 7864 in 10000 actions 
+    make run  58.26s user 0.32s system 99% cpu 58.837 total
     \end{lstlisting}
 
     \switchcolumn
-
-    \begin{lstlisting}[caption=height: 4 and $\lambda$: 0.7]
+    \begin{lstlisting}[title=height: 5 and $\lambda$: 0.9]
     ./bin/tetris
     Loaded config: [1, 3, 6]
 
     All constants:
-    width = 4, height = 4, probaIPiece = 0.5, maxGameAction = 10000
-    epsilon = 1e-08, maxIteration = 100, lambda = 0.7
+    width = 4, height = 5, probaIPiece = 0.5, maxGameAction = 10000
+    epsilon = 1e-08, maxIteration = 100, lambda = 0.9
 
     Iteration i = 0 and delta = 6
-    Iteration i = 1 and delta = 4.2
-    Iteration i = 2 and delta = 2.94
-    Iteration i = 3 and delta = 1.80075
-    Iteration i = 4 and delta = 1.08045
-    Iteration i = 5 and delta = 0
+    Iteration i = 1 and delta = 5.4
+    Iteration i = 2 and delta = 4.86
+    Iteration i = 3 and delta = 4.374
+    Iteration i = 4 and delta = 3.81358
+    Iteration i = 5 and delta = 1.88219
+    Iteration i = 6 and delta = 0
 
-    average over final V 0.544145
-    ***.
+    average over final V 0.676855
+    ....
+    ....
+    ....
+    ..*.
     .***
-    ***.
-    ***.
 
-    Game Over! Global score: 373 in 444 actions
+    Game Over! Global score: 8513 in 10000 actions 
+    make run  58.20s user 0.34s system 99% cpu 58.809 total
     \end{lstlisting}
-
 \end{paracol}
 
+\subsubsection{Observations}
+\quad Over our executions, we can remark first that the $\lambda$ have a huge
+impact on the optimal policy computed. On the small version of the game ($4
+\times 4$) it is really difficult to reach the $maxGameAction$ with $\lambda =
+0.4$, since the model will prioritize short term decisions in order to increase
+more quickly its score. In comparison, with $\lambda = 0.1$, the model will not
+gain that much per action taken, indeed, it will prioritize safer actions
+that allow itself to gain more score on a long term perspective.
+
+That result was kind of expected since in a $4 \times 4$ grid, there is no much
+space for risky moves. Then study of the $4 \times 5$ grid case is really
+interesting because it shows us that with a bigger grid we can easily take much
+more risks in order to increase our global score. The $height = 5$ and $\lambda
+= 0.9$ case illustrates perfectly this because it is now stopped by the
+$maxGameAction$ with an higher score than the $\lambda = 0.1$ case (since the
+risky actions can be smoothed on a bigger grid, we simply benefit of the higher
+score).
+
+In both cases, the total computational time is pretty acceptable (max 1 minute)
+even if it can be largely optimized (see Section~\ref{sec:improvement}). About
+the exact same improvement, the average expected gain $V$ cannot be really
+discussed here since there is a huge part of states that aren't reachable in
+practice.
+
+\newpage
+Finally, we can remark that the value iteration algorithm choice described in
+Section~\ref{sec:question1} was pretty relevant because we converge very quickly
+to the optimal policy (at the last iteration, $\Delta$ is always equal to $0$).
+
+\subsubsection{Usage}
+\quad Now, if you want to try our code by yourself, you can modify the different
+constants by modifying the corresponding \code{\#define} statements in
+\code{src/Tetris.cpp}, \code{hdr/MDP.h} and \code{hdr/State.h}.
+
+In order to recompile and run the whole project, you simply need to execute the
+command:
+\begin{lstlisting}
+    make run
+\end{lstlisting}
+
+Contrarily to the textual output shown in Section~\ref{sec:executions}, in the
+version that you will receive, you will have an exhaustive description of the
+played game (evolution of the state at each action) as follows:
+\begin{lstlisting}
+    ....                .*..                  .*..
+    ..*.                ***.                  ***.
+    ***. --- LPiece --> ***. -- Completion -> ***.
+    ***.                ***.                  ***.
+    Current score: 734
+
+    .*..                .***                  ....
+    ***.                ****                  .***
+    ***. --- LPiece --> ***. -- Completion -> ***.
+    ***.                ***.                  ***.
+    Current score: 735
+
+    ....                ***.                  ***.
+    .***                .***                  .***
+    ***. --- IPiece --> ***. -- Completion -> ***.
+    ***.                ***.                  ***.
+    Current score: 735
+\end{lstlisting}
 
 \subsection{Incoming Improvement}
+\label{sec:improvement}
 \quad For now we compute naively the value iteration algorithm on all state
 combinations, which represents
 \begin{align*}

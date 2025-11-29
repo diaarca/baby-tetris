@@ -1,4 +1,5 @@
 #include "MDP.h"
+#include <sstream>
 
 std::vector<Action>
 MDP::valueIteration(double eps, int maxIteration, double lambda)
@@ -158,14 +159,65 @@ void MDP::playPolicy(Game& game, std::vector<Action> policy)
 
     while (game.getState().getAvailableActions().size() > 0 && i < MAX_ACTION)
     {
-        Action a = policy[stateIndex(game.getState())];
+        State& curr = game.getState();
+        Action a = policy[stateIndex(curr)];
 
-        // std::cout << "Action number " << i << std::endl;
-        // std::cout << game.getState().getNextTromino();
-        game.setState(game.getState().applyAction(a));
-        // std::cout << game.getState();
+        // compute deterministic preview states (placed and after completion)
+        State placed = curr.applyAction(a);
+        State after = placed.completeLines();
 
-        gain = game.getState().evaluate(config_);
+        // pretty-print three fields side-by-side with connectors
+        auto fieldToLines = [](const Field& f)
+        {
+            std::vector<std::string> out;
+            for (int r = 0; r < f.getHeight(); ++r)
+            {
+                std::string line;
+                for (int c = 0; c < f.getWidth(); ++c)
+                    line.push_back(f.getGrid()[r][c] ? '*' : '.');
+                out.push_back(line);
+            }
+            return out;
+        };
+
+        std::vector<std::string> left = fieldToLines(curr.getField());
+        std::vector<std::string> middle = fieldToLines(placed.getField());
+        std::vector<std::string> right = fieldToLines(after.getField());
+
+        // piece name for connector
+        std::ostringstream oss;
+        oss << curr.getNextTromino();
+        std::string pieceName = oss.str();
+
+        // prepare connectors and align vertically
+        int rows =
+            std::max({(int)left.size(), (int)middle.size(), (int)right.size()});
+        int midRow = rows / 2; // place arrows in middle row
+        std::string arrow1 = " --- ";
+        arrow1 += pieceName + " --> ";
+        std::string arrow2 = " -- Completion -> ";
+
+        for (int r = 0; r < rows; ++r)
+        {
+            std::string l = (r < (int)left.size())
+                                ? left[r]
+                                : std::string(left[0].size(), ' ');
+            std::string m = (r < (int)middle.size())
+                                ? middle[r]
+                                : std::string(middle[0].size(), ' ');
+            std::string rg = (r < (int)right.size())
+                                 ? right[r]
+                                 : std::string(right[0].size(), ' ');
+
+            std::string conn1 =
+                (r == midRow) ? arrow1 : std::string(arrow1.size(), ' ');
+            std::string conn2 =
+                (r == midRow) ? arrow2 : std::string(arrow2.size(), ' ');
+
+            std::cout << l << conn1 << m << conn2 << rg << '\n';
+        }
+
+        gain = placed.evaluate(config_);
         auto it = std::find(std::begin(config_), std::end(config_), gain);
         lines = std::distance(std::begin(config_), it) + 1;
 
@@ -174,9 +226,8 @@ void MDP::playPolicy(Game& game, std::vector<Action> policy)
         {
             // std::cout << "Action completed " << lines << " lines\n";
         }
-        game.setState(game.getState().completeLines());
-        // std::cout << "New board:\n" << game.getState().getField();
-        // std::cout << "Current score: " << game.getScore() << "\n\n";
+        game.setState(std::move(after));
+        std::cout << "Current score: " << game.getScore() << "\n\n";
 
         i++;
     }

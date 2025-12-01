@@ -6,6 +6,7 @@ The goal of such a model is to compute in advance the optimal strategy (maximizi
 0. Requirements:
     - gcc
     - make
+
 You can either install them individually or use our `shell.nix` script that install automatically all necessary dependencies by running:
 ```bash
 nix-shell shell.nix

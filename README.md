@@ -4,8 +4,12 @@ The goal of such a model is to compute in advance the optimal strategy (maximizi
 
 ## Installation
 0. Requirements:
-- C++
-- make
+    - gcc
+    - make
+You can either install them individually or use our `shell.nix` script that install automatically all necessary dependencies by running:
+```bash
+nix-shell shell.nix
+```
 1. Clone this git repository :
 ```bash
 git clone git@github.com:diaarca/baby-tetris.git

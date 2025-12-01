@@ -3,10 +3,8 @@
 pkgs.mkShell {
   buildInputs = with pkgs; [
     bear
+    gcc
+    gnumake
+    git
   ];
-
-  shellHook = ''
-    alias g++="clang++"
-  '';
 }
-

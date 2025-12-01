@@ -7,6 +7,8 @@
 #include <iostream>
 #include <memory>
 #include <vector>
+#include <algorithm>
+
 
 #define PROBA_I_PIECE 0.5
 

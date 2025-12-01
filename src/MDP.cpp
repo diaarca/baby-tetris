@@ -47,7 +47,7 @@ MDP::valueIteration(double epsilon, int maxIteration, double lambda)
                 }
             }
 
-            delta = std::max(delta, abs(VPrime[j] - V[j]));
+            delta = std::max(delta, std::abs(VPrime[j] - V[j]));
 
             V[j] = VPrime[j];
         }

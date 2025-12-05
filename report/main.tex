@@ -80,7 +80,7 @@ the expected cumulative discounted reward over time for the "player".
     \item \textbf{Reward Function and Discount Factor}\\
         The reward function is computed based on the number of lines cleared after placing the piece, 
         and a discount factor $\lambda$ is used to weigh future rewards.\\
-        $R(s, a, s') := \text{number~of~lines~cleared}$ and $\lambda \in [0, 1]$ 
+        $R(s, a, s') := \text{coefficient * number~of~lines~cleared}$ with $\lambda \in [0, 1]$ 
 \end{itemize} 
 }
 
@@ -92,7 +92,7 @@ based on the Bellman equation until it converges to the optimal value (margin $\
 V(s) = \max_{a \in A} \sum_{s' \in S} P(s' | s, a) \cdot \left( R(s, a, s') + \lambda V(s') \right)
 \]
 Value iteration is better suited for maximizing the expected discounted reward 
-since it computes the optimal value then extracts the policy and easier to implement
+since it computes the optimal value then extracts the policy and it's easier to implement.
 
 \subsection{Implementation}
 \subsubsection{Main Architecture}
@@ -101,50 +101,49 @@ decided to use an object oriented architecture (C++) for our implementation.
 \par For our structure we have declared 7 classes:
 \begin{enumerate}
     \item \code{Point}: classical point (x,y) class used for grid coordinates
-    \item \code{Field}: the class that contain a boolean grid s.t. grid[i][j] =
-        1 if the corresponding cell is full in the field
-    \item \code{Tromino}: the class that correspond to the baby Tetris pieces
+    \item \code{Field}: contains a boolean grid s.t. grid[i][j] =
+        1 if the corresponding cell is filled in the field
+    \item \code{Tromino}: corresponds to the baby Tetris pieces
         (I Piece or L Piece)
-    \item \code{State}: the class that contain both a field grid and an
+    \item \code{State}: contains both a field grid and an
         incoming Tromino
-    \item \code{Action}: that represent an action choosable on a given state
+    \item \code{Action}: represents a choosable action on a given state
         (combination for placement and rotation of an incoming Tromino)
-    \item \code{Game}: the class that contain the configuration (completed lines
+    \item \code{Game}: contains the configuration (completed lines
         scores), the current state and score of a baby Tetris game (the
         configuration is loaded from a file : \code{config.txt})
-    \item \code{MDP}: the class that all the necessary methods in order to
+    \item \code{MDP}: encompasses all the necessary methods in order to
         compute the value iteration over a game
 \end{enumerate}
 
-Now that we overviewed the global implementation architecture, we will describe
+Now that we presented the overview of the global implementation architecture, we will describe
 our implementation choices.
 \subsubsection{Implementation Choices}
 \begin{itemize}
-    \item \textbf{Piece teleported to their final position}: in order to make
+    \item \textbf{Pieces teleported to their final position}: In order to reduce
         the number of intermediate states when choosing an action, we compute on
-        a state all available actions on this state, then according to the
-        policy we make a choice over these actions and we teleport the incoming
+        a state all available actions, then according to the
+        policy, we make a choice over these actions and we teleport the incoming
         piece in the current state directly to its final position (with the
-        right rotation)
-    \item \textbf{Reward Function}: The reward function as defined in
-        Section~\ref{sec:question1} take both the current state $s$ and an
-        available action $a_s$. Here since we can calculate the available
-        actions, we can know in which state $s'$ we're going to arrive and we
-        can compute directly in $s'$ the number of completed lines before remove
-        them right to the game. Then we abstract the reward function by counting
+        corresponding rotation)
+    \item \textbf{Reward Function}: As defined in
+        Section~\ref{sec:question1}, the reward function takes both the current state $s$ and an
+        available action $a_s$. Since we can calculate the available
+        actions, we know in which state $s'$ we're going to arrive and we
+        can compute directly in $s'$ the number of completed lines before removing
+        them from the game. Then we abstract the reward function by counting
         the number of complete lines in the resulting state
     \item \textbf{Game Ending}: According to the subject, the game should end
-        whenever a piece exceed the height limit of the grid. Again there, we
-        can compute all available actions on a given state, since we cannot
-        place a Tromino outside the grid, such an action will not appear in the
-        set of available actions. Then the game end when there is no available
-        action for the current game
-        state
+        whenever a piece exceeds the height limit of the grid.
+        Since we compute all available actions on a given state, if a piece
+        cannot be placed on the grid, there will be no available action for
+        that state, the game will terminate when there is no available 
+        action for the current state.
     \item \textbf{Max Iteration}: Since the value iteration isn't an exact
-        method, if we fix an $\epsilon$ which is too small, we may iterate for a
-        very long moment. For this reason we fix a maximum number of iteration
-        for the expected value improvement, then we always a value iteration
-        which compute in a reasonable time even if the expected value vector is
+        method, if we fix an $\epsilon$ too small, we might iterate for a
+        very long time. For this reason, we fix a maximum number of iteration
+        for the expected value improvement to have a value iteration method
+        that computes in reasonable time, even if the expected value vector is
         less qualitative than the $\epsilon$ margin we fixed
 \end{itemize}
 
@@ -153,16 +152,16 @@ our implementation choices.
 implementation. In these executions we will use fixed values for:
 $\text{width} = 4$, $\epsilon = 0.00000001$, $\text{maxIteration} = 100$,
 $\text{probaIPiece} = 0.5$ and $\text{maxGameAction} = 10000$. Note that we
-fixed our $\epsilon$ that low to be as close to the optimal policy as possible
-and that our algorithm is in any case bounded in time by the $maxIteration$. In
-contrary, we will make evolve: the height $\in \{4, 5\}$ and the discount factor
-$\lambda \in [0, 1]$.
-
+fixed a small $\epsilon$ in order to approach the optimal policy, 
+keeping in mind that the algorithm is bounded in iteration by the $maxIteration$.
+And the variant variables will be: the height $\in \{4, 5\}$ and the discount factor
+$\lambda \in [0, 1]$.\\
+\\
 For each execution we will measure:
 \begin{enumerate}
-    \item the iterations of the value iteration algorithm
+    \item the number of iterations for the value iteration algorithm
     \item the average expected gain of the optimal policy
-    \item the final score either at the end of the game or if we reach the
+    \item the final score either at the end of the game or when we reach the
         maximum number of actions
     \item the execution time of the said execution
 \end{enumerate}
@@ -270,22 +269,20 @@ For each execution we will measure:
 \end{paracol}
 
 \subsubsection{Observations}
-\quad Over our executions, we can remark first that the $\lambda$ have a huge
-impact on the optimal policy computed. On the small version of the game ($4
-\times 4$) it is really difficult to reach the $maxGameAction$ with $\lambda =
+\quad Over our executions, we remark that the $\lambda$ has a huge
+impact on the optimal policy computed. On the smaller grid ($4
+\times 4$), it is really difficult to reach the $maxGameAction$ with $\lambda =
 0.4$, since the model will prioritize short term decisions in order to increase
-more quickly its score. In comparison, with $\lambda = 0.1$, the model will not
-gain that much per action taken, indeed, it will prioritize safer actions
-that allow itself to gain more score on a long term perspective.
+its score faster. In comparison, with $\lambda = 0.1$, the model will not
+gain that much per action, prioritizing safer actions that allow a higher score on
+the long term.
 
-That result was kind of expected since in a $4 \times 4$ grid, there is no much
-space for risky moves. Then study of the $4 \times 5$ grid case is really
-interesting because it shows us that with a bigger grid we can easily take much
-more risks in order to increase our global score. The $height = 5$ and $\lambda
-= 0.9$ case illustrates perfectly this because it is now stopped by the
-$maxGameAction$ with an higher score than the $\lambda = 0.1$ case (since the
-risky actions can be smoothed on a bigger grid, we simply benefit of the higher
-score).
+That result was as expected, since in a $4 \times 4$ grid, the space for 
+the risky moves is limited. The study of the game with the $4 \times 5$ grid 
+shows that bigger grid provides a larger space to take risks in order to increase 
+the global score. The game with $height = 5$ and $\lambda = 0.9$ illustrates this 
+perfectly because it scores higher than the game with $height = 5$ and 
+$\lambda = 0.1$, since the risky actions can be better expolited on a bigger grid.
 
 In both cases, the total computational time is pretty acceptable (max 1 minute)
 even if it can be largely optimized (see Section~\ref{sec:improvement}). About
@@ -293,23 +290,23 @@ the exact same improvement, the average expected gain $V$ cannot be really
 discussed here since there is a huge part of states that aren't reachable in
 practice.
 
-Finally, we can remark that the value iteration algorithm choice described in
-Section~\ref{sec:question1} was pretty relevant because we converge very quickly
-to the optimal policy (at the last iteration, $\Delta$ is always equal to $0$).
+Finally, we notice that the value iteration algorithm choice described in
+Section~\ref{sec:question1} was pretty relevant because we can observe 
+the quick convergence to the optimal policy (at the last iteration, $\Delta$ 
+is always equal to $0$).
 
 \subsubsection{Usage}
-\quad Now, if you want to try our code by yourself, you can modify the different
-constants by modifying the corresponding \code{\#define} statements in
-\code{src/Tetris.cpp}, \code{hdr/MDP.h} and \code{hdr/State.h}.
+\quad Different constants can be adjusted by modifying the corresponding \code{\#define} 
+statements in \code{src/Tetris.cpp}, \code{hdr/MDP.h} and \code{hdr/State.h}.
 
-In order to recompile and run the whole project, you simply need to execute the
+In order to recompile and run the whole project, execute the following
 command:
 \begin{lstlisting}
     make run
-\end{lstlisting}
+\end{lstlisting} 
 
-Contrarily to the textual output shown in Section~\ref{sec:executions}, in the
-version that you will receive, you will have an exhaustive description of the
+Unlike the textual output shown in Section~\ref{sec:executions}, in the
+submitted version of the code, there is an exhaustive description of the
 played game (evolution of the state at each action) as follows:
 \begin{lstlisting}
     ....                .*..                  .*..
@@ -342,8 +339,8 @@ combinations, which represents
     &= 131072
 \end{align*}
 states in the smallest ($4\times 4$) version of the game. In the near future we
-want to considerably reduce this number by computing the value iteration only an
-states that are reachable from a given starting state $s_0$. For this purpose,
+want to reduce this number by computing the value iteration for only 
+the reachable states (from a given starting state $s_0$). For this purpose,
 we will make use of a Breadth First Search algorithm which will explore
 iteratively all reachable states from the current one.
 

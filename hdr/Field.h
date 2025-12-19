@@ -28,11 +28,11 @@ class Field
     std::vector<std::vector<bool>> getGrid() const { return grid_; };
 
     // other methods
-    bool isAvailable(int line, int column);
-    bool isAvailable(const Tromino& t, int line, int column, int rotation);
+    bool isAvailable(int line, int column) const;
+    bool isAvailable(const Tromino& t, int line, int column, int rotation) const;
     bool addTromino(const Tromino& t, int line, int column, int rotation);
     void setGrid(const std::vector<std::vector<bool>>& g) { grid_ = g; }
-    std::vector<Point> getEmptyPositions();
-    Field clone();
+    std::vector<Point> getEmptyPositions() const;
+    Field clone() const;
     friend std::ostream& operator<<(std::ostream& os, const Field& f);
 };

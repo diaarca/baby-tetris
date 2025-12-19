@@ -25,10 +25,10 @@ class MDP
     std::vector<Action>
     valueIteration(double eps, int maxIteration, double lambda);
 
-    std::unordered_map<State, int> generateAccessibleStates(State s0);
+    std::unordered_map<State, int> generateReachableStates(State s0);
     std::vector<State> generateAllStates();
 
-    size_t stateIndex(State& s);
+    size_t stateIndex(const State& s);
 
     void playPolicy(Game& game, std::vector<Action> policy);
 };

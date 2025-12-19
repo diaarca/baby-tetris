@@ -53,6 +53,11 @@ int main()
               << ", lambda = " << LAMBDA << std::endl
               << std::endl;
 
+    // std::unordered_set<State> q;
+    // q.insert(game.getState().clone());
+    // const State& s = *q.begin();
+    // std::cout << s << std::endl;
+
     // compute the optimal policy using the value iteration algorithm
     std::vector<Action> policy = mdp.valueIteration(EPSILON, MAX_IT, LAMBDA);
 

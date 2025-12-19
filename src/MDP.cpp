@@ -1,4 +1,6 @@
 #include "MDP.h"
+#include <algorithm>
+#include <queue>
 #include <unordered_map>
 
 std::vector<Action>
@@ -17,7 +19,7 @@ MDP::valueIteration(double epsilon, int maxIteration, double lambda)
         for (int j = 0; j < nbState; j++)
         {
             VPrime[j] = 0;
-            State& s = S[j];
+            const State& s = S[j];
             std::vector<Action> actions = s.getAvailableActions();
 
             int nbActions = actions.size();
@@ -30,11 +32,11 @@ MDP::valueIteration(double epsilon, int maxIteration, double lambda)
             for (int k = 0; k < nbActions; k++)
             {
                 rewards[k] = 0;
-                for (State& sPrime : s.genAllStatesFromAction(actions[k]))
+                for (const State& sPrime : s.genAllStatesFromAction(actions[k]))
                 {
                     rewards[k] +=
-                        PROBA_I_PIECE * (sPrime.evaluate(config_) +
-                                         lambda * V[stateIndex(sPrime)]);
+                        PROBA_I_PIECE *
+                        (sPrime.evaluate(config_) + lambda * V[stateIndex(sPrime)]);
                 }
             }
             VPrime[j] = *std::max_element(rewards.begin(), rewards.end());
@@ -66,8 +68,34 @@ MDP::valueIteration(double epsilon, int maxIteration, double lambda)
     return A;
 }
 
-std::unordered_map<State, int> MDP::generateAccessibleStates(State s0){
-    std::unordered_map()}
+std::unordered_map<State, int> MDP::generateReachableStates(State s0)
+{
+    std::unordered_map<State, int> map;
+    std::queue<State> q;
+
+    q.push(s0.clone());
+    map.emplace(std::move(s0), 0);
+
+    while (!q.empty())
+    {
+        State currState = std::move(q.front());
+        q.pop();
+
+        for (const Action& a : currState.getAvailableActions())
+        {
+            for (auto& nextState : currState.genAllStatesFromAction(a))
+            {
+                State finalNextState = nextState.completeLines();
+                if (map.find(finalNextState) == map.end())
+                {
+                    q.push(finalNextState.clone());
+                    map.emplace(std::move(finalNextState), 0);
+                }
+            }
+        }
+    }
+    return map;
+}
 
 std::vector<State> MDP::generateAllStates()
 {
@@ -91,7 +119,8 @@ std::vector<State> MDP::generateAllStates()
     for (uint64_t mask = 0; mask < total; ++mask)
     {
         std::vector<std::vector<bool>> grid(height_,
-                                            std::vector<bool>(width_, false));
+                                            
+std::vector<bool>(width_, false));
         for (int r = 0; r < height_; ++r)
         {
             for (int c = 0; c < width_; ++c)
@@ -104,14 +133,14 @@ std::vector<State> MDP::generateAllStates()
         Field f(grid);
 
         // For each possible next piece type, create a State.
-        states.emplace_back(f, std::make_unique<IPiece>());
-        states.emplace_back(f, std::make_unique<LPiece>());
+        states.emplace_back(f.clone(), std::make_unique<IPiece>());
+        states.emplace_back(std::move(f), std::make_unique<LPiece>());
     }
 
     return states;
 }
 
-size_t MDP::stateIndex(State& s)
+size_t MDP::stateIndex(const State& s)
 {
     int cells = width_ * height_;
     if (cells < 0 || cells >= 64)
@@ -119,7 +148,7 @@ size_t MDP::stateIndex(State& s)
 
     // Build mask the same way as in generateAllStates()
     uint64_t mask = 0ULL;
-    std::vector<std::vector<bool>> grid = s.getField().getGrid();
+    const auto& grid = s.getField().getGrid();
     // Basic sanity checks
     if ((int)grid.size() != height_)
         return static_cast<size_t>(-1);
@@ -156,7 +185,7 @@ void MDP::playPolicy(Game& game, std::vector<Action> policy)
 
     while (game.getState().getAvailableActions().size() > 0 && i < MAX_ACTION)
     {
-        State& curr = game.getState();
+        const State& curr = game.getState();
         Action a = policy[stateIndex(curr)];
 
         // compute deterministic preview states (placed and after completion)
@@ -164,8 +193,7 @@ void MDP::playPolicy(Game& game, std::vector<Action> policy)
         State after = placed.completeLines();
 
         // pretty-print three fields side-by-side with connectors
-        auto fieldToLines = [](const Field& f)
-        {
+        auto fieldToLines = [](const Field& f) {
             std::vector<std::string> out;
             for (int r = 0; r < f.getHeight(); ++r)
             {

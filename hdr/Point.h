@@ -13,6 +13,6 @@ class Point
     int getX() const { return x_; };
     int getY() const { return y_; };
 
-    bool operator==(const Point& o);
+    bool operator==(const Point& o) const;
     friend std::ostream& operator<<(std::ostream& os, const Point& p);
 };

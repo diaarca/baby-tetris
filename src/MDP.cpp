@@ -1,7 +1,10 @@
 #include "MDP.h"
 #include <algorithm>
+#include <iostream>
 #include <unordered_map>
 #include <vector>
+
+auto state_selector = [](const auto& pair) { return pair.first.clone(); };
 
 std::vector<Action>
 MDP::valueIteration(double epsilon, int maxIteration, double lambda)
@@ -16,6 +19,12 @@ MDP::valueIteration(double epsilon, int maxIteration, double lambda)
     std::vector<double> V(nbState); // value vector (expected value)
     std::vector<double> VPrime(nbState);
     double delta = DBL_MAX;
+
+    std::vector<State> SReach;
+    SReach.reserve(nbReachableState);
+    std::transform(map.begin(), map.end(), std::back_inserter(SReach),
+                   state_selector);
+    std::cout << SReach.size() << std::endl;
 
     for (int i = 0; i < maxIteration && delta > epsilon; i++)
     {

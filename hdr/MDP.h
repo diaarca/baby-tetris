@@ -3,6 +3,7 @@
 #include "Game.h"
 #include <sstream>
 #include <float.h>
+#include <numeric>
 
 #define MAX_ACTION 10000
 
@@ -22,6 +23,9 @@ class MDP
 
     std::vector<Action>
     valueIteration(double eps, int maxIteration, double lambda);
+
+    std::vector<Tromino>
+    MDP::trominoValueIteration(double epsilon, int maxIteration, double lambda);
 
     std::vector<State> generateAllStates();
 

@@ -53,6 +53,9 @@ int main()
               << ", lambda = " << LAMBDA << std::endl
               << std::endl;
 
+    
+    std::vector<Tromino> trominos = mdp.trominoValueIteration(EPSILON, MAX_IT, LAMBDA);
+
     // compute the optimal policy using the value iteration algorithm
     std::vector<Action> policy = mdp.valueIteration(EPSILON, MAX_IT, LAMBDA);
 

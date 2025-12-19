@@ -65,6 +65,95 @@ MDP::valueIteration(double epsilon, int maxIteration, double lambda)
     return A;
 }
 
+std::vector<Tromino>
+MDP::trominoValueIteration(double epsilon, int maxIteration, double lambda)
+{
+    std::vector<State> S = generateAllStates();
+    int nbState = S.size();
+    std::vector<Tromino> T(nbState); // policyTromino
+    std::vector<Action> A(nbState); // policy
+    std::vector<double> V(nbState); // value vector (expected value)
+    std::vector<double> VPrime(nbState);
+    double delta = DBL_MAX;
+    std::vector<double> lPieceRewards;
+    std::vector<double> iPieceRewards;
+
+    for (int i = 0; i < maxIteration && delta > epsilon; i++)
+    {
+        delta = 0.0;
+        for (int j = 0; j < nbState; j++)
+        {
+            VPrime[j] = 0;
+            State& s = S[j];
+            std::vector<Action> actions = s.getAvailableActions();
+
+            int nbActions = actions.size();
+
+            std::vector<double> rewards(nbActions);
+
+            if (nbActions == 0)
+                continue;
+
+            for (int k = 0; k < nbActions; k++) //for each action of each state
+            {
+                rewards[k] = 0;
+                for (State& sPrime : s.genAllStatesFromAction(actions[k]))
+                {
+                    double r = PROBA_I_PIECE * (sPrime.evaluate(config_) +
+                                                lambda * V[stateIndex(sPrime)]);
+                    rewards[k] += r; //maybe we don't care we'll see                   
+                    const Tromino* t = &sPrime.getNextTromino();
+                    if (dynamic_cast<const LPiece*>(t) != nullptr)
+                    {
+                        lPieceRewards.push_back(r); 
+                    }
+                    else if (dynamic_cast<const IPiece*>(t) != nullptr)
+                    {
+                        iPieceRewards.push_back(r);              
+                    }
+                }
+            }
+            //picking the min reward tromino is slippery cuz it can lead to the min reward and to max reward, so min avg for now
+            double averageL = 0.0;
+            double averageI = 0.0;
+            if (! lPieceRewards.empty())
+            {
+                double averageL = std::accumulate(lPieceRewards.begin(), lPieceRewards.end(), 0.0) / lPieceRewards.size();
+            } 
+            if (! iPieceRewards.empty())
+            {
+                double averageI = std::accumulate(iPieceRewards.begin(), iPieceRewards.end(), 0.0) / iPieceRewards.size();
+            } 
+            VPrime[j] = *std::max_element(rewards.begin(), rewards.end());
+            
+            if (averageI > averageL) 
+            {
+                T[j] = LPiece();
+            } 
+            else 
+            {
+                T[j] = IPiece();
+            }
+
+            delta = std::max(delta, std::abs(VPrime[j] - V[j]));
+
+            V[j] = VPrime[j];
+        }
+
+        std::cout << "i = " << i << " and delta = " << delta << std::endl;
+    }
+
+    double sum = 0;
+    for (int i = 0; i < nbState; i++)
+    {
+        sum += V[i];
+    }
+    std::cout << "\naverage over final V " << sum / nbState << std::endl;
+
+    return T;
+}
+
+
 std::vector<State> MDP::generateAllStates()
 {
     int cells = width_ * height_;

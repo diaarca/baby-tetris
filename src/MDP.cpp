@@ -1,4 +1,5 @@
 #include "MDP.h"
+#include <unordered_map>
 
 std::vector<Action>
 MDP::valueIteration(double epsilon, int maxIteration, double lambda)
@@ -64,6 +65,9 @@ MDP::valueIteration(double epsilon, int maxIteration, double lambda)
 
     return A;
 }
+
+std::unordered_map<State, int> MDP::generateAccessibleStates(State s0){
+    std::unordered_map()}
 
 std::vector<State> MDP::generateAllStates()
 {

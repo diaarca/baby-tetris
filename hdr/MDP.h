@@ -1,8 +1,10 @@
 #pragma once
 
 #include "Game.h"
-#include <sstream>
 #include <float.h>
+#include <sstream>
+#include <unordered_map>
+#include <unordered_set>
 
 #define MAX_ACTION 10000
 
@@ -23,6 +25,7 @@ class MDP
     std::vector<Action>
     valueIteration(double eps, int maxIteration, double lambda);
 
+    std::unordered_map<State, int> generateAccessibleStates(State s0);
     std::vector<State> generateAllStates();
 
     size_t stateIndex(State& s);

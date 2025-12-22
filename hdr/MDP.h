@@ -22,13 +22,14 @@ class MDP
           config_(std::move(config)) {};
     ~MDP() = default;
 
-    std::vector<Action>
+    std::unordered_map<State, Action>
     valueIteration(double eps, int maxIteration, double lambda);
 
-    std::unordered_map<State, int> generateReachableStates(State s0);
+    std::unordered_map<State, double> generateReachableStates(State s0);
     std::vector<State> generateAllStates();
 
     size_t stateIndex(const State& s);
 
-    void playPolicy(Game& game, std::vector<Action> policy);
+    void playPolicy(Game& game,
+                    const std::unordered_map<State, Action>& policy);
 };

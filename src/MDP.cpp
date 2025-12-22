@@ -1,39 +1,22 @@
 #include "MDP.h"
-#include <algorithm>
-#include <iostream>
-#include <unordered_map>
-#include <vector>
 
-auto state_selector = [](const auto& pair) { return pair.first.clone(); };
-
-std::vector<Action>
+std::unordered_map<State, Action>
 MDP::valueIteration(double epsilon, int maxIteration, double lambda)
 {
-    std::vector<State> S = generateAllStates();
-    std::unordered_map<State, int> map =
+    std::unordered_map<State, double> V =
         generateReachableStates(std::move(s0_));
-    int nbState = S.size();
-    int nbReachableState = map.size();
-    std::cout << nbState << " vs " << nbReachableState << std::endl;
-    std::vector<Action> A(nbState); // policy
-    std::vector<double> V(nbState); // value vector (expected value)
-    std::vector<double> VPrime(nbState);
-    double delta = DBL_MAX;
 
-    std::vector<State> SReach;
-    SReach.reserve(nbReachableState);
-    std::transform(map.begin(), map.end(), std::back_inserter(SReach),
-                   state_selector);
-    std::cout << SReach.size() << std::endl;
+    std::unordered_map<State, Action> A;
+
+    double vAfter, vPrime, delta;
+    delta = DBL_MAX;
 
     for (int i = 0; i < maxIteration && delta > epsilon; i++)
     {
         delta = 0.0;
-        for (int j = 0; j < nbState; j++)
+        for (auto& [currState, currValue] : V)
         {
-            VPrime[j] = 0;
-            const State& s = S[j];
-            std::vector<Action> actions = s.getAvailableActions();
+            std::vector<Action> actions = currState.getAvailableActions();
 
             int nbActions = actions.size();
 
@@ -44,46 +27,58 @@ MDP::valueIteration(double epsilon, int maxIteration, double lambda)
 
             for (int k = 0; k < nbActions; k++)
             {
-                rewards[k] = 0;
-                for (const State& sPrime : s.genAllStatesFromAction(actions[k]))
+                rewards[k] = 0.0;
+                for (State& placedState :
+                     currState.genAllStatesFromAction(actions[k]))
                 {
+                    State afterState = placedState.completeLines();
+
+                    auto it = V.find(afterState);
+                    if (it == V.end())
+                    {
+                        std::cerr << "ERROR: the state cannot be derived into "
+                                     "a non-reachable state"
+                                  << std::endl;
+                        exit(1);
+                    }
+                    vAfter = it->second;
+
                     rewards[k] +=
-                        PROBA_I_PIECE * (sPrime.evaluate(config_) +
-                                         lambda * V[stateIndex(sPrime)]);
+                        PROBA_I_PIECE *
+                        (placedState.evaluate(config_) + lambda * vAfter);
                 }
             }
-            VPrime[j] = *std::max_element(rewards.begin(), rewards.end());
+            vPrime = *std::max_element(rewards.begin(), rewards.end());
 
             for (int k = 0; k < nbActions; k++)
             {
-                if (VPrime[j] == rewards[k])
+                if (vPrime == rewards[k])
                 {
-                    A[j] = actions[k];
+                    A.insert_or_assign(currState.clone(), actions[k]);
                     break;
                 }
             }
 
-            delta = std::max(delta, std::abs(VPrime[j] - V[j]));
-
-            V[j] = VPrime[j];
+            delta = std::max(delta, std::abs(vPrime - currValue));
+            V.insert_or_assign(currState.clone(), vPrime);
         }
 
         std::cout << "i = " << i << " and delta = " << delta << std::endl;
     }
 
     double sum = 0;
-    for (int i = 0; i < nbState; i++)
+    for (std::pair<const State, double>& item : V)
     {
-        sum += V[i];
+        sum += item.second;
     }
-    std::cout << "\naverage over final V " << sum / nbState << std::endl;
+    std::cout << "\naverage over final V " << sum / V.size() << std::endl;
 
     return A;
 }
 
-std::unordered_map<State, int> MDP::generateReachableStates(State s0)
+std::unordered_map<State, double> MDP::generateReachableStates(State s0)
 {
-    std::unordered_map<State, int> map;
+    std::unordered_map<State, double> map;
     std::vector<State> q;
     size_t q_head = 0;
 
@@ -103,7 +98,7 @@ std::unordered_map<State, int> MDP::generateReachableStates(State s0)
                 if (map.find(finalNextState) == map.end())
                 {
                     q.push_back(finalNextState.clone());
-                    map.emplace(std::move(finalNextState), 0);
+                    map.emplace(std::move(finalNextState), 0.0);
                 }
             }
         }
@@ -111,95 +106,24 @@ std::unordered_map<State, int> MDP::generateReachableStates(State s0)
     return map;
 }
 
-std::vector<State> MDP::generateAllStates()
+void MDP::playPolicy(Game& game,
+                     const std::unordered_map<State, Action>& policy)
 {
-    int cells = width_ * height_;
-    if (cells < 0)
-        return {};
-
-    // Guard against shifting by >= 64 on platforms where that is UB.
-    // For reasonably small grids (as used in this project) this is fine.
-    uint64_t total = 1ULL;
-    if (cells >= 64)
-    {
-        // too many states to enumerate safely with 64-bit mask
-        return {};
-    }
-    total <<= cells; // total = 2^cells
-
-    std::vector<State> states;
-    states.reserve(static_cast<size_t>(total) * 2);
-
-    for (uint64_t mask = 0; mask < total; ++mask)
-    {
-        std::vector<std::vector<bool>> grid(height_,
-                                            std::vector<bool>(width_, false));
-        for (int r = 0; r < height_; ++r)
-        {
-            for (int c = 0; c < width_; ++c)
-            {
-                int idx = r * width_ + c; // bit index for this cell
-                grid[r][c] = ((mask >> idx) & 1ULL) != 0ULL;
-            }
-        }
-
-        Field f(grid);
-
-        // For each possible next piece type, create a State.
-        states.emplace_back(f.clone(), std::make_unique<IPiece>());
-        states.emplace_back(std::move(f), std::make_unique<LPiece>());
-    }
-
-    return states;
-}
-
-size_t MDP::stateIndex(const State& s)
-{
-    int cells = width_ * height_;
-    if (cells < 0 || cells >= 64)
-        return static_cast<size_t>(-1);
-
-    // Build mask the same way as in generateAllStates()
-    uint64_t mask = 0ULL;
-    const auto& grid = s.getField().getGrid();
-    // Basic sanity checks
-    if ((int)grid.size() != height_)
-        return static_cast<size_t>(-1);
-
-    for (int r = 0; r < height_; ++r)
-    {
-        if ((int)grid[r].size() != width_)
-            return static_cast<size_t>(-1);
-        for (int c = 0; c < width_; ++c)
-        {
-            int idx = r * width_ + c;
-            if (grid[r][c])
-                mask |= (1ULL << idx);
-        }
-    }
-
-    // Determine piece index: 0 for IPiece, 1 for LPiece
-    const Tromino* t = &s.getNextTromino();
-    size_t pieceIndex = static_cast<size_t>(-1);
-    if (dynamic_cast<const IPiece*>(t) != nullptr)
-        pieceIndex = 0;
-    else if (dynamic_cast<const LPiece*>(t) != nullptr)
-        pieceIndex = 1;
-    else
-        return static_cast<size_t>(-1);
-
-    return static_cast<size_t>(mask) * 2u + pieceIndex;
-}
-
-void MDP::playPolicy(Game& game, std::vector<Action> policy)
-{
-    int i, gain;
-    i = 0;
+    int i = 0, gain;
 
     while (game.getState().getAvailableActions().size() > 0 && i < MAX_ACTION)
     {
         const State& curr = game.getState();
-        Action a = policy[stateIndex(curr)];
+        auto it = policy.find(curr);
+        if (it == policy.end())
+        {
+            std::cerr
+                << "ERROR the state:\n"
+                << curr
+                << "\n haven't any associated action in the provided policy";
+            exit(1);
+        }
+        const Action& a = policy.find(curr)->second;
 
         // compute deterministic preview states (placed and after completion)
         State placed = curr.applyAction(a);

@@ -207,9 +207,9 @@ State State::clone() const
     std::unique_ptr<Tromino> newTromino;
     if (nextTromino_)
     {
-        if (dynamic_cast<const IPiece*>(nextTromino_.get()))
+        if (nextTromino_->isIPiece())
             newTromino = std::make_unique<IPiece>();
-        else if (dynamic_cast<const LPiece*>(nextTromino_.get()))
+        else if (nextTromino_->isLPiece())
             newTromino = std::make_unique<LPiece>();
     }
 
@@ -237,59 +237,66 @@ bool State::operator==(const State& other) const
     if (!thisHasPiece)
         return true;
 
-    bool thisIsIPiece =
-        dynamic_cast<const IPiece*>(nextTromino_.get()) != nullptr;
-    bool otherIsIPiece =
-        dynamic_cast<const IPiece*>(other.nextTromino_.get()) != nullptr;
+    bool thisIsIPiece = nextTromino_->isIPiece();
+    bool otherIsIPiece = other.nextTromino_->isIPiece();
 
     return thisIsIPiece == otherIsIPiece;
 }
 
 size_t State::hash() const
 {
-    uint64_t mask = 0;
-    const auto& grid = field_.getGrid();
     int width = field_.getWidth();
     int height = field_.getHeight();
+    int cells = width * height;
 
-    if (height > 0 && width > 0 && (height * width) < 64)
+    if (cells < 0 || cells >= 64)
     {
-        for (int r = 0; r < height; ++r)
+        return static_cast<size_t>(-1);
+    }
+
+    uint64_t mask = 0ULL;
+    const auto& grid = field_.getGrid();
+
+    if ((int)grid.size() != height)
+    {
+        return static_cast<size_t>(-1);
+    }
+
+    for (int r = 0; r < height; ++r)
+    {
+        if ((int)grid[r].size() != width)
         {
-            for (int c = 0; c < width; ++c)
+            return static_cast<size_t>(-1);
+        }
+        for (int c = 0; c < width; ++c)
+        {
+            if (grid[r][c])
             {
-                if (grid[r][c])
-                {
-                    mask |= (1ULL << (r * width + c));
-                }
+                mask |= (1ULL << (r * width + c));
             }
+        }
+    }
+
+    size_t pieceIndex;
+    if (nextTromino_)
+    {
+        if (nextTromino_->isIPiece())
+        {
+            pieceIndex = 1;
+        }
+        else if (nextTromino_->isLPiece())
+        {
+            pieceIndex = 2;
+        }
+        else
+        {
+            return static_cast<size_t>(-1); // Unknown piece
         }
     }
     else
     {
-        std::string s;
-        for (const auto& row : grid)
-        {
-            for (bool b : row)
-            {
-                s += b ? '1' : '0';
-            }
-        }
-        mask = std::hash<std::string>{}(s);
+        pieceIndex = 0; // No piece
     }
 
-    size_t pieceType = 0;
-    if (nextTromino_)
-    {
-        if (dynamic_cast<const IPiece*>(nextTromino_.get()))
-        {
-            pieceType = 1;
-        }
-        else if (dynamic_cast<const LPiece*>(nextTromino_.get()))
-        {
-            pieceType = 2;
-        }
-    }
-
-    return std::hash<uint64_t>{}(mask) ^ (pieceType << 1);
+    return static_cast<size_t>(mask) * 3 + pieceIndex;
 }

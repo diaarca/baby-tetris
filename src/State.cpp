@@ -95,7 +95,7 @@ State State::applyAction(Action& action)
     return State(newField, std::move(newNext));
 }
 
-State State::applyActionTromino(Action& action, Tromino& t)
+State State::applyActionTromino(Action& action, const Tromino& t)
 {
     Field newField = field_.clone();
     newField.addTromino(*nextTromino_, action.getPosition().getX(),

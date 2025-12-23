@@ -5,7 +5,7 @@
 #include <numeric>
 #include <sstream>
 
-#define MAX_ACTION 10000
+#define MAX_ACTION 100000
 
 class MDP
 {
@@ -31,7 +31,7 @@ class MDP
 
     size_t stateIndex(State& s);
 
-    void playPolicy(Game& game,
-                    std::vector<Action> policy,
-                    const std::vector<std::unique_ptr<Tromino>>& advPolicy);
+    int playPolicy(Game& game,
+                   std::vector<Action> policy,
+                   const std::vector<std::unique_ptr<Tromino>>& advPolicy);
 };

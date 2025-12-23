@@ -1,4 +1,5 @@
 #include <MDP.h>
+#include <cstddef>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
@@ -8,7 +9,7 @@
 #define CONFIG_PATH "config.txt"
 #define EPSILON 0.00000001
 #define MAX_IT 100
-#define LAMBDA 0.1
+#define LAMBDA 0.5
 
 int main()
 {
@@ -39,30 +40,48 @@ int main()
     std::cout << "]\n\n";
 
     // initializing the game and the MDP to compute the optimal policy
-    Field field(WIDTH, HEIGHT);
-    Game game(config, field);
+    // Field field1(WIDTH, HEIGHT);
+    // Game game(config, field1);
+    //
+    // MDP mdp1(field1.getWidth(), field1.getHeight(), game.getState().clone(),
+    //          config);
+    //
+    // std::cout << "All constants:" << std::endl
+    //           << "width = " << WIDTH << ", height = " << HEIGHT
+    //           << ", probaIPiece = " << PROBA_I_PIECE
+    //           << ", maxGameAction = " << MAX_ACTION << std::endl
+    //           << "epsilon = " << EPSILON << ", maxIteration = " << MAX_IT
+    //           << ", lambda = " << LAMBDA << std::endl
+    //           << std::endl;
+    //
+    // std::cout << "\n" << std::endl;
+    //
+    // // compute the optimal policy using the value iteration algorithm
+    // std::vector<Action> policy1 = mdp1.valueIteration(EPSILON, MAX_IT, LAMBDA);
+    //
+    // // play the computed policy on the game
+    // int playerOnly =
+    //     mdp1.playPolicy(game, policy1, std::vector<std::unique_ptr<Tromino>>());
 
-    MDP mdp(field.getWidth(), field.getHeight(), game.getState().clone(),
-            config);
+    Field field2(WIDTH, HEIGHT);
+    Game game2(config, field2);
 
-    std::cout << "All constants:" << std::endl
-              << "width = " << WIDTH << ", height = " << HEIGHT
-              << ", probaIPiece = " << PROBA_I_PIECE
-              << ", maxGameAction = " << MAX_ACTION << std::endl
-              << "epsilon = " << EPSILON << ", maxIteration = " << MAX_IT
-              << ", lambda = " << LAMBDA << std::endl
-              << std::endl;
+    MDP mdp2(field2.getWidth(), field2.getHeight(), game2.getState().clone(),
+             config);
 
+    // compute the optimal adversary policy
     std::vector<std::unique_ptr<Tromino>> trominos =
-        mdp.trominoValueIteration(EPSILON, MAX_IT, LAMBDA);
+        mdp2.trominoValueIteration(EPSILON, MAX_IT, LAMBDA);
 
-    std::cout << "\n\n" << std::endl;
+    std::cout << "\n" << std::endl;
 
-    // compute the optimal policy using the value iteration algorithm
-    std::vector<Action> policy = mdp.valueIteration(EPSILON, MAX_IT, LAMBDA);
+    std::vector<Action> policy2 = mdp2.valueIteration(EPSILON, MAX_IT, LAMBDA);
 
-    // play the computed policy on the game
-    // mdp.playPolicy(game, policy, trominos);
+    // int both = mdp2.playPolicy(game2, policy2, trominos);
+    mdp2.playPolicy(game2, policy2, trominos);
+
+    // std::cout << "playerOnly: " << playerOnly << std::endl
+    //           << "both: " << both << std::endl;
 
     return 0;
 }

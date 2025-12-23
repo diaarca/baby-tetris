@@ -1,4 +1,8 @@
 #include "MDP.h"
+#include "State.h"
+#include "Tromino.h"
+#include <algorithm>
+#include <cstddef>
 
 std::vector<Action>
 MDP::valueIteration(double epsilon, int maxIteration, double lambda)
@@ -74,7 +78,7 @@ MDP::trominoValueIteration(double epsilon, int maxIteration, double lambda)
     std::vector<State> S = generateAllStates();
     int nbState = S.size();
     std::vector<std::unique_ptr<Tromino>> T(nbState); // policyTromino
-    std::vector<double> V(nbState);  // value vector (expected value)
+    std::vector<double> V(nbState); // value vector (expected value)
     std::vector<double> VPrime(nbState);
     double delta = DBL_MAX, maxI, maxL, reward;
     // std::vector<double> lPieceRewards;
@@ -100,12 +104,12 @@ MDP::trominoValueIteration(double epsilon, int maxIteration, double lambda)
 
             for (int k = 0; k < nbActions; k++) // for each action of each state
             {
-                // rewards[k] = 
+                // rewards[k] =
                 maxI = maxL = 0.0;
                 for (State& sPrime : s.genAllStatesFromAction(actions[k]))
                 {
                     reward = PROBA_I_PIECE * (sPrime.evaluate(config_) +
-                                                lambda * V[stateIndex(sPrime)]);
+                                              lambda * V[stateIndex(sPrime)]);
                     // rewards[k] += r; // maybe we don't care we'll see
                     const Tromino* t = &sPrime.getNextTromino();
                     if (dynamic_cast<const LPiece*>(t) != nullptr)
@@ -246,7 +250,7 @@ size_t MDP::stateIndex(State& s)
     return static_cast<size_t>(mask) * 2u + pieceIndex;
 }
 
-void MDP::playPolicy(Game& game,
+int MDP::playPolicy(Game& game,
                      std::vector<Action> policy,
                      const std::vector<std::unique_ptr<Tromino>>& advPolicy)
 {
@@ -257,7 +261,26 @@ void MDP::playPolicy(Game& game,
     {
         State& curr = game.getState();
         Action a = policy[stateIndex(curr)];
-        const std::unique_ptr<Tromino>& t = advPolicy[stateIndex(curr)];
+
+        const Tromino* t = nullptr;
+        std::unique_ptr<Tromino> t_owned;
+
+        if (!advPolicy.empty())
+        {
+            t = advPolicy[stateIndex(curr)].get();
+        }
+        else
+        {
+            if ((rand() / (double)RAND_MAX) < PROBA_I_PIECE)
+            {
+                t_owned = std::make_unique<IPiece>();
+            }
+            else
+            {
+                t_owned = std::make_unique<LPiece>();
+            }
+            t = t_owned.get();
+        }
 
         // compute deterministic preview states (placed and after completion)
         State placed = curr.applyActionTromino(a, *t);
@@ -327,4 +350,6 @@ void MDP::playPolicy(Game& game,
     std::cout << game.getState().getField();
     std::cout << "\nGame Over! Global score: " << game.getScore() << " in " << i
               << " actions \n";
+
+    return game.getScore();
 }

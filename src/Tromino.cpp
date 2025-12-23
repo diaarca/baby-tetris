@@ -35,6 +35,10 @@ void IPiece::print(std::ostream& os) const { os << "IPiece"; }
 // Override print for LPiece
 void LPiece::print(std::ostream& os) const { os << "LPiece"; }
 
+// Implement clone for pieces
+std::unique_ptr<Tromino> IPiece::clone() const { return std::make_unique<IPiece>(*this); }
+std::unique_ptr<Tromino> LPiece::clone() const { return std::make_unique<LPiece>(*this); }
+
 // Implement operator<< for Tromino
 std::ostream& operator<<(std::ostream& os, const Tromino& piece)
 {

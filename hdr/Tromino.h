@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <memory>
 #include <ostream>
 #include <vector>
 
@@ -15,6 +16,8 @@ class Tromino
     virtual void print(std::ostream& os) const = 0; // pure virtual print method
     virtual bool isIPiece() const { return false; }
     virtual bool isLPiece() const { return false; }
+    // Return a heap-allocated copy of this tromino
+    virtual std::unique_ptr<Tromino> clone() const = 0;
 };
 
 // Declare operator<< for Tromino
@@ -26,6 +29,7 @@ class IPiece : public Tromino
     int rotationCount() const override { return 2; };
     std::vector<Offset> getOffsets(int rotation) const override;
     void print(std::ostream& os) const override;
+    std::unique_ptr<Tromino> clone() const;
     bool isIPiece() const override { return true; }
 };
 
@@ -35,5 +39,6 @@ class LPiece : public Tromino
     int rotationCount() const override { return 4; };
     std::vector<Offset> getOffsets(int rotation) const override;
     void print(std::ostream& os) const override;
+    std::unique_ptr<Tromino> clone() const;
     bool isLPiece() const override { return true; }
 };

@@ -1,9 +1,9 @@
 #pragma once
 
 #include "Game.h"
-#include <sstream>
 #include <float.h>
 #include <numeric>
+#include <sstream>
 
 #define MAX_ACTION 10000
 
@@ -24,12 +24,14 @@ class MDP
     std::vector<Action>
     valueIteration(double eps, int maxIteration, double lambda);
 
-    std::vector<Tromino>
-    MDP::trominoValueIteration(double epsilon, int maxIteration, double lambda);
+    std::vector<std::unique_ptr<Tromino>>
+    trominoValueIteration(double epsilon, int maxIteration, double lambda);
 
     std::vector<State> generateAllStates();
 
     size_t stateIndex(State& s);
 
-    void playPolicy(Game& game, std::vector<Action> policy);
+    void playPolicy(Game& game,
+                    std::vector<Action> policy,
+                    const std::vector<std::unique_ptr<Tromino>>& advPolicy);
 };

@@ -65,13 +65,14 @@ MDP::valueIteration(double epsilon, int maxIteration, double lambda)
     return A;
 }
 
-std::vector<Tromino>
+std::vector<std::unique_ptr<Tromino>>
 MDP::trominoValueIteration(double epsilon, int maxIteration, double lambda)
 {
+    std::cout << "Tromino Value Iteration" << std::endl;
     std::vector<State> S = generateAllStates();
     int nbState = S.size();
-    std::vector<Tromino> T(nbState); // policyTromino
-    std::vector<double> V(nbState); // value vector (expected value)
+    std::vector<std::unique_ptr<Tromino>> T(nbState); // policyTromino
+    std::vector<double> V(nbState);  // value vector (expected value)
     std::vector<double> VPrime(nbState);
     double delta = DBL_MAX;
     std::vector<double> lPieceRewards;
@@ -79,9 +80,11 @@ MDP::trominoValueIteration(double epsilon, int maxIteration, double lambda)
 
     for (int i = 0; i < maxIteration && delta > epsilon; i++)
     {
+        // std::cerr << "tromino iteration : " << i << std::endl;
         delta = 0.0;
         for (int j = 0; j < nbState; j++)
         {
+            // std::cerr << "state : " << j << std::endl;
             VPrime[j] = 0;
             State& s = S[j];
             std::vector<Action> actions = s.getAvailableActions();
@@ -93,46 +96,49 @@ MDP::trominoValueIteration(double epsilon, int maxIteration, double lambda)
             if (nbActions == 0)
                 continue;
 
-            for (int k = 0; k < nbActions; k++) //for each action of each state
+            for (int k = 0; k < nbActions; k++) // for each action of each state
             {
                 rewards[k] = 0;
                 for (State& sPrime : s.genAllStatesFromAction(actions[k]))
                 {
                     double r = PROBA_I_PIECE * (sPrime.evaluate(config_) +
                                                 lambda * V[stateIndex(sPrime)]);
-                    rewards[k] += r; //maybe we don't care we'll see                   
+                    rewards[k] += r; // maybe we don't care we'll see
                     const Tromino* t = &sPrime.getNextTromino();
                     if (dynamic_cast<const LPiece*>(t) != nullptr)
                     {
-                        lPieceRewards.push_back(r); 
+                        lPieceRewards.push_back(r);
                     }
                     else if (dynamic_cast<const IPiece*>(t) != nullptr)
                     {
-                        iPieceRewards.push_back(r);              
+                        iPieceRewards.push_back(r);
                     }
                 }
             }
-            //picking the min reward tromino is slippery cuz it can lead to the min reward and to max reward
-            //min of the max rewards for each piece type
+            // picking the min reward tromino is slippery cuz it can lead to the
+            // min reward and to max reward min of the max rewards for each
+            // piece type
             double maxL = 0.0;
             double maxI = 0.0;
-            if (! lPieceRewards.empty())
+            if (!lPieceRewards.empty())
             {
-                maxL = *std::max_element(lPieceRewards.begin(), lPieceRewards.end());
-            } 
-            if (! iPieceRewards.empty())
+                maxL = *std::max_element(lPieceRewards.begin(),
+                                         lPieceRewards.end());
+            }
+            if (!iPieceRewards.empty())
             {
-                maxI = *std::max_element(iPieceRewards.begin(), iPieceRewards.end());
-            } 
-            VPrime[j] = std::min(maxL, maxI );
-            //TODO : if execo than min avg 
-            if (maxI > maxL) 
+                maxI = *std::max_element(iPieceRewards.begin(),
+                                         iPieceRewards.end());
+            }
+            VPrime[j] = std::min(maxL, maxI);
+            // TODO : if execo than min avg
+            if (maxI > maxL)
             {
-                T[j] = LPiece();
-            } 
-            else 
+                T[j] = std::make_unique<LPiece>();
+            }
+            else
             {
-                T[j] = IPiece();
+                T[j] = std::make_unique<IPiece>();
             }
 
             delta = std::max(delta, std::abs(VPrime[j] - V[j]));
@@ -143,16 +149,15 @@ MDP::trominoValueIteration(double epsilon, int maxIteration, double lambda)
         std::cout << "i = " << i << " and delta = " << delta << std::endl;
     }
 
-    double sum = 0;
-    for (int i = 0; i < nbState; i++)
-    {
-        sum += V[i];
-    }
-    std::cout << "\naverage over final V " << sum / nbState << std::endl;
+    // double sum = 0;
+    // for (int i = 0; i < nbState; i++)
+    // {
+    //     sum += V[i];
+    // }
+    // std::cout << "\naverage over final V " << sum / nbState << std::endl;
 
     return T;
 }
-
 
 std::vector<State> MDP::generateAllStates()
 {
@@ -234,7 +239,9 @@ size_t MDP::stateIndex(State& s)
     return static_cast<size_t>(mask) * 2u + pieceIndex;
 }
 
-void MDP::playPolicy(Game& game, std::vector<Action> policy)
+void MDP::playPolicy(Game& game,
+                     std::vector<Action> policy,
+                     const std::vector<std::unique_ptr<Tromino>>& advPolicy)
 {
     int i, gain;
     i = 0;
@@ -243,9 +250,10 @@ void MDP::playPolicy(Game& game, std::vector<Action> policy)
     {
         State& curr = game.getState();
         Action a = policy[stateIndex(curr)];
+        const std::unique_ptr<Tromino>& t = advPolicy[stateIndex(curr)];
 
         // compute deterministic preview states (placed and after completion)
-        State placed = curr.applyAction(a);
+        State placed = curr.applyActionTromino(a, *t);
         State after = placed.completeLines();
 
         // pretty-print three fields side-by-side with connectors

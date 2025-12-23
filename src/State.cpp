@@ -1,4 +1,5 @@
 #include "State.h"
+#include "Tromino.h"
 
 std::vector<Point> State::placementPositions()
 {
@@ -92,6 +93,16 @@ State State::applyAction(Action& action)
     else
         newNext = std::make_unique<LPiece>();
     return State(newField, std::move(newNext));
+}
+
+State State::applyActionTromino(Action& action, Tromino& t)
+{
+    Field newField = field_.clone();
+    newField.addTromino(*nextTromino_, action.getPosition().getX(),
+                        action.getPosition().getY(), action.getRotation());
+
+    std::unique_ptr<Tromino> newTromino = t.clone();
+    return State(newField, std::move(newTromino));
 }
 
 std::vector<State> State::genAllStatesFromAction(Action& action)

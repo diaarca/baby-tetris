@@ -32,6 +32,7 @@ class State
     std::vector<Action> getAvailableActions();
 
     State applyAction(Action& action);
+    State applyActionTromino(Action& action, Tromino& t);
     std::vector<State> genAllStatesFromAction(Action& action);
 
     int evaluate(std::array<int, 3>& config);

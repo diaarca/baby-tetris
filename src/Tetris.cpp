@@ -54,13 +54,13 @@ int main()
               << std::endl;
 
     
-    std::vector<Tromino> trominos = mdp.trominoValueIteration(EPSILON, MAX_IT, LAMBDA);
+    std::vector<std::unique_ptr<Tromino>> trominos = mdp.trominoValueIteration(EPSILON, MAX_IT, LAMBDA);
 
     // compute the optimal policy using the value iteration algorithm
     std::vector<Action> policy = mdp.valueIteration(EPSILON, MAX_IT, LAMBDA);
 
     // play the computed policy on the game
-    mdp.playPolicy(game, policy);
+    mdp.playPolicy(game, policy, trominos);
 
     return 0;
 }

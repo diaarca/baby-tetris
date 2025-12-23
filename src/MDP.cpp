@@ -3,6 +3,8 @@
 std::vector<Action>
 MDP::valueIteration(double epsilon, int maxIteration, double lambda)
 {
+    std::cout << "Action Value Iteration" << std::endl;
+
     std::vector<State> S = generateAllStates();
     int nbState = S.size();
     std::vector<Action> A(nbState); // policy
@@ -74,9 +76,9 @@ MDP::trominoValueIteration(double epsilon, int maxIteration, double lambda)
     std::vector<std::unique_ptr<Tromino>> T(nbState); // policyTromino
     std::vector<double> V(nbState);  // value vector (expected value)
     std::vector<double> VPrime(nbState);
-    double delta = DBL_MAX;
-    std::vector<double> lPieceRewards;
-    std::vector<double> iPieceRewards;
+    double delta = DBL_MAX, maxI, maxL, reward;
+    // std::vector<double> lPieceRewards;
+    // std::vector<double> iPieceRewards;
 
     for (int i = 0; i < maxIteration && delta > epsilon; i++)
     {
@@ -98,47 +100,52 @@ MDP::trominoValueIteration(double epsilon, int maxIteration, double lambda)
 
             for (int k = 0; k < nbActions; k++) // for each action of each state
             {
-                rewards[k] = 0;
+                // rewards[k] = 
+                maxI = maxL = 0.0;
                 for (State& sPrime : s.genAllStatesFromAction(actions[k]))
                 {
-                    double r = PROBA_I_PIECE * (sPrime.evaluate(config_) +
+                    reward = PROBA_I_PIECE * (sPrime.evaluate(config_) +
                                                 lambda * V[stateIndex(sPrime)]);
-                    rewards[k] += r; // maybe we don't care we'll see
+                    // rewards[k] += r; // maybe we don't care we'll see
                     const Tromino* t = &sPrime.getNextTromino();
                     if (dynamic_cast<const LPiece*>(t) != nullptr)
                     {
-                        lPieceRewards.push_back(r);
+                        maxL = reward >= maxL ? reward : maxL;
+                        // lPieceRewards.push_back(r);
                     }
                     else if (dynamic_cast<const IPiece*>(t) != nullptr)
                     {
-                        iPieceRewards.push_back(r);
+                        maxI = reward >= maxI ? reward : maxI;
+                        // iPieceRewards.push_back(r);
                     }
                 }
             }
             // picking the min reward tromino is slippery cuz it can lead to the
             // min reward and to max reward min of the max rewards for each
             // piece type
-            double maxL = 0.0;
-            double maxI = 0.0;
-            if (!lPieceRewards.empty())
-            {
-                maxL = *std::max_element(lPieceRewards.begin(),
-                                         lPieceRewards.end());
-            }
-            if (!iPieceRewards.empty())
-            {
-                maxI = *std::max_element(iPieceRewards.begin(),
-                                         iPieceRewards.end());
-            }
-            VPrime[j] = std::min(maxL, maxI);
+            // double maxL = 0.0;
+            // double maxI = 0.0;
+            // if (!lPieceRewards.empty())
+            // {
+            //     maxL = *std::max_element(lPieceRewards.begin(),
+            //                              lPieceRewards.end());
+            // }
+            // if (!iPieceRewards.empty())
+            // {
+            //     maxI = *std::max_element(iPieceRewards.begin(),
+            //                              iPieceRewards.end());
+            // }
+            // VPrime[j] = maxI >= maxL;
             // TODO : if execo than min avg
-            if (maxI > maxL)
+            if (maxI >= maxL)
             {
                 T[j] = std::make_unique<LPiece>();
+                VPrime[j] = maxL;
             }
             else
             {
                 T[j] = std::make_unique<IPiece>();
+                VPrime[j] = maxI;
             }
 
             delta = std::max(delta, std::abs(VPrime[j] - V[j]));
@@ -149,12 +156,12 @@ MDP::trominoValueIteration(double epsilon, int maxIteration, double lambda)
         std::cout << "i = " << i << " and delta = " << delta << std::endl;
     }
 
-    // double sum = 0;
-    // for (int i = 0; i < nbState; i++)
-    // {
-    //     sum += V[i];
-    // }
-    // std::cout << "\naverage over final V " << sum / nbState << std::endl;
+    double sum = 0;
+    for (int i = 0; i < nbState; i++)
+    {
+        sum += V[i];
+    }
+    std::cout << "\naverage over final V " << sum / nbState << std::endl;
 
     return T;
 }

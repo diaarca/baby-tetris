@@ -71,7 +71,6 @@ MDP::trominoValueIteration(double epsilon, int maxIteration, double lambda)
     std::vector<State> S = generateAllStates();
     int nbState = S.size();
     std::vector<Tromino> T(nbState); // policyTromino
-    std::vector<Action> A(nbState); // policy
     std::vector<double> V(nbState); // value vector (expected value)
     std::vector<double> VPrime(nbState);
     double delta = DBL_MAX;
@@ -113,20 +112,21 @@ MDP::trominoValueIteration(double epsilon, int maxIteration, double lambda)
                     }
                 }
             }
-            //picking the min reward tromino is slippery cuz it can lead to the min reward and to max reward, so min avg for now
-            double averageL = 0.0;
-            double averageI = 0.0;
+            //picking the min reward tromino is slippery cuz it can lead to the min reward and to max reward
+            //min of the max rewards for each piece type
+            double maxL = 0.0;
+            double maxI = 0.0;
             if (! lPieceRewards.empty())
             {
-                double averageL = std::accumulate(lPieceRewards.begin(), lPieceRewards.end(), 0.0) / lPieceRewards.size();
+                maxL = *std::max_element(lPieceRewards.begin(), lPieceRewards.end());
             } 
             if (! iPieceRewards.empty())
             {
-                double averageI = std::accumulate(iPieceRewards.begin(), iPieceRewards.end(), 0.0) / iPieceRewards.size();
+                maxI = *std::max_element(iPieceRewards.begin(), iPieceRewards.end());
             } 
-            VPrime[j] = *std::max_element(rewards.begin(), rewards.end());
-            
-            if (averageI > averageL) 
+            VPrime[j] = std::min(maxL, maxI );
+            //TODO : if execo than min avg 
+            if (maxI > maxL) 
             {
                 T[j] = LPiece();
             } 

@@ -157,7 +157,7 @@ int State::evaluate(std::array<int, 3>& config) const
 State State::completeLines()
 {
     auto grid = field_.getGrid();
-    int removeCount = 0;
+    bool didComplete = false;
 
     for (int r = 0; r < field_.getHeight(); ++r)
     {
@@ -172,18 +172,13 @@ State State::completeLines()
         }
         if (isComplete)
         {
-            for (int c = 0; c < field_.getWidth(); ++c)
-            {
-                grid[r][c] = false;
-            }
-            removeCount++;
-            // move all lines above down
+            didComplete = true;
+            // clear complete line
+            grid[r] = {false, false, false, false};
+            // make all upper lines moving down
             for (int row = r; row > 0; --row)
             {
-                for (int c = 0; c < field_.getWidth(); ++c)
-                {
-                    grid[row][c] = grid[row - 1][c];
-                }
+                grid[row] = grid[row - 1];
             }
             // clear top line
             for (int c = 0; c < field_.getWidth(); ++c)
@@ -196,8 +191,10 @@ State State::completeLines()
     State newState = clone();
 
     // the state after all line removals
-    if (removeCount)
+    if (didComplete)
+    {
         newState.getField().setGrid(grid);
+    }
 
     return newState;
 }

@@ -5,8 +5,9 @@
 #include <sstream>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
 
-#define MAX_ACTION 10000
+#define MAX_ACTION 1000
 
 class MDP
 {
@@ -23,7 +24,9 @@ class MDP
     ~MDP() = default;
 
     std::unordered_map<State, Action>
-    valueIteration(double eps, int maxIteration, double lambda);
+    actionValueIterationExpl(double eps, int maxIteration, double lambda);
+    std::vector<Action>
+    actionValueIteration(double eps, int maxIteration, double lambda);
 
     std::unordered_map<State, double> generateReachableStates(State s0);
     std::vector<State> generateAllStates();

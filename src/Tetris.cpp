@@ -58,7 +58,7 @@ int main()
 
     // compute the optimal policy using the value iteration algorithm
     std::unordered_map<State, Action> policy =
-        mdp.valueIteration(EPSILON, MAX_IT, LAMBDA);
+        mdp.actionValueIterationExpl(EPSILON, MAX_IT, LAMBDA);
 
     // play the computed policy on the game
     mdp.playPolicy(game, policy);

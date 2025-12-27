@@ -104,10 +104,11 @@ MDP::trominoValueIteration(double epsilon, int maxIteration, double lambda)
                 maxI = maxL = 0.0;
                 for (State& sPrime : s.genAllStatesFromAction(actions[k]))
                 {
-                    reward = PROBA_I_PIECE * (sPrime.evaluate(config_) +
-                                                lambda * V[stateIndex(sPrime)]);
+                    State afterState = sPrime.completeLines();
+                    reward = PROBA_I_PIECE * (afterState.evaluate(config_) +
+                                                lambda * V[stateIndex(afterState)]);
                     // rewards[k] += r; // maybe we don't care we'll see
-                    const Tromino* t = &sPrime.getNextTromino();
+                    const Tromino* t = &afterState.getNextTromino();
                     if (dynamic_cast<const LPiece*>(t) != nullptr)
                     {
                         maxL = reward >= maxL ? reward : maxL;

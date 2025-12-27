@@ -1,15 +1,96 @@
 #include "MDP.h"
 
+std::unordered_map<State, Action>
+MDP::actionValueIterationExpl(double epsilon, int maxIteration, double lambda)
+{
+    std::cout << "Exploration Value Iteration" << std::endl;
+    std::unordered_map<State, double> V =
+        generateReachableStates(std::move(s0_));
+
+    std::cout << V.size() << std::endl;
+
+    std::unordered_map<State, Action> A;
+
+    double vAfter, vPrime, delta;
+    delta = DBL_MAX;
+
+    for (int i = 0; i < maxIteration && delta > epsilon; i++)
+    {
+        delta = 0.0;
+        for (auto& [currState, currValue] : V)
+        {
+            std::vector<Action> actions = currState.getAvailableActions();
+
+            int nbActions = actions.size();
+
+            std::vector<double> rewards(nbActions);
+
+            if (nbActions == 0)
+                continue;
+
+            for (int k = 0; k < nbActions; k++)
+            {
+                rewards[k] = 0.0;
+                for (State& placedState :
+                     currState.genAllStatesFromAction(actions[k]))
+                {
+                    State afterState = placedState.completeLines();
+
+                    auto it = V.find(afterState);
+                    if (it == V.end())
+                    {
+                        std::cerr << "ERROR: the state cannot be derived into "
+                                     "a non-reachable state"
+                                  << std::endl;
+                        exit(1);
+                    }
+                    vAfter = it->second;
+
+                    rewards[k] +=
+                        PROBA_I_PIECE *
+                        (placedState.evaluate(config_) + lambda * vAfter);
+                }
+            }
+            vPrime = *std::max_element(rewards.begin(), rewards.end());
+
+            for (int k = 0; k < nbActions; k++)
+            {
+                if (vPrime == rewards[k])
+                {
+                    A.insert_or_assign(currState.clone(), actions[k]);
+                    break;
+                }
+            }
+
+            delta = std::max(delta, std::abs(vPrime - currValue));
+            V.insert_or_assign(currState.clone(), vPrime);
+        }
+
+        std::cout << "i = " << i << " and delta = " << delta << std::endl;
+    }
+
+    double sum = 0;
+    for (std::pair<const State, double>& item : V)
+    {
+        sum += item.second;
+    }
+    std::cout << "\naverage over final V " << sum / V.size() << std::endl;
+
+    return A;
+}
+
 std::vector<Action>
-MDP::valueIteration(double epsilon, int maxIteration, double lambda)
+MDP::actionValueIteration(double epsilon, int maxIteration, double lambda)
 {
     std::cout << "Action Value Iteration" << std::endl;
 
     std::vector<State> S = generateAllStates();
     int nbState = S.size();
+    std::cout << nbState << std::endl;
+    double VPrime = 0.0;
     std::vector<Action> A(nbState); // policy
     std::vector<double> V(nbState); // value vector (expected value)
-    std::vector<double> VPrime(nbState);
+    // std::vector<double> VPrime(nbState);
     double delta = DBL_MAX;
 
     for (int i = 0; i < maxIteration && delta > epsilon; i++)
@@ -17,7 +98,7 @@ MDP::valueIteration(double epsilon, int maxIteration, double lambda)
         delta = 0.0;
         for (int j = 0; j < nbState; j++)
         {
-            VPrime[j] = 0;
+            // VPrime[j] = 0;
             State& s = S[j];
             std::vector<Action> actions = s.getAvailableActions();
 
@@ -30,28 +111,34 @@ MDP::valueIteration(double epsilon, int maxIteration, double lambda)
 
             for (int k = 0; k < nbActions; k++)
             {
-                rewards[k] = 0;
+                rewards[k] = 0.0;
                 for (State& sPrime : s.genAllStatesFromAction(actions[k]))
                 {
+                    State afterState = sPrime.completeLines();
+
                     rewards[k] +=
                         PROBA_I_PIECE * (sPrime.evaluate(config_) +
-                                         lambda * V[stateIndex(sPrime)]);
+                                         lambda * V[stateIndex(afterState)]);
                 }
             }
-            VPrime[j] = *std::max_element(rewards.begin(), rewards.end());
+            // VPrime[j] = *std::max_element(rewards.begin(), rewards.end());
+            VPrime = *std::max_element(rewards.begin(), rewards.end());
 
             for (int k = 0; k < nbActions; k++)
             {
-                if (VPrime[j] == rewards[k])
+                // if (VPrime[j] == rewards[k])
+                if (VPrime == rewards[k])
                 {
                     A[j] = actions[k];
                     break;
                 }
             }
 
-            delta = std::max(delta, std::abs(VPrime[j] - V[j]));
+            // delta = std::max(delta, std::abs(VPrime[j] - V[j]));
+            delta = std::max(delta, std::abs(VPrime - V[j]));
 
-            V[j] = VPrime[j];
+            // V[j] = VPrime[j];
+            V[j] = VPrime;
         }
 
         std::cout << "i = " << i << " and delta = " << delta << std::endl;
@@ -62,9 +149,45 @@ MDP::valueIteration(double epsilon, int maxIteration, double lambda)
     {
         sum += V[i];
     }
-    std::cout << "\naverage over final V " << sum / nbState << std::endl;
+    std::cout << "\naverage over final V " << sum / 25956 << std::endl;
 
     return A;
+}
+
+std::unordered_map<State, double> MDP::generateReachableStates(State s0)
+{
+    std::unordered_map<State, double> map;
+    std::vector<State> q;
+    size_t q_head = 0;
+
+    q.push_back(s0.clone());
+    map.emplace(std::move(s0), 0);
+
+    while (q_head < q.size())
+    {
+        State currState = std::move(q[q_head]);
+        q_head++;
+
+        for (const Action& a : currState.getAvailableActions())
+        {
+            for (auto& nextState : currState.genAllStatesFromAction(a))
+            {
+                State finalNextState = nextState.completeLines();
+                if (map.find(finalNextState) == map.end())
+                {
+                    if (stateIndex(finalNextState) == 97953)
+                    {
+                        std::cout << "from state\n" << currState << std::endl;
+                        std::cout << "to state\n"
+                                  << finalNextState << std::endl;
+                    }
+                    q.push_back(finalNextState.clone());
+                    map.emplace(std::move(finalNextState), 0.0);
+                }
+            }
+        }
+    }
+    return map;
 }
 
 std::vector<std::unique_ptr<Tromino>>
@@ -209,7 +332,7 @@ std::vector<State> MDP::generateAllStates()
     return states;
 }
 
-size_t MDP::stateIndex(State& s)
+size_t MDP::stateIndex(const State& s)
 {
     int cells = width_ * height_;
     if (cells < 0 || cells >= 64)
@@ -248,17 +371,23 @@ size_t MDP::stateIndex(State& s)
 }
 
 void MDP::playPolicy(Game& game,
-                     std::vector<Action> policy,
-                     const std::vector<std::unique_ptr<Tromino>>& advPolicy)
+                     const std::unordered_map<State, Action>& policy)
 {
-    int i, gain;
-    i = 0;
+    int i = 0, gain;
 
     while (game.getState().getAvailableActions().size() > 0 && i < MAX_ACTION)
     {
-        State& curr = game.getState();
-        Action a = policy[stateIndex(curr)];
-        const std::unique_ptr<Tromino>& t = advPolicy[stateIndex(curr)];
+        const State& curr = game.getState();
+        auto it = policy.find(curr);
+        if (it == policy.end())
+        {
+            std::cerr
+                << "ERROR the state:\n"
+                << curr
+                << "\n haven't any associated action in the provided policy";
+            exit(1);
+        }
+        const Action& a = policy.find(curr)->second;
 
         // compute deterministic preview states (placed and after completion)
         State placed = curr.applyActionTromino(a, *t);

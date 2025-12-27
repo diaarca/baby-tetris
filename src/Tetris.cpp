@@ -1,14 +1,17 @@
+#include "Action.h"
+#include "State.h"
 #include <MDP.h>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <unordered_map>
 
 #define WIDTH 4
 #define HEIGHT 4
 #define CONFIG_PATH "config.txt"
 #define EPSILON 0.00000001
-#define MAX_IT 100
-#define LAMBDA 0.1
+#define MAX_IT 1000
+#define LAMBDA 0.9
 
 int main()
 {
@@ -59,7 +62,8 @@ int main()
     std::cout << "\n\n" << std::endl;
 
     // compute the optimal policy using the value iteration algorithm
-    std::vector<Action> policy = mdp.valueIteration(EPSILON, MAX_IT, LAMBDA);
+    std::unordered_map<State, Action> policy =
+        mdp.actionValueIterationExpl(EPSILON, MAX_IT, LAMBDA);
 
     // play the computed policy on the game
     // mdp.playPolicy(game, policy, trominos);

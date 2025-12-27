@@ -4,8 +4,11 @@
 #include <float.h>
 #include <numeric>
 #include <sstream>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
-#define MAX_ACTION 10000
+#define MAX_ACTION 1000
 
 class MDP
 {
@@ -21,17 +24,19 @@ class MDP
           config_(std::move(config)) {};
     ~MDP() = default;
 
+    std::unordered_map<State, Action>
+    actionValueIterationExpl(double eps, int maxIteration, double lambda);
     std::vector<Action>
-    valueIteration(double eps, int maxIteration, double lambda);
+    actionValueIteration(double eps, int maxIteration, double lambda);
 
     std::vector<std::unique_ptr<Tromino>>
     trominoValueIteration(double epsilon, int maxIteration, double lambda);
 
+    std::unordered_map<State, double> generateReachableStates(State s0);
     std::vector<State> generateAllStates();
 
-    size_t stateIndex(State& s);
+    size_t stateIndex(const State& s);
 
     void playPolicy(Game& game,
-                    std::vector<Action> policy,
-                    const std::vector<std::unique_ptr<Tromino>>& advPolicy);
+                    const std::unordered_map<State, Action>& policy);
 };

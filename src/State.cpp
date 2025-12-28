@@ -1,6 +1,6 @@
 #include "State.h"
-#include <stdexcept>
 #include "Tromino.h"
+#include <stdexcept>
 
 std::vector<Point> State::placementPositions() const
 {
@@ -97,8 +97,12 @@ State State::applyAction(const Action& action) const
 State State::applyActionTromino(const Action& action, const Tromino& t) const
 {
     Field newField = field_.clone();
-    newField.addTromino(t, action.getPosition().getX(),
-                        action.getPosition().getY(), action.getRotation());
+    if (!newField.addTromino(t, action.getPosition().getX(),
+                             action.getPosition().getY(), action.getRotation()))
+    {
+        std::cout << "Tromino " << t << " non compatible with action " << action
+                  << std::endl;
+    }
 
     std::unique_ptr<Tromino> newTromino = t.clone();
     return State(newField, std::move(newTromino));

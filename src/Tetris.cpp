@@ -56,7 +56,7 @@ int main()
               << ", lambda = " << LAMBDA << std::endl
               << std::endl;
 
-    std::vector<std::unique_ptr<Tromino>> trominos =
+    std::unordered_map<State, std::unique_ptr<Tromino>> trominos =
         mdp.trominoValueIteration(EPSILON, MAX_IT, LAMBDA);
 
     std::cout << "\n\n" << std::endl;
@@ -66,7 +66,7 @@ int main()
         mdp.actionValueIterationExpl(EPSILON, MAX_IT, LAMBDA);
 
     // play the computed policy on the game
-    // mdp.playPolicy(game, policy, trominos);
+    mdp.playPolicy(game, policy, trominos);
 
     return 0;
 }

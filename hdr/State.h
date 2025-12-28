@@ -37,14 +37,12 @@ class State
 
     std::vector<Action> getAvailableActions() const;
 
-    State applyAction(Action& action);
-    State applyActionTromino(Action& action, Tromino& t);
-    std::vector<State> genAllStatesFromAction(Action& action);
+    State applyActionTromino(const Action& action, const Tromino& t) const;
     State applyAction(const Action& action) const;
     std::vector<State> genAllStatesFromAction(const Action& action) const;
 
     int evaluate(std::array<int, 3>& config) const;
-    State completeLines();
+    State completeLines() const;
 
     bool operator==(const State& other) const;
     size_t hash() const;

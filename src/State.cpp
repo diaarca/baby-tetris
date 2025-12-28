@@ -94,10 +94,10 @@ State State::applyAction(const Action& action) const
     return State(std::move(newField), std::move(newNext));
 }
 
-State State::applyActionTromino(Action& action, Tromino& t)
+State State::applyActionTromino(const Action& action, const Tromino& t) const
 {
     Field newField = field_.clone();
-    newField.addTromino(*nextTromino_, action.getPosition().getX(),
+    newField.addTromino(t, action.getPosition().getX(),
                         action.getPosition().getY(), action.getRotation());
 
     std::unique_ptr<Tromino> newTromino = t.clone();
@@ -165,7 +165,7 @@ int State::evaluate(std::array<int, 3>& config) const
     return score;
 }
 
-State State::completeLines()
+State State::completeLines() const
 {
     auto grid = field_.getGrid();
     bool didComplete = false;
@@ -212,16 +212,8 @@ State State::completeLines()
 
 State State::clone() const
 {
-    std::unique_ptr<Tromino> newTromino;
-    if (nextTromino_)
-    {
-        if (nextTromino_->isIPiece())
-            newTromino = std::make_unique<IPiece>();
-        else if (nextTromino_->isLPiece())
-            newTromino = std::make_unique<LPiece>();
-    }
-
-    return State(field_.clone(), std::move(newTromino));
+    return State(field_.clone(),
+                 nextTromino_ ? nextTromino_->clone() : nullptr);
 }
 
 std::ostream& operator<<(std::ostream& os, const State& s)

@@ -15,6 +15,8 @@ class Action
 
     Point getPosition() const { return position_; };
     int getRotation() const { return rotation_; };
+    Action clone() const;
+
     friend std::ostream& operator<<(std::ostream& os, const Action& a);
     friend bool operator!=(const Action& a, const Action& b);
 };

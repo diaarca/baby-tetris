@@ -1,6 +1,7 @@
 #include "State.h"
-#include <stdexcept>
 #include "Tromino.h"
+#include <memory>
+#include <stdexcept>
 
 std::vector<Point> State::placementPositions() const
 {
@@ -80,6 +81,21 @@ std::vector<Action> State::getAvailableActions() const
     return possibleActions;
 }
 
+State State::applyAction(Action& action)
+{
+    Field newField = field_.clone();
+    newField.addTromino(*nextTromino_, action.getPosition().getX(),
+                        action.getPosition().getY(), action.getRotation());
+
+    std::unique_ptr<Tromino> newNext;
+    if ((rand() / (double)RAND_MAX) < PROBA_I_PIECE)
+        newNext = std::make_unique<IPiece>();
+    else
+        newNext = std::make_unique<LPiece>();
+    return State(std::move(newField), std::move(newNext));
+}
+
+
 State State::applyAction(const Action& action) const
 {
     Field newField = field_.clone();
@@ -94,7 +110,7 @@ State State::applyAction(const Action& action) const
     return State(std::move(newField), std::move(newNext));
 }
 
-State State::applyActionTromino(Action& action, Tromino& t)
+State State::applyActionTromino(Action action, const Tromino& t)
 {
     Field newField = field_.clone();
     newField.addTromino(*nextTromino_, action.getPosition().getX(),
@@ -103,6 +119,27 @@ State State::applyActionTromino(Action& action, Tromino& t)
     std::unique_ptr<Tromino> newTromino = t.clone();
     return State(newField, std::move(newTromino));
 }
+
+std::vector<State> State::genAllStatesFromAction(Action& action)
+{
+    Field newField1 = field_.clone();
+    newField1.addTromino(*nextTromino_, action.getPosition().getX(),
+                         action.getPosition().getY(), action.getRotation());
+
+    Field newField2 = field_.clone();
+    newField2.addTromino(*nextTromino_, action.getPosition().getX(),
+                         action.getPosition().getY(), action.getRotation());
+
+    std::unique_ptr<Tromino> next1 = std::make_unique<IPiece>();
+    std::unique_ptr<Tromino> next2 = std::make_unique<LPiece>();
+
+    std::vector<State> res;
+    res.reserve(2);
+    res.emplace_back(std::move(newField1), std::move(next1));
+    res.emplace_back(std::move(newField2), std::move(next2));
+    return res;
+}
+
 
 std::vector<State> State::genAllStatesFromAction(const Action& action) const
 {

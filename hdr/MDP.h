@@ -2,6 +2,7 @@
 
 #include "Game.h"
 #include <float.h>
+#include <memory>
 #include <numeric>
 #include <sstream>
 #include <unordered_map>
@@ -38,5 +39,6 @@ class MDP
     size_t stateIndex(const State& s);
 
     void playPolicy(Game& game,
-                    const std::unordered_map<State, Action>& policy);
+                    const std::unordered_map<State, Action>& policy,
+                    const std::vector<std::unique_ptr<Tromino>>& advPolicy);
 };

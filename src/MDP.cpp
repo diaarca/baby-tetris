@@ -77,111 +77,6 @@ MDP::actionValueIterationExpl(double epsilon, int maxIteration, double lambda)
     return A;
 }
 
-std::vector<Action>
-MDP::actionValueIteration(double epsilon, int maxIteration, double lambda)
-{
-    std::cout << "Action Value Iteration" << std::endl;
-
-    std::vector<State> S = generateAllStates();
-    int nbState = S.size();
-    std::cout << nbState << std::endl;
-    double VPrime = 0.0;
-    std::vector<Action> A(nbState); // policy
-    std::vector<double> V(nbState); // value vector (expected value)
-    // std::vector<double> VPrime(nbState);
-    double delta = DBL_MAX;
-
-    for (int i = 0; i < maxIteration && delta > epsilon; i++)
-    {
-        delta = 0.0;
-        for (int j = 0; j < nbState; j++)
-        {
-            // VPrime[j] = 0;
-            State& s = S[j];
-            std::vector<Action> actions = s.getAvailableActions();
-
-            int nbActions = actions.size();
-
-            std::vector<double> rewards(nbActions);
-
-            if (nbActions == 0)
-                continue;
-
-            for (int k = 0; k < nbActions; k++)
-            {
-                rewards[k] = 0.0;
-                for (State& sPrime : s.genAllStatesFromAction(actions[k]))
-                {
-                    State afterState = sPrime.completeLines();
-
-                    rewards[k] +=
-                        PROBA_I_PIECE * (sPrime.evaluate(config_) +
-                                         lambda * V[stateIndex(afterState)]);
-                }
-            }
-            // VPrime[j] = *std::max_element(rewards.begin(), rewards.end());
-            VPrime = *std::max_element(rewards.begin(), rewards.end());
-
-            for (int k = 0; k < nbActions; k++)
-            {
-                // if (VPrime[j] == rewards[k])
-                if (VPrime == rewards[k])
-                {
-                    A[j] = actions[k];
-                    break;
-                }
-            }
-
-            // delta = std::max(delta, std::abs(VPrime[j] - V[j]));
-            delta = std::max(delta, std::abs(VPrime - V[j]));
-
-            // V[j] = VPrime[j];
-            V[j] = VPrime;
-        }
-
-        std::cout << "i = " << i << " and delta = " << delta << std::endl;
-    }
-
-    double sum = 0;
-    for (int i = 0; i < nbState; i++)
-    {
-        sum += V[i];
-    }
-    std::cout << "\naverage over final V " << sum / 25956 << std::endl;
-
-    return A;
-}
-
-std::unordered_map<State, double> MDP::generateReachableStates(State s0)
-{
-    std::unordered_map<State, double> map;
-    std::vector<State> q;
-    size_t q_head = 0;
-
-    q.push_back(s0.clone());
-    map.emplace(std::move(s0), 0);
-
-    while (q_head < q.size())
-    {
-        State currState = std::move(q[q_head]);
-        q_head++;
-
-        for (const Action& a : currState.getAvailableActions())
-        {
-            for (auto& nextState : currState.genAllStatesFromAction(a))
-            {
-                State finalNextState = nextState.completeLines();
-                if (map.find(finalNextState) == map.end())
-                {
-                    q.push_back(finalNextState.clone());
-                    map.emplace(std::move(finalNextState), 0.0);
-                }
-            }
-        }
-    }
-    return map;
-}
-
 std::unordered_map<State, std::unique_ptr<Tromino>>
 MDP::trominoValueIteration(double epsilon, int maxIteration, double lambda)
 {
@@ -270,84 +165,34 @@ MDP::trominoValueIteration(double epsilon, int maxIteration, double lambda)
     return T;
 }
 
-std::vector<State> MDP::generateAllStates()
+std::unordered_map<State, double> MDP::generateReachableStates(State s0)
 {
-    int cells = width_ * height_;
-    if (cells < 0)
-        return {};
+    std::unordered_map<State, double> map;
+    std::vector<State> q;
+    size_t q_head = 0;
 
-    // Guard against shifting by >= 64 on platforms where that is UB.
-    // For reasonably small grids (as used in this project) this is fine.
-    uint64_t total = 1ULL;
-    if (cells >= 64)
+    q.push_back(s0.clone());
+    map.emplace(std::move(s0), 0);
+
+    while (q_head < q.size())
     {
-        // too many states to enumerate safely with 64-bit mask
-        return {};
-    }
-    total <<= cells; // total = 2^cells
+        State currState = std::move(q[q_head]);
+        q_head++;
 
-    std::vector<State> states;
-    states.reserve(static_cast<size_t>(total) * 2);
-
-    for (uint64_t mask = 0; mask < total; ++mask)
-    {
-        std::vector<std::vector<bool>> grid(height_,
-                                            std::vector<bool>(width_, false));
-        for (int r = 0; r < height_; ++r)
+        for (const Action& a : currState.getAvailableActions())
         {
-            for (int c = 0; c < width_; ++c)
+            for (auto& nextState : currState.genAllStatesFromAction(a))
             {
-                int idx = r * width_ + c; // bit index for this cell
-                grid[r][c] = ((mask >> idx) & 1ULL) != 0ULL;
+                State finalNextState = nextState.completeLines();
+                if (map.find(finalNextState) == map.end())
+                {
+                    q.push_back(finalNextState.clone());
+                    map.emplace(std::move(finalNextState), 0.0);
+                }
             }
         }
-
-        Field f(grid);
-
-        // For each possible next piece type, create a State.
-        states.emplace_back(f, std::make_unique<IPiece>());
-        states.emplace_back(f, std::make_unique<LPiece>());
     }
-
-    return states;
-}
-
-size_t MDP::stateIndex(const State& s)
-{
-    int cells = width_ * height_;
-    if (cells < 0 || cells >= 64)
-        return static_cast<size_t>(-1);
-
-    // Build mask the same way as in generateAllStates()
-    uint64_t mask = 0ULL;
-    std::vector<std::vector<bool>> grid = s.getField().getGrid();
-    // Basic sanity checks
-    if ((int)grid.size() != height_)
-        return static_cast<size_t>(-1);
-
-    for (int r = 0; r < height_; ++r)
-    {
-        if ((int)grid[r].size() != width_)
-            return static_cast<size_t>(-1);
-        for (int c = 0; c < width_; ++c)
-        {
-            int idx = r * width_ + c;
-            if (grid[r][c])
-                mask |= (1ULL << idx);
-        }
-    }
-
-    // Determine piece index: 0 for IPiece, 1 for LPiece
-    const Tromino* t = &s.getNextTromino();
-    size_t pieceIndex = static_cast<size_t>(-1);
-    if (dynamic_cast<const IPiece*>(t) != nullptr)
-        pieceIndex = 0;
-    else if (dynamic_cast<const LPiece*>(t) != nullptr)
-        pieceIndex = 1;
-    else
-        return static_cast<size_t>(-1);
-
-    return static_cast<size_t>(mask) * 2u + pieceIndex;
+    return map;
 }
 
 void MDP::playPolicy(

@@ -57,11 +57,10 @@ int main()
               << ", lambda = " << LAMBDA << std::endl
               << std::endl;
 
-    // std::vector<std::unique_ptr<Tromino>> trominos =
     std::unordered_map<State, std::unique_ptr<Tromino>> trominos =
         mdp.trominoValueIteration(EPSILON, MAX_IT, LAMBDA);
 
-    std::cout << "\n\n" << std::endl;
+    std::cout << std::endl << std::endl;
 
     // compute the optimal policy using the value iteration algorithm
     std::unordered_map<State, Action> policy =

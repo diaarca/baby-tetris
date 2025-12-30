@@ -196,20 +196,16 @@ MDP::trominoValueIteration(double epsilon, int maxIteration, double lambda)
     std::cout << "Tromino Value Iteration" << std::endl;
     std::vector<State> S = generateAllStates();
     int nbState = S.size();
-    std::vector<std::unique_ptr<Tromino>> T(nbState); // policyTromino
-    std::vector<double> V(nbState); // value vector (expected value)
+    std::vector<std::unique_ptr<Tromino>> T(nbState);
+    std::vector<double> V(nbState);
     std::vector<double> VPrime(nbState);
     double delta = DBL_MAX, maxI, maxL, reward;
-    // std::vector<double> lPieceRewards;
-    // std::vector<double> iPieceRewards;
 
     for (int i = 0; i < maxIteration && delta > epsilon; i++)
     {
-        // std::cerr << "tromino iteration : " << i << std::endl;
         delta = 0.0;
         for (int j = 0; j < nbState; j++)
         {
-            // std::cerr << "state : " << j << std::endl;
             VPrime[j] = 0;
             State& s = S[j];
             std::vector<Action> actions = s.getAvailableActions();

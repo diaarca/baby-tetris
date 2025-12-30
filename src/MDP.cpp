@@ -194,8 +194,10 @@ std::vector<std::unique_ptr<Tromino>>
 MDP::trominoValueIteration(double epsilon, int maxIteration, double lambda)
 {
     std::cout << "Tromino Value Iteration" << std::endl;
+
     std::vector<State> S = generateAllStates();
     int nbState = S.size();
+
     std::vector<std::unique_ptr<Tromino>> T(nbState);
     std::vector<double> V(nbState);
     std::vector<double> VPrime(nbState);
@@ -217,48 +219,28 @@ MDP::trominoValueIteration(double epsilon, int maxIteration, double lambda)
             if (nbActions == 0)
                 continue;
 
-            for (int k = 0; k < nbActions; k++) // for each action of each state
+            for (int k = 0; k < nbActions; k++)
             {
-                // rewards[k] =
                 maxI = maxL = 0.0;
                 for (State& sPrime : s.genAllStatesFromAction(actions[k]))
                 {
+                    std::cout << "toto" << std::endl;
                     State afterState = sPrime.completeLines();
                     reward =
                         PROBA_I_PIECE * (afterState.evaluate(config_) +
                                          lambda * V[stateIndex(afterState)]);
-                    // rewards[k] += r; // maybe we don't care we'll see
                     const Tromino* t = &afterState.getNextTromino();
                     if (dynamic_cast<const LPiece*>(t) != nullptr)
                     {
                         maxL = reward >= maxL ? reward : maxL;
-                        // lPieceRewards.push_back(r);
                     }
                     else if (dynamic_cast<const IPiece*>(t) != nullptr)
                     {
                         maxI = reward >= maxI ? reward : maxI;
-                        // iPieceRewards.push_back(r);
                     }
                 }
             }
-            // picking the min reward tromino is slippery cuz it can lead to the
-            // min reward and to max reward min of the max rewards for each
-            // piece type
-            // double maxL = 0.0;
-            // double maxI = 0.0;
-            // if (!lPieceRewards.empty())
-            // {
-            //     maxL = *std::max_element(lPieceRewards.begin(),
-            //                              lPieceRewards.end());
-            // }
-            // if (!iPieceRewards.empty())
-            // {
-            //     maxI = *std::max_element(iPieceRewards.begin(),
-            //                              iPieceRewards.end());
-            // }
-            // VPrime[j] = maxI >= maxL;
-            // TODO : if execo than min avg
-            if (maxI >= maxL)
+            if (maxL < maxI)
             {
                 T[j] = std::make_unique<LPiece>();
                 VPrime[j] = maxL;

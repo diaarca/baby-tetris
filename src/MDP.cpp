@@ -200,15 +200,15 @@ MDP::trominoValueIteration(double epsilon, int maxIteration, double lambda)
 
     std::vector<std::unique_ptr<Tromino>> T(nbState);
     std::vector<double> V(nbState);
-    std::vector<double> VPrime(nbState);
-    double delta = DBL_MAX, maxI, maxL, reward;
+    double delta, maxI, maxL, reward, vPrime;
+    delta = DBL_MAX;
+    vPrime = 0.0;
 
     for (int i = 0; i < maxIteration && delta > epsilon; i++)
     {
         delta = 0.0;
         for (int j = 0; j < nbState; j++)
         {
-            VPrime[j] = 0;
             State& s = S[j];
             std::vector<Action> actions = s.getAvailableActions();
 
@@ -224,36 +224,36 @@ MDP::trominoValueIteration(double epsilon, int maxIteration, double lambda)
                 maxI = maxL = 0.0;
                 for (State& sPrime : s.genAllStatesFromAction(actions[k]))
                 {
-                    std::cout << "toto" << std::endl;
                     State afterState = sPrime.completeLines();
                     reward =
-                        PROBA_I_PIECE * (afterState.evaluate(config_) +
+                        PROBA_I_PIECE * (sPrime.evaluate(config_) +
                                          lambda * V[stateIndex(afterState)]);
+
                     const Tromino* t = &afterState.getNextTromino();
                     if (dynamic_cast<const LPiece*>(t) != nullptr)
                     {
-                        maxL = reward >= maxL ? reward : maxL;
+                        maxL = reward > maxL ? reward : maxL;
                     }
                     else if (dynamic_cast<const IPiece*>(t) != nullptr)
                     {
-                        maxI = reward >= maxI ? reward : maxI;
+                        maxI = reward > maxI ? reward : maxI;
                     }
                 }
             }
             if (maxL < maxI)
             {
                 T[j] = std::make_unique<LPiece>();
-                VPrime[j] = maxL;
+                vPrime = maxL;
             }
             else
             {
                 T[j] = std::make_unique<IPiece>();
-                VPrime[j] = maxI;
+                vPrime = maxI;
             }
 
-            delta = std::max(delta, std::abs(VPrime[j] - V[j]));
+            delta = std::max(delta, std::abs(vPrime - V[j]));
 
-            V[j] = VPrime[j];
+            V[j] = vPrime;
         }
 
         std::cout << "i = " << i << " and delta = " << delta << std::endl;

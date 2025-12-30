@@ -87,7 +87,6 @@ MDP::trominoValueIteration(double epsilon, int maxIteration, double lambda)
 
     double delta, maxI, maxL, reward, vPrime, vAfter;
     delta = DBL_MAX;
-    maxI = maxL = 0.0;
 
     for (int i = 0; i < maxIteration && delta > epsilon; i++)
     {
@@ -101,9 +100,10 @@ MDP::trominoValueIteration(double epsilon, int maxIteration, double lambda)
             if (nbActions == 0)
                 continue;
 
+
+            maxI = maxL = 0.0;
             for (int k = 0; k < nbActions; k++)
             {
-                maxI = maxL = 0.0;
                 for (State& placedState :
                      currState.genAllStatesFromAction(actions[k]))
                 {
@@ -200,6 +200,7 @@ void MDP::playPolicy(
     const std::unordered_map<State, Action>& policy,
     const std::unordered_map<State, std::unique_ptr<Tromino>>& advPolicy)
 {
+    game.setScore(0);
     int nbAction = 0, gain;
 
     while (game.getState().getAvailableActions().size() > 0 &&
@@ -243,14 +244,14 @@ void MDP::playPolicy(
         State placed = curr.applyActionTromino(a.clone(), *t);
         State after = placed.completeLines();
 
-        prettyPrint(curr, placed.clone(), after.clone());
+        // prettyPrint(curr, placed.clone(), after.clone());
 
         gain = placed.evaluate(config_);
 
         game.setScore(game.getScore() + gain);
 
         game.setState(std::move(after));
-        std::cout << "Current score: " << game.getScore() << "\n\n";
+        // std::cout << "Current score: " << game.getScore() << "\n\n";
 
         nbAction++;
     }

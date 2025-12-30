@@ -10,9 +10,10 @@
 #define WIDTH 4
 #define HEIGHT 4
 #define CONFIG_PATH "config.txt"
-#define EPSILON 0.1
+#define EPSILON 0.000001
 #define MAX_IT 1000
-#define LAMBDA 0.9
+#define LAMBDA_POLICY 0.9
+#define LAMBDA_ADV_POLICY 0.9
 
 int main()
 {
@@ -54,21 +55,21 @@ int main()
               << ", probaIPiece = " << PROBA_I_PIECE
               << ", maxGameAction = " << MAX_ACTION << std::endl
               << "epsilon = " << EPSILON << ", maxIteration = " << MAX_IT
-              << ", lambda = " << LAMBDA << std::endl
+              << ", lambda = " << LAMBDA_POLICY << std::endl
               << std::endl;
 
     std::unordered_map<State, std::unique_ptr<Tromino>> trominos =
-        mdp.trominoValueIteration(EPSILON, MAX_IT, LAMBDA);
+        mdp.trominoValueIteration(EPSILON, MAX_IT, LAMBDA_ADV_POLICY);
 
     std::cout << std::endl << std::endl;
 
     // compute the optimal policy using the value iteration algorithm
     std::unordered_map<State, Action> policy =
-        mdp.actionValueIterationExpl(EPSILON, MAX_IT, LAMBDA);
+        mdp.actionValueIterationExpl(EPSILON, MAX_IT, LAMBDA_POLICY);
 
     // play the computed policy on the game
-    // mdp.playPolicy(game, policy,
-    //                std::unordered_map<State, std::unique_ptr<Tromino>>());
+    mdp.playPolicy(game, policy,
+                   std::unordered_map<State, std::unique_ptr<Tromino>>());
     mdp.playPolicy(game, policy, trominos);
 
     return 0;

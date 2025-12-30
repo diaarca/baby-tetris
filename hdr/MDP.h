@@ -9,7 +9,7 @@
 #include <unordered_set>
 #include <vector>
 
-#define MAX_ACTION 1000
+#define MAX_ACTION 10000
 
 class MDP
 {

@@ -22,7 +22,7 @@ class State
 
   public:
     State(Field field, std::unique_ptr<Tromino> nextTromino)
-        : field_(std::move(field)), nextTromino_(std::move(nextTromino)){};
+        : field_(std::move(field)), nextTromino_(std::move(nextTromino)) {};
 
     State(const State&) = delete;
     State& operator=(const State&) = delete;

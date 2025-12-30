@@ -353,9 +353,10 @@ void MDP::playPolicy(Game& game,
                      const std::unordered_map<State, Action>& policy,
                      const std::vector<std::unique_ptr<Tromino>>& advPolicy)
 {
-    int i = 0, gain;
+    int nbAction = 0, gain;
 
-    while (game.getState().getAvailableActions().size() > 0 && i < MAX_ACTION)
+    while (game.getState().getAvailableActions().size() > 0 &&
+           nbAction < MAX_ACTION)
     {
         State& curr = game.getState();
         auto it = policy.find(curr);
@@ -393,56 +394,7 @@ void MDP::playPolicy(Game& game,
         State placed = curr.applyActionTromino(a.clone(), *t);
         State after = placed.completeLines();
 
-        // pretty-print three fields side-by-side with connectors
-        auto fieldToLines = [](const Field& f)
-        {
-            std::vector<std::string> out;
-            for (int r = 0; r < f.getHeight(); ++r)
-            {
-                std::string line;
-                for (int c = 0; c < f.getWidth(); ++c)
-                    line.push_back(f.getGrid()[r][c] ? '*' : '.');
-                out.push_back(line);
-            }
-            return out;
-        };
-
-        std::vector<std::string> left = fieldToLines(curr.getField());
-        std::vector<std::string> middle = fieldToLines(placed.getField());
-        std::vector<std::string> right = fieldToLines(after.getField());
-
-        // piece name for connector
-        std::ostringstream oss;
-        oss << curr.getNextTromino();
-        std::string pieceName = oss.str();
-
-        // prepare connectors and align vertically
-        int rows =
-            std::max({(int)left.size(), (int)middle.size(), (int)right.size()});
-        int midRow = rows / 2; // place arrows in middle row
-        std::string arrow1 = " --- ";
-        arrow1 += pieceName + " --> ";
-        std::string arrow2 = " -- Completion -> ";
-
-        for (int r = 0; r < rows; ++r)
-        {
-            std::string l = (r < (int)left.size())
-                                ? left[r]
-                                : std::string(left[0].size(), ' ');
-            std::string m = (r < (int)middle.size())
-                                ? middle[r]
-                                : std::string(middle[0].size(), ' ');
-            std::string rg = (r < (int)right.size())
-                                 ? right[r]
-                                 : std::string(right[0].size(), ' ');
-
-            std::string conn1 =
-                (r == midRow) ? arrow1 : std::string(arrow1.size(), ' ');
-            std::string conn2 =
-                (r == midRow) ? arrow2 : std::string(arrow2.size(), ' ');
-
-            std::cout << l << conn1 << m << conn2 << rg << '\n';
-        }
+        prettyPrint(curr, placed.clone(), after.clone());
 
         gain = placed.evaluate(config_);
 
@@ -451,10 +403,63 @@ void MDP::playPolicy(Game& game,
         game.setState(std::move(after));
         std::cout << "Current score: " << game.getScore() << "\n\n";
 
-        i++;
+        nbAction++;
     }
 
     std::cout << game.getState().getField();
-    std::cout << "\nGame Over! Global score: " << game.getScore() << " in " << i
-              << " actions \n";
+    std::cout << "\nGame Over! Global score: " << game.getScore() << " in "
+              << nbAction << " actions \n";
+}
+
+void MDP::prettyPrint(State& curr, State placed, State after)
+{
+    // pretty-print three fields side-by-side with connectors
+    auto fieldToLines = [](const Field& f)
+    {
+        std::vector<std::string> out;
+        for (int r = 0; r < f.getHeight(); ++r)
+        {
+            std::string line;
+            for (int c = 0; c < f.getWidth(); ++c)
+                line.push_back(f.getGrid()[r][c] ? '*' : '.');
+            out.push_back(line);
+        }
+        return out;
+    };
+
+    std::vector<std::string> left = fieldToLines(curr.getField());
+    std::vector<std::string> middle = fieldToLines(placed.getField());
+    std::vector<std::string> right = fieldToLines(after.getField());
+
+    // piece name for connector
+    std::ostringstream oss;
+    oss << curr.getNextTromino();
+    std::string pieceName = oss.str();
+
+    // prepare connectors and align vertically
+    int rows =
+        std::max({(int)left.size(), (int)middle.size(), (int)right.size()});
+    int midRow = rows / 2; // place arrows in middle row
+    std::string arrow1 = " --- ";
+    arrow1 += pieceName + " --> ";
+    std::string arrow2 = " -- Completion -> ";
+
+    for (int r = 0; r < rows; ++r)
+    {
+        std::string l =
+            (r < (int)left.size()) ? left[r] : std::string(left[0].size(), ' ');
+        std::string m = (r < (int)middle.size())
+                            ? middle[r]
+                            : std::string(middle[0].size(), ' ');
+        std::string rg = (r < (int)right.size())
+                             ? right[r]
+                             : std::string(right[0].size(), ' ');
+
+        std::string conn1 =
+            (r == midRow) ? arrow1 : std::string(arrow1.size(), ' ');
+        std::string conn2 =
+            (r == midRow) ? arrow2 : std::string(arrow2.size(), ' ');
+
+        std::cout << l << conn1 << m << conn2 << rg << '\n';
+    }
 }

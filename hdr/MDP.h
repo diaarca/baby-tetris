@@ -41,4 +41,6 @@ class MDP
     void playPolicy(Game& game,
                     const std::unordered_map<State, Action>& policy,
                     const std::vector<std::unique_ptr<Tromino>>& advPolicy);
+
+    void prettyPrint(State& curr, State placed, State after);
 };

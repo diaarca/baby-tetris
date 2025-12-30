@@ -1,7 +1,4 @@
 #include "State.h"
-#include "Tromino.h"
-#include <memory>
-#include <stdexcept>
 
 std::vector<Point> State::placementPositions() const
 {

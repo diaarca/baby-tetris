@@ -30,7 +30,7 @@ class MDP
     std::vector<Action>
     actionValueIteration(double eps, int maxIteration, double lambda);
 
-    std::vector<std::unique_ptr<Tromino>>
+    std::unordered_map<State, std::unique_ptr<Tromino>>
     trominoValueIteration(double epsilon, int maxIteration, double lambda);
 
     std::unordered_map<State, double> generateReachableStates(State s0);
@@ -38,9 +38,11 @@ class MDP
 
     size_t stateIndex(const State& s);
 
-    void playPolicy(Game& game,
-                    const std::unordered_map<State, Action>& policy,
-                    const std::vector<std::unique_ptr<Tromino>>& advPolicy);
+    void playPolicy(
+        Game& game,
+        const std::unordered_map<State, Action>& policy,
+        // const std::vector<std::unique_ptr<Tromino>>& advPolicy);
+        const std::unordered_map<State, std::unique_ptr<Tromino>>& advPolicy);
 
     void prettyPrint(State& curr, State placed, State after);
 };

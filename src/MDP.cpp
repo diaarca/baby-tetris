@@ -4,10 +4,7 @@ std::unordered_map<State, Action>
 MDP::actionValueIterationExpl(double epsilon, int maxIteration, double lambda)
 {
     std::cout << "Exploration Value Iteration" << std::endl;
-    std::unordered_map<State, double> V =
-        generateReachableStates(std::move(s0_));
-
-    std::cout << V.size() << std::endl;
+    std::unordered_map<State, double> V = generateReachableStates(s0_.clone());
 
     std::unordered_map<State, Action> A;
 
@@ -39,7 +36,8 @@ MDP::actionValueIterationExpl(double epsilon, int maxIteration, double lambda)
                     auto it = V.find(afterState);
                     if (it == V.end())
                     {
-                        std::cerr << "ERROR: the state cannot be derived into "
+                        std::cerr << "ERROR (actionValueIterationExpl): the "
+                                     "state cannot be derived into "
                                      "a non-reachable state"
                                   << std::endl;
                         exit(1);
@@ -175,12 +173,6 @@ std::unordered_map<State, double> MDP::generateReachableStates(State s0)
                 State finalNextState = nextState.completeLines();
                 if (map.find(finalNextState) == map.end())
                 {
-                    if (stateIndex(finalNextState) == 97953)
-                    {
-                        std::cout << "from state\n" << currState << std::endl;
-                        std::cout << "to state\n"
-                                  << finalNextState << std::endl;
-                    }
                     q.push_back(finalNextState.clone());
                     map.emplace(std::move(finalNextState), 0.0);
                 }
@@ -190,31 +182,26 @@ std::unordered_map<State, double> MDP::generateReachableStates(State s0)
     return map;
 }
 
-std::vector<std::unique_ptr<Tromino>>
+std::unordered_map<State, std::unique_ptr<Tromino>>
 MDP::trominoValueIteration(double epsilon, int maxIteration, double lambda)
 {
     std::cout << "Tromino Value Iteration" << std::endl;
+    std::unordered_map<State, double> V = generateReachableStates(s0_.clone());
 
-    std::vector<State> S = generateAllStates();
-    int nbState = S.size();
+    std::unordered_map<State, std::unique_ptr<Tromino>> T;
 
-    std::vector<std::unique_ptr<Tromino>> T(nbState);
-    std::vector<double> V(nbState);
-    double delta, maxI, maxL, reward, vPrime;
+    double delta, maxI, maxL, reward, vPrime, vAfter;
     delta = DBL_MAX;
-    vPrime = 0.0;
+    maxI = maxL = 0.0;
 
     for (int i = 0; i < maxIteration && delta > epsilon; i++)
     {
         delta = 0.0;
-        for (int j = 0; j < nbState; j++)
+        for (auto& [currState, currValue] : V)
         {
-            State& s = S[j];
-            std::vector<Action> actions = s.getAvailableActions();
+            std::vector<Action> actions = currState.getAvailableActions();
 
             int nbActions = actions.size();
-
-            std::vector<double> rewards(nbActions);
 
             if (nbActions == 0)
                 continue;
@@ -222,12 +209,24 @@ MDP::trominoValueIteration(double epsilon, int maxIteration, double lambda)
             for (int k = 0; k < nbActions; k++)
             {
                 maxI = maxL = 0.0;
-                for (State& sPrime : s.genAllStatesFromAction(actions[k]))
+                for (State& placedState :
+                     currState.genAllStatesFromAction(actions[k]))
                 {
-                    State afterState = sPrime.completeLines();
-                    reward =
-                        PROBA_I_PIECE * (sPrime.evaluate(config_) +
-                                         lambda * V[stateIndex(afterState)]);
+                    State afterState = placedState.completeLines();
+
+                    auto it = V.find(afterState);
+                    if (it == V.end())
+                    {
+                        std::cerr << "ERROR (trominoValueIteration): the "
+                                     "state cannot be derived into "
+                                     "a non-reachable state"
+                                  << std::endl;
+                        exit(1);
+                    }
+                    vAfter = it->second;
+
+                    reward = PROBA_I_PIECE *
+                             (placedState.evaluate(config_) + lambda * vAfter);
 
                     const Tromino* t = &afterState.getNextTromino();
                     if (dynamic_cast<const LPiece*>(t) != nullptr)
@@ -242,29 +241,31 @@ MDP::trominoValueIteration(double epsilon, int maxIteration, double lambda)
             }
             if (maxL < maxI)
             {
-                T[j] = std::make_unique<LPiece>();
+                T.insert_or_assign(currState.clone(),
+                                   std::make_unique<LPiece>());
                 vPrime = maxL;
             }
             else
             {
-                T[j] = std::make_unique<IPiece>();
+                T.insert_or_assign(currState.clone(),
+                                   std::make_unique<IPiece>());
                 vPrime = maxI;
             }
 
-            delta = std::max(delta, std::abs(vPrime - V[j]));
+            delta = std::max(delta, std::abs(vPrime - currValue));
 
-            V[j] = vPrime;
+            V.insert_or_assign(currState.clone(), vPrime);
         }
 
         std::cout << "i = " << i << " and delta = " << delta << std::endl;
     }
 
     double sum = 0;
-    for (int i = 0; i < nbState; i++)
+    for (std::pair<const State, double>& item : V)
     {
-        sum += V[i];
+        sum += item.second;
     }
-    std::cout << "\naverage over final V " << sum / nbState << std::endl;
+    std::cout << "\naverage over final V " << sum / V.size() << std::endl;
 
     return T;
 }
@@ -349,9 +350,10 @@ size_t MDP::stateIndex(const State& s)
     return static_cast<size_t>(mask) * 2u + pieceIndex;
 }
 
-void MDP::playPolicy(Game& game,
-                     const std::unordered_map<State, Action>& policy,
-                     const std::vector<std::unique_ptr<Tromino>>& advPolicy)
+void MDP::playPolicy(
+    Game& game,
+    const std::unordered_map<State, Action>& policy,
+    const std::unordered_map<State, std::unique_ptr<Tromino>>& advPolicy)
 {
     int nbAction = 0, gain;
 
@@ -359,25 +361,22 @@ void MDP::playPolicy(Game& game,
            nbAction < MAX_ACTION)
     {
         State& curr = game.getState();
-        auto it = policy.find(curr);
-        if (it == policy.end())
+        auto itAction = policy.find(curr);
+        if (itAction == policy.end())
         {
-            std::cerr
-                << "ERROR the state:\n"
-                << curr
-                << "\n haven't any associated action in the provided policy";
+            std::cerr << "ERROR the state:\n"
+                      << curr << std::endl
+                      << "haven't any associated action in the provided policy"
+                      << std::endl;
             exit(1);
         }
-        const Action& a = policy.find(curr)->second;
+        const Action& a = itAction->second;
 
-        const Tromino* t = nullptr;
+        const std::unique_ptr<Tromino>* t_ptr;
         std::unique_ptr<Tromino> t_owned;
 
-        if (!advPolicy.empty())
-        {
-            t = advPolicy[stateIndex(curr)].get();
-        }
-        else
+        auto itTromino = advPolicy.find(curr);
+        if (itTromino == advPolicy.end())
         {
             if ((rand() / (double)RAND_MAX) < PROBA_I_PIECE)
             {
@@ -387,8 +386,13 @@ void MDP::playPolicy(Game& game,
             {
                 t_owned = std::make_unique<LPiece>();
             }
-            t = t_owned.get();
+            t_ptr = &t_owned;
         }
+        else
+        {
+            t_ptr = &itTromino->second;
+        }
+        const std::unique_ptr<Tromino>& t = *t_ptr;
 
         // compute deterministic preview states (placed and after completion)
         State placed = curr.applyActionTromino(a.clone(), *t);

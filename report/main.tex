@@ -328,20 +328,47 @@ played game (evolution of the state at each action) as follows:
     Current score: 735
 \end{lstlisting}
 
-\subsection{Incoming Improvement}
-\label{sec:improvement}
-\quad For now we compute naively the value iteration algorithm on all state
-combinations, which represents
-\begin{align*}
-    &= 2^{\text{gridHeight} * \text{gridWidth}} * \text{nbOfTrominoTypes} \\
-    &= 2^{4*4} * 2 \\
-    &= 2^{17} \\
-    &= 131072
-\end{align*}
-states in the smallest ($4\times 4$) version of the game. In the near future we
-want to reduce this number by computing the value iteration for only 
-the reachable states (from a given starting state $s_0$). For this purpose,
-we will make use of a Breadth First Search algorithm which will explore
-iteratively all reachable states from the current one.
+\subsection{Reachable States}
+% \label{sec:improvement}
+\quad Instead of computing the value iteration on all possible states, we focus on
+the reachable states from a given starting state $s_0$. To achieve this, we
+implement a Breadth First Search (BFS) algorithm that explores all reachable
+states iteratively from the current state. 
+% implem : 
 
+
+\section{Question 2: Adversarial MDP For Opponent}
+\quad The goal of this part is to design an adversary policy that selects tromino pieces for the game
+with the intention of minimizing the players score.
+For this policy we use once again value iteration, but this time we minimize the expected cumulative 
+discounted reward over time from the available actions. The policy chooses the tromino piece that 
+leads to the lowest expected score for the player.
+We have the same states (reachable states), actions, transition function and reward function as in Section~\ref{sec:question1},
+the only change is the value iteration equation.
+% \[
+% V(s) = \min_{a \in A} \sum_{s' \in S} P(s' | s, a) \cdot \left( R(s, a, s') + \lambda V(s') \right)
+% \]
+The player will still use the optimal policy computed in Section~\ref{sec:question1} to play the game.
+
+\subsubsection{Choosing the Tromino Piece}
+\quad We considered two different heuristic approaches for choosing the tromino piece:
+\begin{itemize}
+    \item \textbf{Lowest Maximal Expected Reward}: The policy chooses the tromino piece that leads to the lowest maximal 
+    expected reward for the player.
+    \[
+    V(s) = \min_{t \in \{I,L\}} \max_{a \in A_t(s)} \sum_{s'} P(s'|s,a,t) \cdot \left( R(s,a,s') + \lambda V(s') \right)
+    \]
+
+    \item \textbf{Lowest Average Expected Reward}: The policy chooses the tromino piece that leads to the lowest average
+    expected reward for the player. CHECK THE EQUATION!!!!
+    \[
+    V(s) = \min_{t \in \{I,L\}} \frac{1}{|A_t(s)|} \sum_{a \in A_t(s)} \sum_{s'} P(s'|s,a,t) \cdot \left( R(s,a,s') + \lambda V(s') \right)
+    \]
+\end{itemize}
+Both approaches produce similar results, with no remarkable difference. However, compared to the random
+adversary policy, where the tromino pieces are chosen randomly, the tromino value iteration, for both approaches, 
+successfully decreases the player's score.  \\
+\subsection{Implementation}
+\quad We add a new method in the \code{MDP} class that computes value iteration for the adversary policy.
+LISTING!!!!
 \end{document}

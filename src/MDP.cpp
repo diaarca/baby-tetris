@@ -5,11 +5,14 @@ MDP::actionValueIteration(double epsilon, int maxIteration, double lambda)
 {
     std::cout << "Exploration Value Iteration" << std::endl;
     std::unordered_map<State, double> V = generateReachableStates(s0_.clone());
+    std::cout << "Number of reachable states: " << V.size() << std::endl;
 
     std::unordered_map<State, Action> A;
 
     double vAfter, vPrime, delta;
     delta = DBL_MAX;
+
+    int nbTerminal = 0;
 
     for (int i = 0; i < maxIteration && delta > epsilon; i++)
     {
@@ -23,7 +26,9 @@ MDP::actionValueIteration(double epsilon, int maxIteration, double lambda)
             std::vector<double> rewards(nbActions);
 
             if (nbActions == 0)
+            {
                 continue;
+            }
 
             for (int k = 0; k < nbActions; k++)
             {
@@ -36,7 +41,7 @@ MDP::actionValueIteration(double epsilon, int maxIteration, double lambda)
                     auto it = V.find(afterState);
                     if (it == V.end())
                     {
-                        std::cerr << "ERROR (actionValueIterationExpl): the "
+                        std::cerr << "ERROR (actionValueIteration): the "
                                      "state cannot be derived into "
                                      "a non-reachable state"
                                   << std::endl;
@@ -73,6 +78,7 @@ MDP::actionValueIteration(double epsilon, int maxIteration, double lambda)
         sum += item.second;
     }
     std::cout << "\naverage over final V " << sum / V.size() << std::endl;
+    std::cout << nbTerminal << std::endl;
 
     return A;
 }
@@ -100,7 +106,9 @@ MDP::trominoValueIterationMinMax(double epsilon,
             int nbActions = actions.size();
 
             if (nbActions == 0)
+            {
                 continue;
+            }
 
             maxI = maxL = 0.0;
             for (int k = 0; k < nbActions; k++)
@@ -189,7 +197,9 @@ MDP::trominoValueIterationMinAvg(double epsilon,
             int nbActions = actions.size();
 
             if (nbActions == 0)
+            {
                 continue;
+            }
 
             avgI = avgL = 0.0;
             for (int k = 0; k < nbActions; k++)
@@ -263,8 +273,26 @@ std::unordered_map<State, double> MDP::generateReachableStates(State s0)
     std::vector<State> q;
     size_t q_head = 0;
 
+    State s0_other = s0.clone();
+    const Tromino& current_tromino = s0_other.getNextTromino();
+    if (dynamic_cast<const IPiece*>(&current_tromino))
+    {
+        s0_other.setNextTromino(LPiece());
+    }
+    else
+    {
+        s0_other.setNextTromino(IPiece());
+    }
+
     q.push_back(s0.clone());
     map.emplace(std::move(s0), 0);
+
+    if (map.find(s0_other) == map.end())
+    {
+        std::cout << "adding the other s0 to the map" << std::endl;
+        q.push_back(s0_other.clone());
+        map.emplace(std::move(s0_other), 0);
+    }
 
     while (q_head < q.size())
     {

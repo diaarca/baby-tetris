@@ -8,13 +8,13 @@
 #include <unordered_map>
 
 #define WIDTH 4
-#define HEIGHT 5
+#define HEIGHT 4
 #define CONFIG_PATH "config.txt"
 #define EPSILON 0.000001
 #define MAX_IT 1000
 #define ACTION_POLICY_LAMBDA 0.9
 #define TROMINO_POLICY_LAMBDA 0.9
-#define NB_SIMU 100
+#define NB_SIMU 1
 
 int main()
 {
@@ -74,6 +74,8 @@ int main()
     // compute the optimal policy using the value iteration algorithm
     std::unordered_map<State, Action> actions =
         mdp.actionValueIteration(EPSILON, MAX_IT, ACTION_POLICY_LAMBDA);
+
+    std::cout << "Number of states in policy: " << actions.size() << std::endl;
 
     int rand = 0;
 

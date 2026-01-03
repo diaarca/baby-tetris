@@ -8,6 +8,7 @@
 #include <functional>
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <vector>
 
 #define PROBA_I_PIECE 0.5
@@ -46,8 +47,8 @@ class State
     std::vector<State> genAllStatesFromAction(Action& action);
     std::vector<State> genAllStatesFromAction(const Action& action) const;
 
-    int evaluate(std::array<int, 3>& config) const;
-    State completeLines();
+    int evaluate(const std::array<int, 3>& config) const;
+    State completeLines() const;
 
     bool operator==(const State& other) const;
     size_t hash() const;

@@ -31,6 +31,7 @@ class State
 
     State clone() const;
 
+    void setNextTromino(const Tromino& t) { nextTromino_ = t.clone(); };
     Field& getField() { return field_; }
     const Field& getField() const { return field_; }
     const Tromino& getNextTromino() const { return *nextTromino_; }

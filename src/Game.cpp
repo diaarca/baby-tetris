@@ -1,4 +1,6 @@
 #include "Game.h"
+#include "State.h"
+#include <algorithm>
 
 Game::Game(const std::array<int, 3>& config, Field& field)
     : state_(field, std::make_unique<IPiece>()), score_(0), config_(config)

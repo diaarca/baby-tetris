@@ -8,12 +8,13 @@
 #include <unordered_map>
 
 #define WIDTH 4
-#define HEIGHT 4
+#define HEIGHT 5
 #define CONFIG_PATH "config.txt"
 #define EPSILON 0.000001
 #define MAX_IT 1000
-#define LAMBDA_POLICY 0.9
-#define LAMBDA_ADV_POLICY 0.9
+#define ACTION_POLICY_LAMBDA 0.9
+#define TROMINO_POLICY_LAMBDA 0.9
+#define NB_SIMU 100
 
 int main()
 {
@@ -55,22 +56,42 @@ int main()
               << ", probaIPiece = " << PROBA_I_PIECE
               << ", maxGameAction = " << MAX_ACTION << std::endl
               << "epsilon = " << EPSILON << ", maxIteration = " << MAX_IT
-              << ", lambda = " << LAMBDA_POLICY << std::endl
+              << ", action policy lambda = " << ACTION_POLICY_LAMBDA
+              << ", tromino policy lambda = " << TROMINO_POLICY_LAMBDA
+              << " and number of simulation = " << NB_SIMU << std::endl
               << std::endl;
 
-    std::unordered_map<State, std::unique_ptr<Tromino>> trominos =
-        mdp.trominoValueIteration(EPSILON, MAX_IT, LAMBDA_ADV_POLICY);
+    std::unordered_map<State, std::unique_ptr<Tromino>> minMaxTrominos =
+        mdp.trominoValueIterationMinMax(EPSILON, MAX_IT, TROMINO_POLICY_LAMBDA);
+
+    std::cout << std::endl << std::endl;
+
+    std::unordered_map<State, std::unique_ptr<Tromino>> minAvgTrominos =
+        mdp.trominoValueIterationMinAvg(EPSILON, MAX_IT, TROMINO_POLICY_LAMBDA);
 
     std::cout << std::endl << std::endl;
 
     // compute the optimal policy using the value iteration algorithm
-    std::unordered_map<State, Action> policy =
-        mdp.actionValueIterationExpl(EPSILON, MAX_IT, LAMBDA_POLICY);
+    std::unordered_map<State, Action> actions =
+        mdp.actionValueIteration(EPSILON, MAX_IT, ACTION_POLICY_LAMBDA);
 
-    // play the computed policy on the game
-    mdp.playPolicy(game, policy,
-                   std::unordered_map<State, std::unique_ptr<Tromino>>());
-    mdp.playPolicy(game, policy, trominos);
+    int rand = 0;
+
+    for (int i = 0; i < NB_SIMU; i++)
+    {
+        rand += mdp.playPolicy(
+            game, actions,
+            std::unordered_map<State, std::unique_ptr<Tromino>>());
+    }
+
+    int minMax = mdp.playPolicy(game, actions, minMaxTrominos);
+    int minAvg = mdp.playPolicy(game, actions, minAvgTrominos);
+
+    std::cout << "Average results:" << std::endl
+              << "Random Adversary moves: " << (double)rand / (double)NB_SIMU
+              << std::endl
+              << "Min Max Adversary Moves: " << minMax << std::endl
+              << "Min Avg Adversary Moves: " << minAvg << std::endl;
 
     return 0;
 }

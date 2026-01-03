@@ -8,6 +8,7 @@
 #include <functional>
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <vector>
 
 #define PROBA_I_PIECE 0.5
@@ -22,7 +23,7 @@ class State
 
   public:
     State(Field field, std::unique_ptr<Tromino> nextTromino)
-        : field_(std::move(field)), nextTromino_(std::move(nextTromino)){};
+        : field_(std::move(field)), nextTromino_(std::move(nextTromino)) {};
 
     State(const State&) = delete;
     State& operator=(const State&) = delete;
@@ -31,6 +32,7 @@ class State
 
     State clone() const;
 
+    void setNextTromino(const Tromino& t) { nextTromino_ = t.clone(); };
     Field& getField() { return field_; }
     const Field& getField() const { return field_; }
     const Tromino& getNextTromino() const { return *nextTromino_; }
@@ -45,8 +47,8 @@ class State
     std::vector<State> genAllStatesFromAction(Action& action);
     std::vector<State> genAllStatesFromAction(const Action& action) const;
 
-    int evaluate(std::array<int, 3>& config) const;
-    State completeLines();
+    int evaluate(const std::array<int, 3>& config) const;
+    State completeLines() const;
 
     bool operator==(const State& other) const;
     size_t hash() const;

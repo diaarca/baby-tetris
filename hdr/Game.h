@@ -11,6 +11,8 @@ class Game
 
   public:
     Game(const std::array<int, 3>& config, Field& field);
+    Game(const std::array<int, 3>& config, State& state)
+        : state_(std::move(state)), score_(0), config_(config) {};
 
     State& getState() { return state_; };
     int getScore() { return score_; };

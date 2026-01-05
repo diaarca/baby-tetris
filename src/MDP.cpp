@@ -4,272 +4,372 @@
 #include <algorithm>
 #include <cstddef>
 
-std::vector<Action>
-MDP::valueIteration(double epsilon, int maxIteration, double lambda)
+std::unordered_map<State, Action>
+MDP::actionValueIteration(double epsilon, int maxIteration, double lambda)
 {
-    std::cout << "Action Value Iteration" << std::endl;
+    std::cout << "Exploration Value Iteration" << std::endl;
+    std::unordered_map<State, double> V = generateReachableStates(s0_.clone());
+    std::cout << "Number of reachable states: " << V.size() << std::endl;
 
-    std::vector<State> S = generateAllStates();
-    int nbState = S.size();
-    std::vector<Action> A(nbState); // policy
-    std::vector<double> V(nbState); // value vector (expected value)
-    std::vector<double> VPrime(nbState);
-    double delta = DBL_MAX;
+    std::unordered_map<State, Action> A;
+
+    double vAfter, vPrime, delta;
+    delta = DBL_MAX;
 
     for (int i = 0; i < maxIteration && delta > epsilon; i++)
     {
         delta = 0.0;
-        for (int j = 0; j < nbState; j++)
+        for (auto& [currState, currValue] : V)
         {
-            VPrime[j] = 0;
-            State& s = S[j];
-            std::vector<Action> actions = s.getAvailableActions();
+            std::vector<Action> actions = currState.getAvailableActions();
 
             int nbActions = actions.size();
 
             std::vector<double> rewards(nbActions);
 
             if (nbActions == 0)
+            {
                 continue;
+            }
 
             for (int k = 0; k < nbActions; k++)
             {
-                rewards[k] = 0;
-                for (State& sPrime : s.genAllStatesFromAction(actions[k]))
+                rewards[k] = 0.0;
+                for (State& placedState :
+                     currState.genAllStatesFromAction(actions[k]))
                 {
+                    State afterState = placedState.completeLines();
+
+                    auto it = V.find(afterState);
+                    if (it == V.end())
+                    {
+                        std::cerr << "ERROR (actionValueIteration): the "
+                                     "state cannot be derived into "
+                                     "a non-reachable state"
+                                  << std::endl;
+                        exit(1);
+                    }
+                    vAfter = it->second;
+
                     rewards[k] +=
-                        PROBA_I_PIECE * (sPrime.evaluate(config_) +
-                                         lambda * V[stateIndex(sPrime)]);
+                        PROBA_I_PIECE *
+                        (placedState.evaluate(config_) + lambda * vAfter);
                 }
             }
-            VPrime[j] = *std::max_element(rewards.begin(), rewards.end());
+            vPrime = *std::max_element(rewards.begin(), rewards.end());
 
             for (int k = 0; k < nbActions; k++)
             {
-                if (VPrime[j] == rewards[k])
+                if (vPrime == rewards[k])
                 {
-                    A[j] = actions[k];
+                    A.insert_or_assign(currState.clone(), actions[k]);
                     break;
                 }
             }
 
-            delta = std::max(delta, std::abs(VPrime[j] - V[j]));
-
-            V[j] = VPrime[j];
+            delta = std::max(delta, std::abs(vPrime - currValue));
+            V.insert_or_assign(currState.clone(), vPrime);
         }
 
         std::cout << "i = " << i << " and delta = " << delta << std::endl;
     }
 
     double sum = 0;
-    for (int i = 0; i < nbState; i++)
+    for (std::pair<const State, double>& item : V)
     {
-        sum += V[i];
+        sum += item.second;
     }
-    std::cout << "\naverage over final V " << sum / nbState << std::endl;
+    std::cout << "\naverage over final V " << sum / V.size() << std::endl;
 
     return A;
 }
 
-std::vector<std::unique_ptr<Tromino>>
-MDP::trominoValueIteration(double epsilon, int maxIteration, double lambda)
+std::unordered_map<State, std::unique_ptr<Tromino>>
+MDP::trominoValueIterationMinMax(double epsilon,
+                                 int maxIteration,
+                                 double lambda)
 {
-    std::cout << "Tromino Value Iteration" << std::endl;
-    std::vector<State> S = generateAllStates();
-    int nbState = S.size();
-    std::vector<std::unique_ptr<Tromino>> T(nbState); // policyTromino
-    std::vector<double> V(nbState); // value vector (expected value)
-    std::vector<double> VPrime(nbState);
-    double delta = DBL_MAX, maxI, maxL, reward;
-    // std::vector<double> lPieceRewards;
-    // std::vector<double> iPieceRewards;
+    std::cout << "Min Max Tromino Value Iteration" << std::endl;
+    std::unordered_map<State, double> V = generateReachableStates(s0_.clone());
+
+    std::unordered_map<State, std::unique_ptr<Tromino>> T;
+
+    double delta, maxI, maxL, reward, vPrime, vAfter;
+    delta = DBL_MAX;
 
     for (int i = 0; i < maxIteration && delta > epsilon; i++)
     {
-        // std::cerr << "tromino iteration : " << i << std::endl;
         delta = 0.0;
-        for (int j = 0; j < nbState; j++)
+        for (auto& [currState, currValue] : V)
         {
-            // std::cerr << "state : " << j << std::endl;
-            VPrime[j] = 0;
-            State& s = S[j];
-            std::vector<Action> actions = s.getAvailableActions();
+            std::vector<Action> actions = currState.getAvailableActions();
 
             int nbActions = actions.size();
 
-            std::vector<double> rewards(nbActions);
-
             if (nbActions == 0)
-                continue;
-
-            for (int k = 0; k < nbActions; k++) // for each action of each state
             {
-                // rewards[k] =
-                maxI = maxL = 0.0;
-                for (State& sPrime : s.genAllStatesFromAction(actions[k]))
+                continue;
+            }
+
+            maxI = maxL = 0.0;
+            for (int k = 0; k < nbActions; k++)
+            {
+                for (State& placedState :
+                     currState.genAllStatesFromAction(actions[k]))
                 {
-                    reward = PROBA_I_PIECE * (sPrime.evaluate(config_) +
-                                              lambda * V[stateIndex(sPrime)]);
-                    // rewards[k] += r; // maybe we don't care we'll see
-                    const Tromino* t = &sPrime.getNextTromino();
+                    State afterState = placedState.completeLines();
+
+                    auto it = V.find(afterState);
+                    if (it == V.end())
+                    {
+                        std::cerr << "ERROR (trominoValueIteration): the "
+                                     "state cannot be derived into "
+                                     "a non-reachable state"
+                                  << std::endl;
+                        exit(1);
+                    }
+                    vAfter = it->second;
+
+                    reward = PROBA_I_PIECE *
+                             (placedState.evaluate(config_) + lambda * vAfter);
+
+                    const Tromino* t = &afterState.getNextTromino();
                     if (dynamic_cast<const LPiece*>(t) != nullptr)
                     {
-                        maxL = reward >= maxL ? reward : maxL;
-                        // lPieceRewards.push_back(r);
+                        maxL = reward > maxL ? reward : maxL;
                     }
                     else if (dynamic_cast<const IPiece*>(t) != nullptr)
                     {
-                        maxI = reward >= maxI ? reward : maxI;
-                        // iPieceRewards.push_back(r);
+                        maxI = reward > maxI ? reward : maxI;
                     }
                 }
             }
-            // picking the min reward tromino is slippery cuz it can lead to the
-            // min reward and to max reward min of the max rewards for each
-            // piece type
-            // double maxL = 0.0;
-            // double maxI = 0.0;
-            // if (!lPieceRewards.empty())
-            // {
-            //     maxL = *std::max_element(lPieceRewards.begin(),
-            //                              lPieceRewards.end());
-            // }
-            // if (!iPieceRewards.empty())
-            // {
-            //     maxI = *std::max_element(iPieceRewards.begin(),
-            //                              iPieceRewards.end());
-            // }
-            // VPrime[j] = maxI >= maxL;
-            // TODO : if execo than min avg
-            if (maxI >= maxL)
+            if (maxL < maxI)
             {
-                T[j] = std::make_unique<LPiece>();
-                VPrime[j] = maxL;
+                T.insert_or_assign(currState.clone(),
+                                   std::make_unique<LPiece>());
+                vPrime = maxL;
             }
             else
             {
-                T[j] = std::make_unique<IPiece>();
-                VPrime[j] = maxI;
+                T.insert_or_assign(currState.clone(),
+                                   std::make_unique<IPiece>());
+                vPrime = maxI;
             }
 
-            delta = std::max(delta, std::abs(VPrime[j] - V[j]));
+            delta = std::max(delta, std::abs(vPrime - currValue));
 
-            V[j] = VPrime[j];
+            V.insert_or_assign(currState.clone(), vPrime);
         }
 
         std::cout << "i = " << i << " and delta = " << delta << std::endl;
     }
 
     double sum = 0;
-    for (int i = 0; i < nbState; i++)
+    for (std::pair<const State, double>& item : V)
     {
-        sum += V[i];
+        sum += item.second;
     }
-    std::cout << "\naverage over final V " << sum / nbState << std::endl;
+    std::cout << "\naverage over final V " << sum / V.size() << std::endl;
 
     return T;
 }
 
-std::vector<State> MDP::generateAllStates()
+std::unordered_map<State, std::unique_ptr<Tromino>>
+MDP::trominoValueIterationMinAvg(double epsilon,
+                                 int maxIteration,
+                                 double lambda)
 {
-    int cells = width_ * height_;
-    if (cells < 0)
-        return {};
+    std::cout << "Min Average Tromino Value Iteration" << std::endl;
+    std::unordered_map<State, double> V = generateReachableStates(s0_.clone());
 
-    // Guard against shifting by >= 64 on platforms where that is UB.
-    // For reasonably small grids (as used in this project) this is fine.
-    uint64_t total = 1ULL;
-    if (cells >= 64)
+    std::unordered_map<State, std::unique_ptr<Tromino>> T;
+
+    double delta, reward, vPrime, vAfter, avgI, avgL;
+    delta = DBL_MAX;
+
+    for (int i = 0; i < maxIteration && delta > epsilon; i++)
     {
-        // too many states to enumerate safely with 64-bit mask
-        return {};
-    }
-    total <<= cells; // total = 2^cells
-
-    std::vector<State> states;
-    states.reserve(static_cast<size_t>(total) * 2);
-
-    for (uint64_t mask = 0; mask < total; ++mask)
-    {
-        std::vector<std::vector<bool>> grid(height_,
-                                            std::vector<bool>(width_, false));
-        for (int r = 0; r < height_; ++r)
+        delta = 0.0;
+        for (auto& [currState, currValue] : V)
         {
-            for (int c = 0; c < width_; ++c)
+            std::vector<Action> actions = currState.getAvailableActions();
+
+            int nbActions = actions.size();
+
+            if (nbActions == 0)
             {
-                int idx = r * width_ + c; // bit index for this cell
-                grid[r][c] = ((mask >> idx) & 1ULL) != 0ULL;
+                continue;
+            }
+
+            avgI = avgL = 0.0;
+            for (int k = 0; k < nbActions; k++)
+            {
+                for (State& placedState :
+                     currState.genAllStatesFromAction(actions[k]))
+                {
+                    State afterState = placedState.completeLines();
+
+                    auto it = V.find(afterState);
+                    if (it == V.end())
+                    {
+                        std::cerr << "ERROR (trominoValueIteration): the "
+                                     "state cannot be derived into "
+                                     "a non-reachable state"
+                                  << std::endl;
+                        exit(1);
+                    }
+                    vAfter = it->second;
+
+                    reward = PROBA_I_PIECE *
+                             (placedState.evaluate(config_) + lambda * vAfter);
+
+                    const Tromino* t = &afterState.getNextTromino();
+                    if (dynamic_cast<const LPiece*>(t) != nullptr)
+                    {
+                        avgL += reward;
+                    }
+                    else if (dynamic_cast<const IPiece*>(t) != nullptr)
+                    {
+                        avgI += reward;
+                    }
+                }
+            }
+            avgI /= nbActions;
+            avgL /= nbActions;
+            if (avgL < avgI)
+            {
+                T.insert_or_assign(currState.clone(),
+                                   std::make_unique<LPiece>());
+                vPrime = avgL;
+            }
+            else
+            {
+                T.insert_or_assign(currState.clone(),
+                                   std::make_unique<IPiece>());
+                vPrime = avgI;
+            }
+
+            delta = std::max(delta, std::abs(vPrime - currValue));
+
+            V.insert_or_assign(currState.clone(), vPrime);
+        }
+
+        std::cout << "i = " << i << " and delta = " << delta << std::endl;
+    }
+
+    double sum = 0;
+    for (std::pair<const State, double>& item : V)
+    {
+        sum += item.second;
+    }
+    std::cout << "\naverage over final V " << sum / V.size() << std::endl;
+
+    return T;
+}
+
+std::unordered_map<State, double> MDP::generateReachableStates(State s0)
+{
+    std::unordered_map<State, double> map;
+    std::vector<State> q;
+    size_t q_head = 0;
+
+    State s0_other = s0.clone();
+    const Tromino& current_tromino = s0_other.getNextTromino();
+    if (dynamic_cast<const IPiece*>(&current_tromino))
+    {
+        s0_other.setNextTromino(LPiece());
+    }
+    else
+    {
+        s0_other.setNextTromino(IPiece());
+    }
+
+    q.push_back(s0.clone());
+    map.emplace(std::move(s0), 0);
+
+    if (map.find(s0_other) == map.end())
+    {
+        q.push_back(s0_other.clone());
+        map.emplace(std::move(s0_other), 0);
+    }
+
+    while (q_head < q.size())
+    {
+        State currState = std::move(q[q_head]);
+        q_head++;
+
+        for (const Action& a : currState.getAvailableActions())
+        {
+            for (auto& nextState : currState.genAllStatesFromAction(a))
+            {
+                State finalNextState = nextState.completeLines();
+                if (map.find(finalNextState) == map.end())
+                {
+                    q.push_back(finalNextState.clone());
+                    map.emplace(std::move(finalNextState), 0.0);
+                }
             }
         }
-
-        Field f(grid);
-
-        // For each possible next piece type, create a State.
-        states.emplace_back(f, std::make_unique<IPiece>());
-        states.emplace_back(f, std::make_unique<LPiece>());
     }
-
-    return states;
+    return map;
 }
 
-size_t MDP::stateIndex(State& s)
+int MDP::playPolicy(
+    Game& game,
+    const std::unordered_map<State, Action>& policy,
+    const std::unordered_map<State, std::unique_ptr<Tromino>>& advPolicy)
 {
-    int cells = width_ * height_;
-    if (cells < 0 || cells >= 64)
-        return static_cast<size_t>(-1);
+    // maybe use the tromino policy to fix the very first Tromino
+    game.setState(s0_.clone());
+    game.setScore(0);
 
-    // Build mask the same way as in generateAllStates()
-    uint64_t mask = 0ULL;
-    std::vector<std::vector<bool>> grid = s.getField().getGrid();
-    // Basic sanity checks
-    if ((int)grid.size() != height_)
-        return static_cast<size_t>(-1);
+    State& curr = game.getState();
+    const std::unique_ptr<Tromino>* t_ptr;
+    std::unique_ptr<Tromino> t_owned;
 
-    for (int r = 0; r < height_; ++r)
+    auto itTromino = advPolicy.find(curr);
+    if (itTromino == advPolicy.end())
     {
-        if ((int)grid[r].size() != width_)
-            return static_cast<size_t>(-1);
-        for (int c = 0; c < width_; ++c)
+        if ((rand() / (double)RAND_MAX) < PROBA_I_PIECE)
         {
-            int idx = r * width_ + c;
-            if (grid[r][c])
-                mask |= (1ULL << idx);
-        }
-    }
-
-    // Determine piece index: 0 for IPiece, 1 for LPiece
-    const Tromino* t = &s.getNextTromino();
-    size_t pieceIndex = static_cast<size_t>(-1);
-    if (dynamic_cast<const IPiece*>(t) != nullptr)
-        pieceIndex = 0;
-    else if (dynamic_cast<const LPiece*>(t) != nullptr)
-        pieceIndex = 1;
-    else
-        return static_cast<size_t>(-1);
-
-    return static_cast<size_t>(mask) * 2u + pieceIndex;
-}
-
-int MDP::playPolicy(Game& game,
-                     std::vector<Action> policy,
-                     const std::vector<std::unique_ptr<Tromino>>& advPolicy)
-{
-    int i, gain;
-    i = 0;
-
-    while (game.getState().getAvailableActions().size() > 0 && i < MAX_ACTION)
-    {
-        State& curr = game.getState();
-        Action a = policy[stateIndex(curr)];
-
-        const Tromino* t = nullptr;
-        std::unique_ptr<Tromino> t_owned;
-
-        if (!advPolicy.empty())
-        {
-            t = advPolicy[stateIndex(curr)].get();
+            t_owned = std::make_unique<IPiece>();
         }
         else
+        {
+            t_owned = std::make_unique<LPiece>();
+        }
+        t_ptr = &t_owned;
+    }
+    else
+    {
+        t_ptr = &itTromino->second;
+    }
+    const std::unique_ptr<Tromino>& t = *t_ptr;
+    game.getState().setNextTromino(*t);
+
+    int nbAction = 0, gain;
+
+    while (game.getState().getAvailableActions().size() > 0 &&
+           nbAction < MAX_ACTION)
+    {
+        State& curr = game.getState();
+        auto itAction = policy.find(curr);
+        if (itAction == policy.end())
+        {
+            std::cerr << "ERROR the state:\n"
+                      << curr << std::endl
+                      << "haven't any associated action in the provided policy"
+                      << std::endl;
+            exit(1);
+        }
+        const Action& a = itAction->second;
+
+        const std::unique_ptr<Tromino>* t_ptr;
+        std::unique_ptr<Tromino> t_owned;
+
+        auto itTromino = advPolicy.find(curr);
+        if (itTromino == advPolicy.end())
         {
             if ((rand() / (double)RAND_MAX) < PROBA_I_PIECE)
             {
@@ -279,77 +379,86 @@ int MDP::playPolicy(Game& game,
             {
                 t_owned = std::make_unique<LPiece>();
             }
-            t = t_owned.get();
+            t_ptr = &t_owned;
         }
+        else
+        {
+            t_ptr = &itTromino->second;
+        }
+        const std::unique_ptr<Tromino>& t = *t_ptr;
 
         // compute deterministic preview states (placed and after completion)
-        State placed = curr.applyActionTromino(a, *t);
+        State placed = curr.applyActionTromino(a.clone(), *t);
         State after = placed.completeLines();
 
-        // pretty-print three fields side-by-side with connectors
-        auto fieldToLines = [](const Field& f)
-        {
-            std::vector<std::string> out;
-            for (int r = 0; r < f.getHeight(); ++r)
-            {
-                std::string line;
-                for (int c = 0; c < f.getWidth(); ++c)
-                    line.push_back(f.getGrid()[r][c] ? '*' : '.');
-                out.push_back(line);
-            }
-            return out;
-        };
-
-        std::vector<std::string> left = fieldToLines(curr.getField());
-        std::vector<std::string> middle = fieldToLines(placed.getField());
-        std::vector<std::string> right = fieldToLines(after.getField());
-
-        // piece name for connector
-        std::ostringstream oss;
-        oss << curr.getNextTromino();
-        std::string pieceName = oss.str();
-
-        // prepare connectors and align vertically
-        int rows =
-            std::max({(int)left.size(), (int)middle.size(), (int)right.size()});
-        int midRow = rows / 2; // place arrows in middle row
-        std::string arrow1 = " --- ";
-        arrow1 += pieceName + " --> ";
-        std::string arrow2 = " -- Completion -> ";
-
-        for (int r = 0; r < rows; ++r)
-        {
-            std::string l = (r < (int)left.size())
-                                ? left[r]
-                                : std::string(left[0].size(), ' ');
-            std::string m = (r < (int)middle.size())
-                                ? middle[r]
-                                : std::string(middle[0].size(), ' ');
-            std::string rg = (r < (int)right.size())
-                                 ? right[r]
-                                 : std::string(right[0].size(), ' ');
-
-            std::string conn1 =
-                (r == midRow) ? arrow1 : std::string(arrow1.size(), ' ');
-            std::string conn2 =
-                (r == midRow) ? arrow2 : std::string(arrow2.size(), ' ');
-
-            std::cout << l << conn1 << m << conn2 << rg << '\n';
-        }
+        // prettyPrint(curr, placed.clone(), after.clone());
 
         gain = placed.evaluate(config_);
 
         game.setScore(game.getScore() + gain);
 
         game.setState(std::move(after));
-        std::cout << "Current score: " << game.getScore() << "\n\n";
+        // std::cout << "Current score: " << game.getScore() << "\n\n";
 
-        i++;
+        nbAction++;
     }
 
-    std::cout << game.getState().getField();
-    std::cout << "\nGame Over! Global score: " << game.getScore() << " in " << i
-              << " actions \n";
+    // std::cout << game.getState().getField();
+    // std::cout << "\nGame Over! Global score: " << game.getScore() << " in "
+    //           << nbAction << " actions \n";
 
     return game.getScore();
+}
+
+void MDP::prettyPrint(State& curr, State placed, State after)
+{
+    // pretty-print three fields side-by-side with connectors
+    auto fieldToLines = [](const Field& f)
+    {
+        std::vector<std::string> out;
+        for (int r = 0; r < f.getHeight(); ++r)
+        {
+            std::string line;
+            for (int c = 0; c < f.getWidth(); ++c)
+                line.push_back(f.getGrid()[r][c] ? '*' : '.');
+            out.push_back(line);
+        }
+        return out;
+    };
+
+    std::vector<std::string> left = fieldToLines(curr.getField());
+    std::vector<std::string> middle = fieldToLines(placed.getField());
+    std::vector<std::string> right = fieldToLines(after.getField());
+
+    // piece name for connector
+    std::ostringstream oss;
+    oss << curr.getNextTromino();
+    std::string pieceName = oss.str();
+
+    // prepare connectors and align vertically
+    int rows =
+        std::max({(int)left.size(), (int)middle.size(), (int)right.size()});
+    int midRow = rows / 2; // place arrows in middle row
+    std::string arrow1 = " --- ";
+    arrow1 += pieceName + " --> ";
+    std::string arrow2 = " -- Completion -> ";
+
+    for (int r = 0; r < rows; ++r)
+    {
+        std::string l =
+            (r < (int)left.size()) ? left[r] : std::string(left[0].size(), ' ');
+        std::string m = (r < (int)middle.size())
+                            ? middle[r]
+                            : std::string(middle[0].size(), ' ');
+        std::string rg = (r < (int)right.size())
+                             ? right[r]
+                             : std::string(right[0].size(), ' ');
+
+        std::string conn1 =
+            (r == midRow) ? arrow1 : std::string(arrow1.size(), ' ');
+        std::string conn2 =
+            (r == midRow) ? arrow2 : std::string(arrow2.size(), ' ');
+
+        std::cout << l << conn1 << m << conn2 << rg << '\n';
+    }
 }

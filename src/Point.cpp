@@ -1,6 +1,6 @@
 #include "Point.h"
 
-bool Point::operator==(const Point& p)
+bool Point::operator==(const Point& p) const
 {
     return x_ == p.getX() && y_ == p.getY();
 }

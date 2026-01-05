@@ -1,15 +1,20 @@
+#include "Action.h"
+#include "State.h"
 #include <MDP.h>
-#include <cstddef>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <memory>
+#include <unordered_map>
 
 #define WIDTH 4
 #define HEIGHT 4
 #define CONFIG_PATH "config.txt"
-#define EPSILON 0.00000001
-#define MAX_IT 100
-#define LAMBDA 0.5
+#define EPSILON 0.000001
+#define MAX_IT 1000
+#define ACTION_POLICY_LAMBDA 0.9
+#define TROMINO_POLICY_LAMBDA 0.9
+#define NB_SIMU 1
 
 int main()
 {
@@ -40,48 +45,53 @@ int main()
     std::cout << "]\n\n";
 
     // initializing the game and the MDP to compute the optimal policy
-    // Field field1(WIDTH, HEIGHT);
-    // Game game(config, field1);
-    //
-    // MDP mdp1(field1.getWidth(), field1.getHeight(), game.getState().clone(),
-    //          config);
-    //
-    // std::cout << "All constants:" << std::endl
-    //           << "width = " << WIDTH << ", height = " << HEIGHT
-    //           << ", probaIPiece = " << PROBA_I_PIECE
-    //           << ", maxGameAction = " << MAX_ACTION << std::endl
-    //           << "epsilon = " << EPSILON << ", maxIteration = " << MAX_IT
-    //           << ", lambda = " << LAMBDA << std::endl
-    //           << std::endl;
-    //
-    // std::cout << "\n" << std::endl;
-    //
-    // // compute the optimal policy using the value iteration algorithm
-    // std::vector<Action> policy1 = mdp1.valueIteration(EPSILON, MAX_IT, LAMBDA);
-    //
-    // // play the computed policy on the game
-    // int playerOnly =
-    //     mdp1.playPolicy(game, policy1, std::vector<std::unique_ptr<Tromino>>());
+    Field field(WIDTH, HEIGHT);
+    Game game(config, field);
 
-    Field field2(WIDTH, HEIGHT);
-    Game game2(config, field2);
+    MDP mdp(field.getWidth(), field.getHeight(), game.getState().clone(),
+            config);
 
-    MDP mdp2(field2.getWidth(), field2.getHeight(), game2.getState().clone(),
-             config);
+    std::cout << "All constants:" << std::endl
+              << "width = " << WIDTH << ", height = " << HEIGHT
+              << ", probaIPiece = " << PROBA_I_PIECE
+              << ", maxGameAction = " << MAX_ACTION << std::endl
+              << "epsilon = " << EPSILON << ", maxIteration = " << MAX_IT
+              << ", action policy lambda = " << ACTION_POLICY_LAMBDA
+              << ", tromino policy lambda = " << TROMINO_POLICY_LAMBDA
+              << " and number of simulation = " << NB_SIMU << std::endl
+              << std::endl;
 
-    // compute the optimal adversary policy
-    std::vector<std::unique_ptr<Tromino>> trominos =
-        mdp2.trominoValueIteration(EPSILON, MAX_IT, LAMBDA);
+    std::unordered_map<State, std::unique_ptr<Tromino>> minMaxTrominos =
+        mdp.trominoValueIterationMinMax(EPSILON, MAX_IT, TROMINO_POLICY_LAMBDA);
 
-    std::cout << "\n" << std::endl;
+    std::cout << std::endl << std::endl;
 
-    std::vector<Action> policy2 = mdp2.valueIteration(EPSILON, MAX_IT, LAMBDA);
+    std::unordered_map<State, std::unique_ptr<Tromino>> minAvgTrominos =
+        mdp.trominoValueIterationMinAvg(EPSILON, MAX_IT, TROMINO_POLICY_LAMBDA);
 
-    // int both = mdp2.playPolicy(game2, policy2, trominos);
-    mdp2.playPolicy(game2, policy2, trominos);
+    std::cout << std::endl << std::endl;
 
-    // std::cout << "playerOnly: " << playerOnly << std::endl
-    //           << "both: " << both << std::endl;
+    // compute the optimal policy using the value iteration algorithm
+    std::unordered_map<State, Action> actions =
+        mdp.actionValueIteration(EPSILON, MAX_IT, ACTION_POLICY_LAMBDA);
+
+    int rand = 0;
+
+    for (int i = 0; i < NB_SIMU; i++)
+    {
+        rand += mdp.playPolicy(
+            game, actions,
+            std::unordered_map<State, std::unique_ptr<Tromino>>());
+    }
+
+    int minMax = mdp.playPolicy(game, actions, minMaxTrominos);
+    int minAvg = mdp.playPolicy(game, actions, minAvgTrominos);
+
+    std::cout << "Average results:" << std::endl
+              << "Random Adversary moves: " << (double)rand / (double)NB_SIMU
+              << std::endl
+              << "Min Max Adversary Moves: " << minMax << std::endl
+              << "Min Avg Adversary Moves: " << minAvg << std::endl;
 
     return 0;
 }

@@ -1,6 +1,6 @@
 #include "Field.h"
 
-bool Field::isAvailable(int line, int column)
+bool Field::isAvailable(int line, int column) const
 {
     if (line < 0 || line >= height_)
         return false;
@@ -9,10 +9,10 @@ bool Field::isAvailable(int line, int column)
     return !grid_[line][column];
 }
 
-bool Field::isAvailable(const Tromino& t, int line, int column, int rotation)
+bool Field::isAvailable(const Tromino& t, int line, int column, int rotation) const
 {
     std::vector<Offset> offsets = t.getOffsets(rotation);
-    for (Offset& off : offsets)
+    for (const Offset& off : offsets)
     {
         int l = line + off[0];
         int c = column + off[1];
@@ -27,7 +27,7 @@ bool Field::addTromino(const Tromino& t, int line, int column, int rotation)
     if (!isAvailable(t, line, column, rotation))
         return false;
     std::vector<Offset> offsets = t.getOffsets(rotation);
-    for (Offset& off : offsets)
+    for (const Offset& off : offsets)
     {
         int l = line + off[0];
         int c = column + off[1];
@@ -36,7 +36,7 @@ bool Field::addTromino(const Tromino& t, int line, int column, int rotation)
     return true;
 }
 
-std::vector<Point> Field::getEmptyPositions()
+std::vector<Point> Field::getEmptyPositions() const
 {
     std::vector<Point> positions;
     for (int l = 0; l < height_; ++l)
@@ -50,7 +50,7 @@ std::vector<Point> Field::getEmptyPositions()
     return positions;
 }
 
-Field Field::clone()
+Field Field::clone() const
 {
     Field clone(grid_);
     return clone;

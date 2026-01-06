@@ -31,7 +31,7 @@ $(BINDIR):
 clean:
 	rm -rf $(OBJDIR) $(BINDIR)
 
-run: $(TARGET)
+run: clean $(TARGET)
 	./$(TARGET)
 
 bear:

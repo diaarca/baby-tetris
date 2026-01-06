@@ -7,9 +7,11 @@
 std::unordered_map<State, Action>
 MDP::actionValueIteration(double epsilon, int maxIteration, double lambda)
 {
-    std::cout << "Exploration Value Iteration" << std::endl;
+    if (DEBUG)
+    {
+        std::cout << "Exploration Value Iteration" << std::endl;
+    }
     std::unordered_map<State, double> V = generateReachableStates(s0_.clone());
-    std::cout << "Number of reachable states: " << V.size() << std::endl;
 
     std::unordered_map<State, Action> A;
 
@@ -71,7 +73,10 @@ MDP::actionValueIteration(double epsilon, int maxIteration, double lambda)
             V.insert_or_assign(currState.clone(), vPrime);
         }
 
-        std::cout << "i = " << i << " and delta = " << delta << std::endl;
+        if (DEBUG)
+        {
+            std::cout << "i = " << i << " and delta = " << delta << std::endl;
+        }
     }
 
     double sum = 0;
@@ -79,7 +84,10 @@ MDP::actionValueIteration(double epsilon, int maxIteration, double lambda)
     {
         sum += item.second;
     }
-    std::cout << "\naverage over final V " << sum / V.size() << std::endl;
+    if (DEBUG)
+    {
+        std::cout << "\naverage over final V " << sum / V.size() << std::endl;
+    }
 
     return A;
 }
@@ -89,7 +97,10 @@ MDP::trominoValueIterationMinMax(double epsilon,
                                  int maxIteration,
                                  double lambda)
 {
-    std::cout << "Min Max Tromino Value Iteration" << std::endl;
+    if (DEBUG)
+    {
+        std::cout << "Min Max Tromino Value Iteration" << std::endl;
+    }
     std::unordered_map<State, double> V = generateReachableStates(s0_.clone());
 
     std::unordered_map<State, std::unique_ptr<Tromino>> T;
@@ -162,7 +173,10 @@ MDP::trominoValueIterationMinMax(double epsilon,
             V.insert_or_assign(currState.clone(), vPrime);
         }
 
-        std::cout << "i = " << i << " and delta = " << delta << std::endl;
+        if (DEBUG)
+        {
+            std::cout << "i = " << i << " and delta = " << delta << std::endl;
+        }
     }
 
     double sum = 0;
@@ -170,7 +184,10 @@ MDP::trominoValueIterationMinMax(double epsilon,
     {
         sum += item.second;
     }
-    std::cout << "\naverage over final V " << sum / V.size() << std::endl;
+    if (DEBUG)
+    {
+        std::cout << "\naverage over final V " << sum / V.size() << std::endl;
+    }
 
     return T;
 }
@@ -180,7 +197,10 @@ MDP::trominoValueIterationMinAvg(double epsilon,
                                  int maxIteration,
                                  double lambda)
 {
-    std::cout << "Min Average Tromino Value Iteration" << std::endl;
+    if (DEBUG)
+    {
+        std::cout << "Min Average Tromino Value Iteration" << std::endl;
+    }
     std::unordered_map<State, double> V = generateReachableStates(s0_.clone());
 
     std::unordered_map<State, std::unique_ptr<Tromino>> T;
@@ -255,7 +275,10 @@ MDP::trominoValueIterationMinAvg(double epsilon,
             V.insert_or_assign(currState.clone(), vPrime);
         }
 
-        std::cout << "i = " << i << " and delta = " << delta << std::endl;
+        if (DEBUG)
+        {
+            std::cout << "i = " << i << " and delta = " << delta << std::endl;
+        }
     }
 
     double sum = 0;
@@ -263,7 +286,10 @@ MDP::trominoValueIterationMinAvg(double epsilon,
     {
         sum += item.second;
     }
-    std::cout << "\naverage over final V " << sum / V.size() << std::endl;
+    if (DEBUG)
+    {
+        std::cout << "\naverage over final V " << sum / V.size() << std::endl;
+    }
 
     return T;
 }

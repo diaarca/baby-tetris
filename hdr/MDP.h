@@ -10,6 +10,7 @@
 #include <vector>
 
 #define MAX_ACTION 10000
+#define DEBUG 0
 
 class MDP
 {

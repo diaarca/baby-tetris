@@ -1,6 +1,6 @@
 #include "Action.h"
 #include "State.h"
-#include <MDP.h>
+#include "MDP.h"
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
@@ -8,13 +8,13 @@
 #include <unordered_map>
 
 #define WIDTH 4
-#define HEIGHT 4
+#define HEIGHT 5
 #define CONFIG_PATH "config.txt"
-#define EPSILON 0.000001
+#define EPSILON 0.00000001
 #define MAX_IT 1000
 #define ACTION_POLICY_LAMBDA 0.9
-#define TROMINO_POLICY_LAMBDA 0.9
-#define NB_SIMU 1
+#define TROMINO_POLICY_LAMBDA 0.1
+#define NB_SIMU 50
 
 int main()
 {
@@ -54,8 +54,8 @@ int main()
     std::cout << "All constants:" << std::endl
               << "width = " << WIDTH << ", height = " << HEIGHT
               << ", probaIPiece = " << PROBA_I_PIECE
-              << ", maxGameAction = " << MAX_ACTION << std::endl
-              << "epsilon = " << EPSILON << ", maxIteration = " << MAX_IT
+              << ", maxGameAction = " << MAX_ACTION << ", epsilon = " << EPSILON
+              << ", maxIteration = " << MAX_IT
               << ", action policy lambda = " << ACTION_POLICY_LAMBDA
               << ", tromino policy lambda = " << TROMINO_POLICY_LAMBDA
               << " and number of simulation = " << NB_SIMU << std::endl
@@ -64,12 +64,18 @@ int main()
     std::unordered_map<State, std::unique_ptr<Tromino>> minMaxTrominos =
         mdp.trominoValueIterationMinMax(EPSILON, MAX_IT, TROMINO_POLICY_LAMBDA);
 
-    std::cout << std::endl << std::endl;
+    if (DEBUG)
+    {
+        std::cout << std::endl << std::endl;
+    }
 
     std::unordered_map<State, std::unique_ptr<Tromino>> minAvgTrominos =
         mdp.trominoValueIterationMinAvg(EPSILON, MAX_IT, TROMINO_POLICY_LAMBDA);
 
-    std::cout << std::endl << std::endl;
+    if (DEBUG)
+    {
+        std::cout << std::endl << std::endl;
+    }
 
     // compute the optimal policy using the value iteration algorithm
     std::unordered_map<State, Action> actions =

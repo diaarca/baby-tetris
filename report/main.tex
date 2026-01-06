@@ -10,6 +10,8 @@
 \usepackage{amsmath}
 \usepackage{paracol}
 \usepackage{vwcol}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
 
 \setlength{\parindent}{.45cm}
 \pagestyle{plain} % Use plain page style for all pages
@@ -295,7 +297,273 @@ Section~\ref{sec:question1} was pretty relevant because we can observe
 the quick convergence to the optimal policy (at the last iteration, $\Delta$ 
 is always equal to $0$).
 
-\subsubsection{Usage}
+\subsection{Reachable States}
+% \label{sec:improvement}
+\quad Instead of computing the value iteration on all possible states, we focus on
+the reachable states from a given starting state $s_0$. To achieve this, we
+implement a Breadth First Search (BFS) algorithm that explores all reachable
+states iteratively from the current state.:
+
+\begin{algorithm}[H]
+\caption{Generate Reachable States}
+\begin{algorithmic}[1]
+\State $Q$: a queue of states
+\State $s$: a state
+\State $H$: a hashMap of states
+\State $s \gets s_0$
+\State $Q.\text{push}(s)$
+\While{$Q.\text{isNotEmpty}()$}
+    \State $s \gets Q.\text{pop}()$
+    \For{$a$: \text{availableActions}$(s)$}
+        \State $s_{\text{Placed}} \gets \text{applyAction}(s, a)$
+        \State $s_{\text{After}} \gets s_{\text{Placed}}.\text{completeLines}()$
+        \If{$Q.\text{doesNotContain}(s_{\text{After}})$ \textbf{and} $H.\text{doesNotContain}(s_{\text{After}})$}
+            \State $Q.\text{push}(s_{\text{After}})$
+        \EndIf
+    \EndFor
+    \State $H.\text{push}(s)$
+\EndWhile
+\State \Return $H$
+\end{algorithmic}
+\end{algorithm}
+
+\newpage
+
+Then we can repeat our experiments that produces results that are way better:
+\begin{paracol}{2}
+    \begin{lstlisting}[title=height: 4 and $\lambda$: 0.1]
+    All constants:
+    width = 4, height = 4, probaIPiece = 0.5, maxGameAction = 10000, epsilon = 1e-08, maxIteration = 1000, lambda = 0.1
+
+    i = 0 and delta = 6.10288
+    i = 1 and delta = 0.352625
+    i = 2 and delta = 0.0250445
+    i = 3 and delta = 0.0010013
+    i = 4 and delta = 4.28143e-05
+    i = 5 and delta = 1.79071e-06
+    i = 6 and delta = 4.8676e-08
+    i = 7 and delta = 1.07541e-09
+
+    average over final V 0.565842
+    ....
+    ....
+    ..**
+    ..**
+
+    Game Over! Global score: 7632 in 10000 actions
+    _________________________________
+    Executed in    7.69 secs
+    \end{lstlisting}
+
+
+  	\switchcolumn
+    \begin{lstlisting}[title=height: 4 and $\lambda$: 0.9]
+    All constants:
+    width = 4, height = 4, probaIPiece = 0.5, maxGameAction = 10000, epsilon = 1e-08, maxIteration = 1000, lambda = 0.9
+
+    i = 0 and delta = 8.36976
+    i = 1 and delta = 5.32365
+    i = 2 and delta = 3.54512
+    i = 3 and delta = 2.10366
+    ...
+    i = 87 and delta = 1.33224e-08
+    i = 88 and delta = 1.0733e-08
+    i = 89 and delta = 8.64692e-09
+
+    average over final V 4.15109
+    *...
+    *..*
+    *..*
+    **.*
+
+    Game Over! Global score: 11118 in 10000 actions
+    _________________________________
+    Executed in   26.53 secs
+    \end{lstlisting}
+\end{paracol}
+
+\begin{paracol}{2}
+    \begin{lstlisting}[title=height: 5 and $\lambda$: 0.1]
+    All constants:
+    width = 4, height = 5, probaIPiece = 0.5, maxGameAction = 10000, epsilon = 1e-08, maxIteration = 1000, lambda = 0.1
+
+    i = 0 and delta = 6.20552
+    i = 1 and delta = 0.477762
+    i = 2 and delta = 0.0334845
+    i = 3 and delta = 0.00181086
+    i = 4 and delta = 6.29689e-05
+    i = 5 and delta = 2.6382e-06
+    i = 6 and delta = 1.32337e-07
+    i = 7 and delta = 6.63914e-09
+
+    average over final V 0.559813
+    ....
+    ....
+    ....
+    *...
+    ***.
+
+    Game Over! Global score: 7620 in 10000 actions
+    ________________________________
+    Executed in   46.73 secs
+    \end{lstlisting}
+
+    \switchcolumn
+    \begin{lstlisting}[title=height: 5 and $\lambda$: 0.9]
+    All constants:
+    width = 4, height = 5, probaIPiece = 0.5, maxGameAction = 10000, epsilon = 1e-08, maxIteration = 1000, lambda = 0.9
+
+    i = 0 and delta = 9.7563
+    i = 1 and delta = 6.7369
+    i = 2 and delta = 4.43912
+    i = 3 and delta = 2.70431
+    ...
+    i = 88 and delta = 1.44415e-08
+    i = 89 and delta = 1.16674e-08
+    i = 90 and delta = 9.42616e-09
+
+    average over final V 4.54237
+    ...*
+    ..**
+    .***
+    .***
+    .***
+
+    Game Over! Global score: 13305 in 10000 actions
+    _________________________________
+    Executed in  402.82 secs
+    \end{lstlisting}
+\end{paracol}
+
+\quad We can then remark that with this new implementation, the value iteration algorithm is quite slower both in terms of computation (per iteration) and in number of iteration. For instance, the 4$\times$4 game with $\lambda = 0.4$ wasn't able to play all the 10000 actions with being blocked while we can now play it with a way more "risky" policy ($\lambda = 0.9$).
+
+\section{Question 2: Adversarial MDP For Opponent}
+\quad The goal of this part is to design an adversary policy that selects tromino pieces for the game
+with the intention of minimizing the players score.
+For this policy we use once again value iteration, but this time we minimize the expected cumulative 
+discounted reward over time from the available actions. The policy chooses the tromino piece that 
+leads to the lowest expected score for the player.
+We have the same states (reachable states), actions, transition function and reward function as in Section~\ref{sec:question1},
+the only change is the value iteration equation.
+% \[
+% V(s) = \min_{a \in A} \sum_{s' \in S} P(s' | s, a) \cdot \left( R(s, a, s') + \lambda V(s') \right)
+% \]
+The player will still use the optimal policy computed in Section~\ref{sec:question1} to play the game.
+
+\subsubsection{Choosing the Tromino Piece}
+\quad We considered two different heuristic approaches for choosing the tromino piece:
+\begin{itemize}
+    \item \textbf{Lowest Maximal Expected Reward}: The policy chooses the tromino piece that leads to the lowest maximal 
+    expected reward for the player.
+    \[
+    V(s) = \min_{t \in \{I,L\}} \max_{a \in A_t(s)} \sum_{s'} P(s'|s,a,t) \cdot \left( R(s,a,s') + \lambda V(s') \right)
+    \]
+
+    \item \textbf{Lowest Average Expected Reward}: The policy chooses the tromino piece that leads to the lowest average
+    expected reward for the player.
+    \[
+    V(s) = \min_{t \in \{I,L\}} \frac{1}{|A_t(s)|} \sum_{a \in A_t(s)} \sum_{s'} P(s'|s,a,t) \cdot \left( R(s,a,s') + \lambda V(s') \right)
+    \]
+\end{itemize}
+Both approaches produce similar results, with no remarkable difference. However, compared to the random
+adversary policy, where the tromino pieces are chosen randomly, the tromino value iteration, for both approaches, 
+successfully decreases the player's score.  \\
+
+\subsection{Implementation}
+\quad We add a new method in the \code{MDP} class that computes value iteration for the adversary policy. Both the \code{trominoValueIterationMinMax} and \code{trominoValueIterationMinAvg} methods share a common value iteration framework. They primarily differ in how the next tromino piece is chosen by the adversary, which in turn defines the update rule for the state value function $V(s)$. The common part involves an outer loop for value iteration convergence and an inner loop iterating through all reachable states via a map `V`.
+
+\subsubsection{Lowest Maximal Expected Reward (\code{trominoValueIterationMinMax})}
+\quad In this approach, the adversary aims to minimize the maximum possible expected reward that the player can achieve. For each state, the algorithm computes the best outcome for the player for each potential next piece. The adversary then chooses the piece that leads to the lower of these two maximal rewards.
+
+\begin{lstlisting}[language=C++, caption={Lowest Maximal Expected Reward}, label={lst:minmax_diff_cpp}]
+// ... (within the loop over all reachable states)
+// for (auto& [currState, currValue] : V)
+
+    double maxI = 0.0, maxL = 0.0;
+    for (const Action& action : currState.getAvailableActions())
+    {
+        // This inner loop evaluates outcomes for both next-piece possibilities
+        for (State& placedState : currState.genAllStatesFromAction(action))
+        {
+            State afterState = placedState.completeLines();
+            double vAfter = V.at(afterState);
+            double reward = 0.5 * (placedState.evaluate(config_) + lambda * vAfter);
+
+            const Tromino* t = &afterState.getNextTromino();
+            if (dynamic_cast<const LPiece*>(t))
+            {
+                maxL = std::max(maxL, reward);
+            }
+            else if (dynamic_cast<const IPiece*>(t))
+            {
+                maxI = std::max(maxI, reward);
+            }
+        }
+    }
+    // The new state value (vPrime) is the minimum of the two maximal rewards
+    if (maxL < maxI)
+    {
+        T.insert_or_assign(currState.clone(), std::make_unique<LPiece>());
+        vPrime = maxL;
+    }
+    else
+    {
+        T.insert_or_assign(currState.clone(), std::make_unique<IPiece>());
+        vPrime = maxI;
+    }
+// ... (the rest of the loop updates delta and V[currState] with vPrime)
+\end{lstlisting}
+
+\subsubsection{Lowest Average Expected Reward (\code{trominoValueIterationMinAvg})}
+\quad In this variant, the adversary selects the next tromino ('I' or 'L') that results in the lowest average expected reward for the player, averaged over all available actions.
+
+\begin{lstlisting}[language=C++, caption={Lowest Average Expected Reward}, label={lst:minavg_diff_cpp}]
+// ... (within the loop over all reachable states)
+// for (auto& [currState, currValue] : V)
+
+    double avgI = 0.0, avgL = 0.0;
+    int nbActions = currState.getAvailableActions().size();
+
+    for (const Action& action : currState.getAvailableActions())
+    {
+        // This inner loop evaluates outcomes for both next-piece possibilities
+        for (State& placedState : currState.genAllStatesFromAction(action))
+        {
+            State afterState = placedState.completeLines();
+            double vAfter = V.at(afterState);
+            double reward = 0.5 * (placedState.evaluate(config_) + lambda * vAfter);
+
+            const Tromino* t = &afterState.getNextTromino();
+            if (dynamic_cast<const LPiece*>(t))
+            {
+                avgL += reward;
+            }
+            else if (dynamic_cast<const IPiece*>(t))
+            {
+                avgI += reward;
+            }
+        }
+    }
+    // Normalize the sums to get the average reward per action
+    if (nbActions > 0) {
+        avgI /= nbActions;
+        avgL /= nbActions;
+    }
+    // The new state value (vPrime) is the minimum of the two average rewards
+    if (avgL < avgI)
+    {
+        T.insert_or_assign(currState.clone(), std::make_unique<LPiece>());
+        vPrime = avgL;
+    }
+    else
+    {
+        T.insert_or_assign(currState.clone(), std::make_unique<IPiece>());
+        vPrime = avgI;
+    }
+// ... (the rest of the loop updates delta and V[currState] with vPrime)
+\end{lstlisting}
+
+\section{Usage}
 \quad Different constants can be adjusted by modifying the corresponding \code{\#define} 
 statements in \code{src/Tetris.cpp}, \code{hdr/MDP.h} and \code{hdr/State.h}.
 
@@ -328,47 +596,4 @@ played game (evolution of the state at each action) as follows:
     Current score: 735
 \end{lstlisting}
 
-\subsection{Reachable States}
-% \label{sec:improvement}
-\quad Instead of computing the value iteration on all possible states, we focus on
-the reachable states from a given starting state $s_0$. To achieve this, we
-implement a Breadth First Search (BFS) algorithm that explores all reachable
-states iteratively from the current state. 
-% implem : 
-
-
-\section{Question 2: Adversarial MDP For Opponent}
-\quad The goal of this part is to design an adversary policy that selects tromino pieces for the game
-with the intention of minimizing the players score.
-For this policy we use once again value iteration, but this time we minimize the expected cumulative 
-discounted reward over time from the available actions. The policy chooses the tromino piece that 
-leads to the lowest expected score for the player.
-We have the same states (reachable states), actions, transition function and reward function as in Section~\ref{sec:question1},
-the only change is the value iteration equation.
-% \[
-% V(s) = \min_{a \in A} \sum_{s' \in S} P(s' | s, a) \cdot \left( R(s, a, s') + \lambda V(s') \right)
-% \]
-The player will still use the optimal policy computed in Section~\ref{sec:question1} to play the game.
-
-\subsubsection{Choosing the Tromino Piece}
-\quad We considered two different heuristic approaches for choosing the tromino piece:
-\begin{itemize}
-    \item \textbf{Lowest Maximal Expected Reward}: The policy chooses the tromino piece that leads to the lowest maximal 
-    expected reward for the player.
-    \[
-    V(s) = \min_{t \in \{I,L\}} \max_{a \in A_t(s)} \sum_{s'} P(s'|s,a,t) \cdot \left( R(s,a,s') + \lambda V(s') \right)
-    \]
-
-    \item \textbf{Lowest Average Expected Reward}: The policy chooses the tromino piece that leads to the lowest average
-    expected reward for the player. CHECK THE EQUATION!!!!
-    \[
-    V(s) = \min_{t \in \{I,L\}} \frac{1}{|A_t(s)|} \sum_{a \in A_t(s)} \sum_{s'} P(s'|s,a,t) \cdot \left( R(s,a,s') + \lambda V(s') \right)
-    \]
-\end{itemize}
-Both approaches produce similar results, with no remarkable difference. However, compared to the random
-adversary policy, where the tromino pieces are chosen randomly, the tromino value iteration, for both approaches, 
-successfully decreases the player's score.  \\
-\subsection{Implementation}
-\quad We add a new method in the \code{MDP} class that computes value iteration for the adversary policy.
-LISTING!!!!
 \end{document}

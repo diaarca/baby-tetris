@@ -563,6 +563,71 @@ successfully decreases the player's score.  \\
 // ... (the rest of the loop updates delta and V[currState] with vPrime)
 \end{lstlisting}
 
+\newpage
+
+\subsection{Executions}
+\quad According to our implementation, we made the same executions in order to compare our adversary policies. Here we play the value iteration policy (from Section~/ref{sec:question1}) for the player on 3 adversary policies: random (based on \code{PROBA\_I\_PIECE}), Min-Max value iteration and Min-Avg iteration:
+
+\begin{paracol}{2}
+    \begin{lstlisting}[title=height: 4 and $\lambda_{tromino}$: 0.1]
+    All constants:
+    width = 4, height = 4, probaIPiece = 0.5, maxGameAction = 10000, epsilon = 1e-08, maxIteration = 1000, action policy lambda = 0.9, tromino policy lambda = 0.1 and number of simulation = 50
+
+    Average results:
+    Random Adversary moves: 11086.3
+    Min Max Adversary Moves: 9999
+    Min Avg Adversary Moves: 10000
+    ___________________________________
+    Executed in   35.04 secs
+    \end{lstlisting}
+
+
+  	\switchcolumn
+    \begin{lstlisting}[title=height: 4 and $\lambda_{tromino}$: 0.9]
+    All constants:
+    width = 4, height = 4, probaIPiece = 0.5, maxGameAction = 10000, epsilon = 1e-08, maxIteration = 1000, action policy lambda = 0.9, tromino policy lambda = 0.9 and number of simulation = 50
+
+    Average results:
+    Random Adversary moves: 11091.7
+    Min Max Adversary Moves: 9999
+    Min Avg Adversary Moves: 10000
+    ___________________________________
+    Executed in   40.04 secs
+    \end{lstlisting}
+\end{paracol}
+
+\begin{paracol}{2}
+    \begin{lstlisting}[title=height: 5 and $\lambda_{tromino}$: 0.1]
+    All constants:
+    width = 4, height = 5, probaIPiece = 0.5, maxGameAction = 10000, epsilon = 1e-08, maxIteration = 1000, action policy lambda = 0.9, tromino policy lambda = 0.9 and number of simulation = 50
+
+    Average results:
+    Random Adversary moves: 13285
+    Min Max Adversary Moves: 9996
+    Min Avg Adversary Moves: 9996
+    ___________________________________
+    Executed in  630.78 secs
+    \end{lstlisting}
+
+    \switchcolumn
+    \begin{lstlisting}[title=height: 5 and $\lambda_{tromino}$: 0.9]
+    All constants:
+    width = 4, height = 5, probaIPiece = 0.5, maxGameAction = 10000, epsilon = 1e-08, maxIteration = 1000, action policy lambda = 0.9, tromino policy lambda = 0.1 and number of simulation = 50
+
+    Average results:
+    Random Adversary moves: 13292.5
+    Min Max Adversary Moves: 9996
+    Min Avg Adversary Moves: 9996
+    ___________________________________
+    Executed in  537.57 secs
+    \end{lstlisting}
+\end{paracol}
+
+\subsubsection{Observations}
+\quad We can first observe that the score is not that much reduced by the adversary policies even if it is more noticeable in the 4$\times$5 case. This is caused by the lack of possibilities, we can only choose between 2 pieces where the player may have to choose between way more actions.
+
+Contrarily to the player value iteration we can remark that the $\lambda$ parameter doesn't affect the score of the game. This is due to the fact that the score is minimized in that case and then the factor with which we multiply the $V(s)$ will not change anything.
+
 \section{Usage}
 \quad Different constants can be adjusted by modifying the corresponding \code{\#define} 
 statements in \code{src/Tetris.cpp}, \code{hdr/MDP.h} and \code{hdr/State.h}.
@@ -571,7 +636,7 @@ In order to recompile and run the whole project, execute the following
 command:
 \begin{lstlisting}
     make run
-\end{lstlisting} 
+\end{lstlisting}
 
 Unlike the textual output shown in Section~\ref{sec:executions}, in the
 submitted version of the code, there is an exhaustive description of the

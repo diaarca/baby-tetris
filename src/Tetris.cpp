@@ -14,7 +14,7 @@
 #define MAX_IT 1000
 #define ACTION_POLICY_LAMBDA 0.9
 #define TROMINO_POLICY_LAMBDA 0.1
-#define NB_SIMU 50
+#define NB_SIMU 1
 
 int main()
 {

@@ -2,7 +2,7 @@
 This is an university project (in collaboration with [Seçkin Yağmur Ergin](https://github.com/xaelxx14)) that aims to create a MDP model for the Tetris game.
 The goal of such a model is to compute in advance the optimal strategy (maximizing the game score)
 
-## Installation
+## Usage
 0. Requirements:
     - gcc
     - make

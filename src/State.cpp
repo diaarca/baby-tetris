@@ -158,7 +158,7 @@ std::vector<State> State::genAllStatesFromAction(const Action& action) const
     return res;
 }
 
-int State::evaluate(const std::array<int, 3>& config) const
+int State::nbCompleteLines() const
 {
     int completedLines = 0;
     const auto& grid = field_.getGrid();
@@ -179,6 +179,12 @@ int State::evaluate(const std::array<int, 3>& config) const
         if (isComplete)
             completedLines++;
     }
+    return completedLines;
+}
+
+int State::evaluate(const std::array<int, 3>& config) const
+{
+    int completedLines = nbCompleteLines();
 
     int score = 0;
     switch (completedLines)

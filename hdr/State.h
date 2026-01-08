@@ -48,6 +48,7 @@ class State
     std::vector<State> genAllStatesFromAction(const Action& action) const;
 
     int evaluate(const std::array<int, 3>& config) const;
+    int nbCompleteLines() const;
     State completeLines() const;
 
     bool operator==(const State& other) const;

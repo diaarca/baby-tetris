@@ -6,6 +6,7 @@
 #include <iostream>
 #include <memory>
 #include <unordered_map>
+#include <vector>
 
 #define WIDTH 4
 #define HEIGHT 4
@@ -14,7 +15,9 @@
 #define MAX_IT 1000
 #define ACTION_POLICY_LAMBDA 0.9
 #define TROMINO_POLICY_LAMBDA 0.1
-#define NB_SIMU 1
+#define NB_SIMU 100
+#define LINE_WEIGHT 10.0  // High reward for clearing lines
+#define HEIGHT_WEIGHT 0.5 // Penalty for height
 
 int main()
 {
@@ -33,7 +36,7 @@ int main()
     {
         if (!(in >> config[i]))
         {
-            std::cerr << "Config must contain at least 5 ints\n";
+            std::cerr << "Config must contain at least 3 ints\n";
             return 1;
         }
     }
@@ -58,51 +61,57 @@ int main()
               << ", maxIteration = " << MAX_IT
               << ", action policy lambda = " << ACTION_POLICY_LAMBDA
               << ", tromino policy lambda = " << TROMINO_POLICY_LAMBDA
-              << " and number of simulation = " << NB_SIMU << std::endl
+              << ", number of simulation = " << NB_SIMU << std::endl
               << std::endl;
 
-    std::unordered_map<State, std::unique_ptr<Tromino>> minMaxTrominos =
-        mdp.trominoValueIterationMinMax(EPSILON, MAX_IT, TROMINO_POLICY_LAMBDA);
+    // --- Policy Computations ---
+    std::cout << "Computing policies..." << std::endl;
 
-    if (DEBUG)
-    {
-        std::cout << std::endl << std::endl;
-    }
-
-    std::unordered_map<State, std::unique_ptr<Tromino>> minAvgTrominos =
-        mdp.trominoValueIterationMinAvg(EPSILON, MAX_IT, TROMINO_POLICY_LAMBDA);
-
-    if (DEBUG)
-    {
-        std::cout << std::endl << std::endl;
-    }
-
-    // compute the optimal policy using the value iteration algorithm
-    std::unordered_map<State, Action> actions =
+    std::unordered_map<State, Action> vi_policy =
         mdp.actionValueIteration(EPSILON, MAX_IT, ACTION_POLICY_LAMBDA);
 
-    if (DEBUG)
+    std::unordered_map<State, Action> lh_policy = mdp.lineAndHeightPolicy(
+        ACTION_POLICY_LAMBDA, LINE_WEIGHT, HEIGHT_WEIGHT, EPSILON, MAX_IT);
+
+    std::unordered_map<State, std::unique_ptr<Tromino>> rand_tromino;
+    std::unordered_map<State, std::unique_ptr<Tromino>> minmax_tromino =
+        mdp.trominoValueIterationMinMax(EPSILON, MAX_IT, TROMINO_POLICY_LAMBDA);
+    std::unordered_map<State, std::unique_ptr<Tromino>> minavg_tromino =
+        mdp.trominoValueIterationMinAvg(EPSILON, MAX_IT, TROMINO_POLICY_LAMBDA);
+
+    std::cout << "Policies computed." << std::endl << std::endl;
+
+    // --- Simulations ---
+    std::cout << "Running simulations..." << std::endl;
+
+    double vi_rand_score = 0, lh_rand_score = 0;
+    for (int i = 0; i < NB_SIMU; ++i)
     {
-        std::cout << std::endl << std::endl;
+        vi_rand_score += mdp.playPolicy(game, vi_policy, rand_tromino);
+        lh_rand_score += mdp.playPolicy(game, lh_policy, rand_tromino);
     }
 
-    int rand = 0;
+    double vi_minmax_score = mdp.playPolicy(game, vi_policy, minmax_tromino);
+    double lh_minmax_score = mdp.playPolicy(game, lh_policy, minmax_tromino);
 
-    for (int i = 0; i < NB_SIMU; i++)
-    {
-        rand += mdp.playPolicy(
-            game, actions,
-            std::unordered_map<State, std::unique_ptr<Tromino>>());
-    }
+    double vi_minavg_score = mdp.playPolicy(game, vi_policy, minavg_tromino);
+    double lh_minavg_score = mdp.playPolicy(game, lh_policy, minavg_tromino);
 
-    int minMax = mdp.playPolicy(game, actions, minMaxTrominos);
-    int minAvg = mdp.playPolicy(game, actions, minAvgTrominos);
+    std::cout << "Simulations complete." << std::endl << std::endl;
 
-    std::cout << "Average results:" << std::endl
-              << "Random Adversary moves: " << (double)rand / (double)NB_SIMU
-              << std::endl
-              << "Min Max Adversary Moves: " << minMax << std::endl
-              << "Min Avg Adversary Moves: " << minAvg << std::endl;
+    // --- Results ---
+    std::cout << "------ Average Results ------" << std::endl << std::endl;
+
+    std::cout << "--- Basic Value Iteration Policy ---" << std::endl;
+    std::cout << "Random Adversary: " << vi_rand_score / NB_SIMU << std::endl;
+    std::cout << "MinMax Adversary: " << vi_minmax_score << std::endl;
+    std::cout << "MinAvg Adversary: " << vi_minavg_score << std::endl
+              << std::endl;
+
+    std::cout << "--- Line & Height Policy ---" << std::endl;
+    std::cout << "Random Adversary: " << lh_rand_score / NB_SIMU << std::endl;
+    std::cout << "MinMax Adversary: " << lh_minmax_score << std::endl;
+    std::cout << "MinAvg Adversary: " << lh_minavg_score << std::endl;
 
     return 0;
 }

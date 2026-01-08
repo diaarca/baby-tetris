@@ -47,4 +47,13 @@ class MDP
         const std::unordered_map<State, std::unique_ptr<Tromino>>& advPolicy);
 
     void prettyPrint(State& curr, State placed, State after);
+
+    std::unordered_map<State, Action> lineAndHeightPolicy(double lambda,
+                                                            double line_weight,
+                                                            double height_weight,
+                                                            double epsilon,
+                                                            int maxIteration);
+
+  private:
+    int getMaxHeight(const Field& field) const;
 };

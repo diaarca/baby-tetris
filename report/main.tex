@@ -640,15 +640,80 @@ successfully decreases the player's score.  \\
 Contrarily to the player value iteration we can remark that the $\lambda$ parameter doesn't affect the score of the game. This is due to the fact that the score is minimized in that case and then the factor with which we multiply the $V(s)$ will not change anything.
 
 \section{Question 3: Robust Policy For Player}
-\quad In this section, we study the case when the player do not make any
-assumption on the adversary policy by looking for policies that could suit with
-"any" adversary. Here we accept quite lower maximum score if it make
-the minimal score (over all adversary policies) is higher.
+\quad In this section, we study the case where the player doesn't make any
+assumptions on the adversary policy, searching for a generally suitable policy instead
+of optimizing against a specific one. We accept a lower maximum score if it elevates
+the minimal score across all adversary policies.\\
 
-Our first idea at this end is
+\quad To this end, the first idea we had was to implement a Max-Min value iteration.
+Player policy always considers the worst-case scenario against all adversary policies.
+This is achieved by modifying the value iteration to maximizing the minimum expected reward
+over all possible states resulting from the adversary's actions (tromino choices).
+\[
+V(s) = \max_{a \in A} \min_{t \in \{I,L\}} P(s' | s, a, t) \cdot \left( R(s, a, s') + \lambda V(s') \right)
+\]
 
+\quad The second approach we had was to parameterize the base player value iteration.
+The idea is to use these parameters as weight in the reward function to adjust the importance of each factor.
+\[R(s, a, s') := \text{wl} \cdot \text{completed\_lines}_{s'} -
+                \text{wh} \cdot \text{max\_cell\_height}_{s'} +
+                \text{ws} \cdot \text{score}_{s'} -
+                \text{wg} \cdot \text{gaps}_{s'}
+\]
+Where \code{wl}, \code{wh}, \code{ws} and \code{wg} are respectively the weights for completed lines, 
+the highest occupied cell's height, the produced score and the number of gaps obtained after the tromino placement.
+
+\subsection{Implementation}
+\subsubsection{Max - Min Value Iteration (\code{robustActionValueIteration})}
+\quad In this variant, the adversary selects the next tromino ('I' or 'L') that results in the lowest average expected reward for the player, averaged over all available actions.
+
+\begin{lstlisting}[language=C++, caption={Lowest Average Expected Reward}, label={lst:minavg_diff_cpp}]
+// ... (within the loop over all reachable states)
+// for (auto& [currState, currValue] : V)
+std::vector<Action> actions = currState.getAvailableActions();
+int nbActions = actions.size();
+
+if (nbActions == 0) {
+    continue;
+}
+
+std::vector<double> robust_action_values(nbActions);
+
+for (int k = 0; k < nbActions; k++) {
+    double min_reward_for_action = DBL_MAX;
+
+    auto nextStates = currState.genAllStatesFromAction(actions[k]);
+    if (nextStates.empty()) {
+        continue;
+    }
+
+    for (State& placedState : nextStates) {
+        State afterState = placedState.completeLines();
+
+        auto it = V.find(afterState);
+        if (it == V.end()) {
+            std::cerr << "ERROR (robustActionValueIteration): the state cannot be derived into a non-reachable state" << std::endl;
+            exit(1);
+        }
+        double vAfter = it->second;
+        double reward = placedState.evaluate(config_) + lambda * vAfter;
+
+        if (reward < min_reward_for_action) {
+            min_reward_for_action = reward;
+        }
+    }
+    robust_action_values[k] = min_reward_for_action;
+}
+
+vPrime = *std::max_element(robust_action_values.begin(), robust_action_values.end());
+\end{lstlisting}
+
+\subsection{Executions}
+BLABLABLA
+\subsection{Observations}
+BLABLABLA
 \section{Usage}
-\quad Different constants can be adjusted by modifying the corresponding \code{\#define} 
+\quad Different constants can be adjusted by modifying the corresponding \code{\#define}
 statements in \code{src/Tetris.cpp}, \code{hdr/MDP.h} and \code{hdr/State.h}.
 
 In order to recompile and run the whole project, execute the following

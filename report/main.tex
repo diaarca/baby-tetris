@@ -689,16 +689,16 @@ V(s) = \max_{a \in A} \min_{t \in \{I,L\}} P(s' | s, a, t) \cdot \left( R(s, a, 
 
 \quad The second approach we had was to parameterize the base player value iteration.
 The idea is to use these parameters as weight in the reward function to adjust the importance of each factor.
-\[R(s, a, s') := \text{wl} \cdot \text{completed\_lines}_{s'} -
-                \text{wh} \cdot \text{max\_cell\_height}_{s'} +
-                \text{ws} \cdot \text{score}_{s'} -
-                \text{wg} \cdot \text{gaps}_{s'}
+\[R(s, a, s') := \text{lw} \cdot \text{completed\_lines}_{s'} -
+                \text{hw} \cdot \text{max\_cell\_height}_{s'} +
+                \text{sw} \cdot \text{score}_{s'} -
+                \text{gr} \cdot \text{gaps}_{s'}
 \]
-Where \code{wl}, \code{wh}, \code{ws} and \code{wg} are respectively the weights for completed lines, 
+Where \code{lw}, \code{hw}, \code{sw} and \code{gr} are respectively the weights for completed lines,
 the highest occupied cell's height, the produced score and the number of gaps obtained after the tromino placement.
 
 \subsection{Executions}
-\quad The following table presents selected results from our grid search experiments for the parameterized policy and the performance of the dedicated Max-Min VI policy.
+\quad The following table presents selected results from our grid search experiments for the parameterized policy and the performance of the dedicated Max-Min Value Iteration (VI) policy.
 
 \begin{table}[H]
     \centering

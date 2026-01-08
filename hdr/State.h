@@ -49,6 +49,7 @@ class State
 
     int evaluate(const std::array<int, 3>& config) const;
     State completeLines() const;
+    int gapCheck() const;
 
     bool operator==(const State& other) const;
     size_t hash() const;

@@ -39,6 +39,11 @@ class MDP
                                 int maxIteration,
                                 double lambda);
 
+    std::unordered_map<State, std::unique_ptr<Tromino>>
+    trominoValueIterationGap(double epsilon,
+                             int maxIteration,
+                             double lambda);
+
     std::unordered_map<State, double> generateReachableStates(State s0);
 
     int playPolicy(

@@ -192,6 +192,100 @@ MDP::trominoValueIterationMinMax(double epsilon,
 }
 
 std::unordered_map<State, std::unique_ptr<Tromino>>
+MDP::trominoValueIterationGap(double epsilon,
+                       int maxIteration,
+                       double lambda)
+{
+    std::unordered_map<State, double> V = generateReachableStates(s0_.clone());
+    std::unordered_map<State, std::unique_ptr<Tromino>> T;
+    double delta, reward, vPrime, vAfter, avgI, avgL;
+    delta = DBL_MAX;
+
+    for (int i = 0; i < maxIteration && delta > epsilon; i++)
+    {
+        delta = 0.0;
+        for (auto& [currState, currValue] : V)
+        {
+            std::vector<Action> actions = currState.getAvailableActions();
+
+            int nbActions = actions.size();
+
+            if (nbActions == 0)
+            {
+                continue;
+            }
+            avgI = avgL = 0.0;
+            for (int k = 0; k < nbActions; k++)
+            {
+                for (State& placedState :
+                     currState.genAllStatesFromAction(actions[k]))
+                {
+                    State afterState = placedState.completeLines();
+
+                    auto it = V.find(afterState);
+                    if (it == V.end())
+                    {
+                        std::cerr << "ERROR (trominoValueIterationGap): the "
+                                     "state cannot be derived into "
+                                     "a non-reachable state"
+                                  << std::endl;
+                        exit(1);
+                    }
+                    vAfter = it->second;
+
+                    reward = placedState.gapCheck() + lambda * vAfter;
+
+                    const Tromino* t = &afterState.getNextTromino();
+                    if (dynamic_cast<const LPiece*>(t) != nullptr)
+                    {
+                        avgL += reward;
+                    }
+                    else if (dynamic_cast<const IPiece*>(t) != nullptr)
+                    {
+                        avgI += reward;
+                    }
+                }
+            }
+            //max gap
+            avgI /= nbActions;
+            avgL /= nbActions;
+            if (avgL < avgI)
+            {
+                T.insert_or_assign(currState.clone(),
+                                   std::make_unique<IPiece>());
+                vPrime = avgL;
+            }
+            else
+            {
+                T.insert_or_assign(currState.clone(),
+                                   std::make_unique<LPiece>());
+                vPrime = avgI;
+            }
+
+            delta = std::max(delta, std::abs(vPrime - currValue));
+
+            V.insert_or_assign(currState.clone(), vPrime);
+        }
+
+        if (DEBUG)
+        {
+            std::cout << "i = " << i << " and delta = " << delta << std::endl;
+        }
+    }
+
+    double sum = 0;
+    for (std::pair<const State, double>& item : V)
+    {
+        sum += item.second;
+    }
+    if (DEBUG)
+    {
+        std::cout << "\naverage over final V " << sum / V.size() << std::endl;
+    }
+
+    return T;
+}
+std::unordered_map<State, std::unique_ptr<Tromino>>
 MDP::trominoValueIterationMinAvg(double epsilon,
                                  int maxIteration,
                                  double lambda)

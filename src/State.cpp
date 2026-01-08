@@ -199,6 +199,36 @@ int State::evaluate(const std::array<int, 3>& config) const
     return score;
 }
 
+int State::gapCheck() const
+{
+    const auto& grid = field_.getGrid();
+    int rows = field_.getHeight();
+    int cols = field_.getWidth();
+
+    int gaps = 0;
+    for (int c = 0; c < cols; ++c)
+    {
+        int lineStart = 0;
+        for (int r = 0; r < rows; ++r)
+        {
+            if (grid[r][c])
+            {
+                lineStart++;
+            }
+            else if (lineStart > 0 && !grid[r][c]) //if line has started and we find an empty cell
+            {
+                gaps++;
+            }
+        }
+        if (lineStart != rows) //if gap before line starts
+        {
+            gaps += (rows - lineStart); 
+        }
+    }
+    return gaps; // Negative score for gaps
+}
+
+
 State State::completeLines() const
 {
     auto grid = field_.getGrid();

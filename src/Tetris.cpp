@@ -1,108 +1,301 @@
 #include "Action.h"
 #include "MDP.h"
 #include "State.h"
+#include <algorithm>
+#include <array>
+#include <cmath>
 #include <cstdlib>
 #include <fstream>
+#include <functional>
+#include <future>
+#include <iomanip>
 #include <iostream>
 #include <memory>
+#include <mutex>
+#include <thread>
 #include <unordered_map>
+#include <vector>
 
 #define WIDTH 4
 #define HEIGHT 4
-#define CONFIG_PATH "config.txt"
 #define EPSILON 0.00000001
 #define MAX_IT 1000
 #define ACTION_POLICY_LAMBDA 0.9
 #define TROMINO_POLICY_LAMBDA 0.1
-#define NB_SIMU 1
+#define NB_SIMU 100
+
+// --- Global Data Structures ---
+
+// Struct to hold the results for one configuration
+struct RunResult
+{
+    int config_index;
+    std::array<double, 4> params;
+    double random_score;
+    double minmax_score;
+    double minavg_score;
+    double gapavg_score;
+    double min_score;
+};
+
+// Global adversary policies to be accessible by all threads (read-only)
+std::unordered_map<State, std::unique_ptr<Tromino>> g_rand_tromino;
+std::unordered_map<State, std::unique_ptr<Tromino>> g_minmax_tromino;
+std::unordered_map<State, std::unique_ptr<Tromino>> g_minavg_tromino;
+std::unordered_map<State, std::unique_ptr<Tromino>> g_gapavg_tromino;
+
+// Global mutex to protect console output
+std::mutex g_cout_mutex;
+
+// --- Thread-safe evaluation function ---
+
+RunResult evaluate_configuration(int idx, std::array<double, 4> p, State s0)
+{
+    double line_w = p[0];
+    double height_w = p[1];
+    double score_w = p[2];
+    double gap_r = p[3];
+
+    // Each thread gets its own MDP and Game objects
+    Field field(WIDTH, HEIGHT);
+    Game game(field);
+    MDP mdp(WIDTH, HEIGHT, s0.clone());
+
+    {
+        std::lock_guard<std::mutex> lock(g_cout_mutex);
+        std::cout << "Running configuration #" << idx << ": {" << line_w << ", "
+                  << height_w << ", " << score_w << ", " << gap_r << "}"
+                  << std::endl;
+    }
+
+    std::unordered_map<State, Action> policy =
+        mdp.actionValueIteration(ACTION_POLICY_LAMBDA, line_w, height_w,
+                                 score_w, gap_r, EPSILON, MAX_IT);
+
+    double rand_score_sum = 0;
+    for (int i = 0; i < NB_SIMU; ++i)
+    {
+        rand_score_sum += mdp.playPolicy(game, policy, g_rand_tromino);
+    }
+    double rand_avg = rand_score_sum / NB_SIMU;
+    double minmax_score =
+        (double)mdp.playPolicy(game, policy, g_minmax_tromino);
+    double minavg_score =
+        (double)mdp.playPolicy(game, policy, g_minavg_tromino);
+    double gapavg_score =
+        (double)mdp.playPolicy(game, policy, g_gapavg_tromino);
+
+    double min_score =
+        std::min({rand_avg, minmax_score, minavg_score, gapavg_score});
+
+    return {idx,          p,        rand_avg, minmax_score, minavg_score,
+            gapavg_score, min_score};
+}
+
+// --- Analysis Helper Functions ---
+double calculate_variance(const RunResult& res)
+{
+    double mean = (res.random_score + res.minmax_score + res.minavg_score +
+                   res.gapavg_score) /
+                  4.0;
+    double sq_diff = 0;
+    sq_diff += std::pow(res.random_score - mean, 2);
+    sq_diff += std::pow(res.minmax_score - mean, 2);
+    sq_diff += std::pow(res.minavg_score - mean, 2);
+    sq_diff += std::pow(res.gapavg_score - mean, 2);
+    return sq_diff / 4.0;
+}
+
+void print_result_summary(const std::string& title, const RunResult& result)
+{
+    std::cout << "--- " << title << " ---" << std::endl;
+    std::cout << "  Configuration #" << result.config_index << ": {"
+              << result.params[0] << ", " << result.params[1] << ", "
+              << result.params[2] << ", " << result.params[3] << "}"
+              << std::endl;
+    std::cout << "  Scores -> Random: " << std::fixed << std::setprecision(2)
+              << result.random_score << " | MinMax: " << result.minmax_score
+              << " | MinAvg: " << result.minavg_score
+              << " | GapAvg: " << result.gapavg_score
+              << " | Min Score: " << result.min_score << std::endl
+              << std::endl;
+}
 
 int main()
 {
-    // initialize pseudo random generator
     srand((time(NULL) & 0xFFFF));
 
-    // parsing the "config.txt" file in order to parametrize the reward function
-    std::array<int, 3> config{};
-    std::ifstream in(CONFIG_PATH);
-    if (!in)
+    Field master_field(WIDTH, HEIGHT);
+    Game master_game(master_field);
+    MDP master_mdp(WIDTH, HEIGHT, master_game.getState().clone());
+    State s0 = master_game.getState().clone();
+
+    std::cout << "Computing adversary policies..." << std::endl;
+    // Initialize global adversary policies
+    g_rand_tromino =
+        std::unordered_map<State,
+                           std::unique_ptr<Tromino>>(); // Empty map for random
+    g_minmax_tromino = master_mdp.trominoValueIterationMinMax(
+        EPSILON, MAX_IT, TROMINO_POLICY_LAMBDA);
+    g_minavg_tromino = master_mdp.trominoValueIterationMinAvg(
+        EPSILON, MAX_IT, TROMINO_POLICY_LAMBDA);
+    g_gapavg_tromino = master_mdp.trominoValueIterationGapAvg(
+        EPSILON, MAX_IT, TROMINO_POLICY_LAMBDA);
+    std::cout << "Adversary policies computed." << std::endl << std::endl;
+
+    std::cout << "--- Starting Parallel Configuration Exploration ---"
+              << std::endl;
+    std::cout << "Launching " << std::thread::hardware_concurrency()
+              << " concurrent threads if available." << std::endl;
+
+    const std::vector<double> line_weights = {0.0, 10.0, 20.0};
+    const std::vector<double> height_weights = {0.0, 1.0};
+    const std::vector<double> score_weights = {1.0, 4.0};
+    const std::vector<double> gap_reduction_weights = {0.0, 1.0, 1.5};
+
+    std::vector<std::future<RunResult>> futures;
+    int config_idx = 0;
+
+    for (double line_w : line_weights)
     {
-        std::cerr << "Failed to open config file '" << CONFIG_PATH << "'\n";
-        return 1;
-    }
-    for (int i = 0; i < 3; ++i)
-    {
-        if (!(in >> config[i]))
+        for (double height_w : height_weights)
         {
-            std::cerr << "Config must contain at least 5 ints\n";
-            return 1;
+            for (double score_w : score_weights)
+            {
+                for (double gap_r : gap_reduction_weights)
+                {
+                    std::array<double, 4> params = {line_w, height_w, score_w,
+                                                    gap_r};
+                    futures.push_back(
+                        std::async(std::launch::async, evaluate_configuration,
+                                   config_idx, params, s0.clone()));
+                    config_idx++;
+                }
+            }
         }
     }
-    std::cout << "Loaded config: [";
-    for (int i = 0; i < 3; ++i)
+
+    std::vector<RunResult> all_results;
+    for (auto& fut : futures)
     {
-        std::cout << config[i] << (i + 1 < 3 ? ", " : "");
+        all_results.push_back(fut.get());
     }
-    std::cout << "]\n\n";
 
-    // initializing the game and the MDP to compute the optimal policy
-    Field field(WIDTH, HEIGHT);
-    Game game(config, field);
+    std::sort(all_results.begin(), all_results.end(),
+              [](const RunResult& a, const RunResult& b)
+              { return a.config_index < b.config_index; });
 
-    MDP mdp(field.getWidth(), field.getHeight(), game.getState().clone(),
-            config);
-
-    std::cout << "All constants:" << std::endl
-              << "width = " << WIDTH << ", height = " << HEIGHT
-              << ", probaIPiece = " << PROBA_I_PIECE
-              << ", maxGameAction = " << MAX_ACTION << ", epsilon = " << EPSILON
-              << ", maxIteration = " << MAX_IT
-              << ", action policy lambda = " << ACTION_POLICY_LAMBDA
-              << ", tromino policy lambda = " << TROMINO_POLICY_LAMBDA
-              << " and number of simulation = " << NB_SIMU << std::endl
+    std::cout << "\n--- All Configurations Tested ---" << std::endl;
+    std::cout << "+--------+---------+----------+---------+----------+---------"
+                 "-+----------+----------+----------+-----------+"
+              << std::endl;
+    std::cout << "| Config | Line W. | Height W.| Score W.| Gap Red. | Rand "
+                 "Avg | MinMax S.| MinAvg S.| GapAvg S.| Min Score |"
+              << std::endl;
+    std::cout << "+--------+---------+----------+---------+----------+---------"
+                 "-+----------+----------+----------+-----------+"
+              << std::endl;
+    for (const auto& result : all_results)
+    {
+        std::cout << "| #" << std::setw(5) << std::left << result.config_index
+                  << "| " << std::setw(7) << std::left << result.params[0]
+                  << "| " << std::setw(8) << std::left << result.params[1]
+                  << "| " << std::setw(7) << std::left << result.params[2]
+                  << "| " << std::setw(8) << std::left << result.params[3]
+                  << "| " << std::setw(8) << std::left << std::fixed
+                  << std::setprecision(2) << result.random_score << "| "
+                  << std::setw(8) << std::left << result.minmax_score << "| "
+                  << std::setw(8) << std::left << result.minavg_score << "| "
+                  << std::setw(8) << std::left << result.gapavg_score << "| "
+                  << std::setw(9) << std::left << result.min_score << " |"
+                  << std::endl;
+    }
+    std::cout << "+--------+---------+----------+---------+----------+---------"
+                 "-+----------+----------+----------+-----------+"
               << std::endl;
 
-    std::unordered_map<State, std::unique_ptr<Tromino>> minMaxTrominos =
-        mdp.trominoValueIterationMinMax(EPSILON, MAX_IT, TROMINO_POLICY_LAMBDA);
-
-    if (DEBUG)
+    if (!all_results.empty())
     {
-        std::cout << std::endl << std::endl;
+        std::cout << "\n--- Detailed Analysis of Configurations ---"
+                  << std::endl
+                  << std::endl;
+
+        auto best_rand =
+            *std::max_element(all_results.begin(), all_results.end(),
+                              [](const RunResult& a, const RunResult& b)
+                              { return a.random_score < b.random_score; });
+        print_result_summary("Best for Random Adversary", best_rand);
+
+        auto worst_rand =
+            *std::min_element(all_results.begin(), all_results.end(),
+                              [](const RunResult& a, const RunResult& b)
+                              { return a.random_score < b.random_score; });
+        print_result_summary("Worst for Random Adversary", worst_rand);
+
+        auto best_minmax =
+            *std::max_element(all_results.begin(), all_results.end(),
+                              [](const RunResult& a, const RunResult& b)
+                              { return a.minmax_score < b.minmax_score; });
+        print_result_summary("Best for MinMax Adversary", best_minmax);
+
+        auto worst_minmax =
+            *std::min_element(all_results.begin(), all_results.end(),
+                              [](const RunResult& a, const RunResult& b)
+                              { return a.minmax_score < b.minmax_score; });
+        print_result_summary("Worst for MinMax Adversary", worst_minmax);
+
+        auto best_minavg =
+            *std::max_element(all_results.begin(), all_results.end(),
+                              [](const RunResult& a, const RunResult& b)
+                              { return a.minavg_score < b.minavg_score; });
+        print_result_summary("Best for MinAvg Adversary", best_minavg);
+
+        auto worst_minavg =
+            *std::min_element(all_results.begin(), all_results.end(),
+                              [](const RunResult& a, const RunResult& b)
+                              { return a.minavg_score < b.minavg_score; });
+        print_result_summary("Worst for MinAvg Adversary", worst_minavg);
+
+        auto best_gapavg =
+            *std::max_element(all_results.begin(), all_results.end(),
+                              [](const RunResult& a, const RunResult& b)
+                              { return a.gapavg_score < b.gapavg_score; });
+        print_result_summary("Best for GapAvg Adversary", best_gapavg);
+
+        auto worst_gapavg =
+            *std::min_element(all_results.begin(), all_results.end(),
+                              [](const RunResult& a, const RunResult& b)
+                              { return a.gapavg_score < b.gapavg_score; });
+        print_result_summary("Worst for GapAvg Adversary", worst_gapavg);
+
+        auto most_robust =
+            *std::max_element(all_results.begin(), all_results.end(),
+                              [](const RunResult& a, const RunResult& b)
+                              { return a.min_score < b.min_score; });
+        print_result_summary("Most Robust (Highest Minimum Score)",
+                             most_robust);
+
+        auto most_variable = *std::max_element(
+            all_results.begin(), all_results.end(),
+            [](const RunResult& a, const RunResult& b)
+            { return calculate_variance(a) < calculate_variance(b); });
+        print_result_summary("Most Variable (Highest Score Variance)",
+                             most_variable);
+
+        auto best_overall =
+            *std::max_element(all_results.begin(), all_results.end(),
+                              [](const RunResult& a, const RunResult& b)
+                              {
+                                  return (a.random_score + a.minmax_score +
+                                          a.minavg_score + a.gapavg_score) /
+                                             4.0 <
+                                         (b.random_score + b.minmax_score +
+                                          b.minavg_score + b.gapavg_score) /
+                                             4.0;
+                              });
+        print_result_summary("Best Overall (Average across all Adversaries)",
+                             best_overall);
     }
-
-    std::unordered_map<State, std::unique_ptr<Tromino>> minAvgTrominos =
-        mdp.trominoValueIterationMinAvg(EPSILON, MAX_IT, TROMINO_POLICY_LAMBDA);
-
-    if (DEBUG)
-    {
-        std::cout << std::endl << std::endl;
-    }
-
-    // compute the optimal policy using the value iteration algorithm
-    std::unordered_map<State, Action> actions =
-        mdp.actionValueIteration(EPSILON, MAX_IT, ACTION_POLICY_LAMBDA);
-
-    if (DEBUG)
-    {
-        std::cout << std::endl << std::endl;
-    }
-
-    int rand = 0;
-
-    for (int i = 0; i < NB_SIMU; i++)
-    {
-        rand += mdp.playPolicy(
-            game, actions,
-            std::unordered_map<State, std::unique_ptr<Tromino>>());
-    }
-
-    int minMax = mdp.playPolicy(game, actions, minMaxTrominos);
-    int minAvg = mdp.playPolicy(game, actions, minAvgTrominos);
-
-    std::cout << "Average results:" << std::endl
-              << "Random Adversary moves: " << (double)rand / (double)NB_SIMU
-              << std::endl
-              << "Min Max Adversary Moves: " << minMax << std::endl
-              << "Min Avg Adversary Moves: " << minAvg << std::endl;
 
     return 0;
 }

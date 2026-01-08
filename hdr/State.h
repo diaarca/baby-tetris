@@ -12,6 +12,9 @@
 #include <vector>
 
 #define PROBA_I_PIECE 0.5
+#define SCORE_1_LINE 1
+#define SCORE_2_LINES 3
+#define SCORE_3_LINES 6
 
 class State
 {
@@ -47,8 +50,10 @@ class State
     std::vector<State> genAllStatesFromAction(Action& action);
     std::vector<State> genAllStatesFromAction(const Action& action) const;
 
-    int evaluate(const std::array<int, 3>& config) const;
+    int evaluate() const;
+    int nbCompleteLines() const;
     State completeLines() const;
+    int gapCheck() const;
 
     bool operator==(const State& other) const;
     size_t hash() const;

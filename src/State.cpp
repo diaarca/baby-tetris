@@ -158,7 +158,7 @@ std::vector<State> State::genAllStatesFromAction(const Action& action) const
     return res;
 }
 
-int State::evaluate(const std::array<int, 3>& config) const
+int State::nbCompleteLines() const
 {
     int completedLines = 0;
     const auto& grid = field_.getGrid();
@@ -179,18 +179,24 @@ int State::evaluate(const std::array<int, 3>& config) const
         if (isComplete)
             completedLines++;
     }
+    return completedLines;
+}
+
+int State::evaluate() const
+{
+    int completedLines = nbCompleteLines();
 
     int score = 0;
     switch (completedLines)
     {
     case 1:
-        score += config[0];
+        score += SCORE_1_LINE;
         break;
     case 2:
-        score += config[1];
+        score += SCORE_2_LINES;
         break;
     case 3:
-        score += config[2];
+        score += SCORE_3_LINES;
         break;
     default:
         break;
@@ -198,6 +204,32 @@ int State::evaluate(const std::array<int, 3>& config) const
 
     return score;
 }
+
+int State::gapCheck() const
+{
+    const auto& grid = field_.getGrid();
+    int rows = field_.getHeight();
+    int cols = field_.getWidth();
+    int holes = 0;
+
+    for (int c = 0; c < cols; ++c)
+    {
+        bool roof = false;
+        for (int r = 0; r < rows; ++r)
+        {
+            if (grid[r][c])
+            {
+                roof = true;
+            }
+            else if (roof)
+            {
+                holes++;
+            }
+        }
+    }
+    return holes; 
+}
+
 
 State State::completeLines() const
 {

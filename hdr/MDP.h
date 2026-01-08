@@ -10,7 +10,7 @@
 #include <vector>
 
 #define MAX_ACTION 10000
-#define DEBUG 1
+#define DEBUG 0
 
 class MDP
 {
@@ -21,9 +21,9 @@ class MDP
     std::array<int, 3> config_;
 
   public:
-    MDP(int width, int height, State s0, std::array<int, 3>& config)
+    MDP(int width, int height, State s0, const std::array<int, 3>& config)
         : width_(width), height_(height), s0_(std::move(s0)),
-          config_(std::move(config)) {};
+          config_(config) {};
     ~MDP() = default;
 
     std::unordered_map<State, Action>

@@ -1,2 +1,0 @@
-- [ ] average based tromino value iteration
-- [ ] robust action value iteration

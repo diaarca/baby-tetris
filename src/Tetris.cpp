@@ -57,11 +57,25 @@ int main()
     // --- Configuration Exploration ---
     std::cout << "--- Starting Configuration Exploration ---" << std::endl;
 
-    // table of configurations to test [line_weight, height_weight,
-    // score_weight, gap_reduction]
-    const std::vector<std::array<double, 4>> configurations = {
-        {10.0, 2.0, 1.0, 0.5}, {20.0, 2.0, 1.0, 0.5}, {10.0, 4.0, 1.0, 0.5},
-        {10.0, 2.0, 2.0, 0.5}, {10.0, 2.0, 1.0, 1.0}, {5.0, 1.0, 1.0, 1.0}};
+    const std::vector<double> line_comp_weights = {0};
+    const std::vector<double> height_weights = {0};
+    const std::vector<double> score_weights = {1};
+    const std::vector<double> gap_red_weights = {0};
+
+    std::vector<std::array<double, 4>> configurations;
+    for (double lw : line_comp_weights)
+    {
+        for (double hw : height_weights)
+        {
+            for (double sw : score_weights)
+            {
+                for (double gw : gap_red_weights)
+                {
+                     configurations.push_back({lw, hw, sw, gw});
+                }
+            }
+        }
+    }
 
     std::vector<RunResult> all_results;
     int config_idx = 0;

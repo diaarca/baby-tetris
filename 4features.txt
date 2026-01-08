@@ -1,0 +1,36 @@
+rm -rf obj bin
+mkdir -p obj
+g++ -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g -MMD -MP -c src/Action.cpp -o obj/Action.o
+g++ -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g -MMD -MP -c src/Field.cpp -o obj/Field.o
+g++ -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g -MMD -MP -c src/Game.cpp -o obj/Game.o
+g++ -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g -MMD -MP -c src/MDP.cpp -o obj/MDP.o
+g++ -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g -MMD -MP -c src/Point.cpp -o obj/Point.o
+g++ -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g -MMD -MP -c src/State.cpp -o obj/State.o
+g++ -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g -MMD -MP -c src/Tetris.cpp -o obj/Tetris.o
+g++ -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g -MMD -MP -c src/Tromino.cpp -o obj/Tromino.o
+mkdir -p bin
+g++ -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g -MMD -MP -o bin/tetris obj/Action.o obj/Field.o obj/Game.o obj/MDP.o obj/Point.o obj/State.o obj/Tetris.o obj/Tromino.o
+./bin/tetris
+
+Computing adversary policies...
+Adversary policies computed.
+
+--- Starting Configuration Exploration ---
+Running configuration #0: {10, 2, 1, 0.5}
+Running configuration #1: {20, 2, 1, 0.5}
+Running configuration #2: {10, 4, 1, 0.5}
+Running configuration #3: {10, 2, 2, 0.5}
+Running configuration #4: {10, 2, 1, 1}
+Running configuration #5: {5, 1, 1, 1}
+
+--- All Configurations Tested ---
++--------+---------+----------+---------+----------+----------+----------+----------+
+| Config | Line W. | Height W.| Score W.| Gap Red. | Rand Avg | MinMax S.| MinAvg S.| GapAvg S.|
++--------+---------+----------+---------+----------+----------+----------+----------+----------+
+| #0    | 10     | 2       | 1      | 0.5     | 7933.35 | 9996.00 | 8750.00 | 7499.00  |
+| #1    | 20.00  | 2.00    | 1.00   | 0.50    | 7934.62 | 9996.00 | 8750.00 | 7499.00  |
+| #2    | 10.00  | 4.00    | 1.00   | 0.50    | 7845.04 | 7499.00 | 8750.00 | 7499.00  |
+| #3    | 10.00  | 2.00    | 2.00   | 0.50    | 7932.68 | 9996.00 | 8750.00 | 7499.00  |
+| #4    | 10.00  | 2.00    | 1.00   | 1.00    | 7934.94 | 9996.00 | 8750.00 | 7499.00  |
+| #5    | 5.00   | 1.00    | 1.00   | 1.00    | 8385.86 | 7499.00 | 8749.00 | 7499.00  |
++--------+---------+----------+---------+----------+----------+----------+----------+----------+

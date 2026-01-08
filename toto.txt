@@ -1,0 +1,71 @@
+rm -rf obj bin
+mkdir -p obj
+g++ -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g -MMD -MP -c src/Action.cpp -o obj/Action.o
+g++ -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g -MMD -MP -c src/Field.cpp -o obj/Field.o
+g++ -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g -MMD -MP -c src/Game.cpp -o obj/Game.o
+g++ -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g -MMD -MP -c src/MDP.cpp -o obj/MDP.o
+g++ -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g -MMD -MP -c src/Point.cpp -o obj/Point.o
+g++ -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g -MMD -MP -c src/State.cpp -o obj/State.o
+g++ -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g -MMD -MP -c src/Tetris.cpp -o obj/Tetris.o
+g++ -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g -MMD -MP -c src/Tromino.cpp -o obj/Tromino.o
+mkdir -p bin
+g++ -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g -MMD -MP -o bin/tetris obj/Action.o obj/Field.o obj/Game.o obj/MDP.o obj/Point.o obj/State.o obj/Tetris.o obj/Tromino.o
+./bin/tetris
+Computing adversary policies...
+Adversary policies computed.
+
+--- Starting Parallel Configuration Exploration ---
+Launching 8 concurrent threads if available.
+Running configuration #0: {5, 1, 2, 1}
+Running configuration #Running configuration #Running configuration #2: {Running configuration #5: {5, 1, 3, 1}5
+3: {Running configuration #Running configuration #11Running configuration #: {110: {5, 1, : {2, 2}
+10, 1, 3Running configuration #, Running configuration #101513, : {Running configuration #4: {10, , 2, 2, 5, 2}2, 2, 1}
+}
+1, 31, 8: {10Running configuration #, , 12, , Running configuration #2, 1}
+15: {10, 22, , 23, 2}
+14: {10, 2, 3, 1}
+}
+6: {5, 2, 3, 1}
+, 3, 2}
+Running configuration #7: {5, 2, 3, 2}
+2}
+Running configuration #12: {10, 2, 2, 1}
+Running configuration #9: {10, 1, 2, 2}
+
+
+--- All Configurations Tested ---
++--------+---------+----------+---------+----------+----------+----------+----------+----------+-----------+
+| Config | Line W. | Height W.| Score W.| Gap Red. | Rand Avg | MinMax S.| MinAvg S.| GapAvg S.| Min Score |
++--------+---------+----------+---------+----------+----------+----------+----------+----------+-----------+
+| #0    | 5      | 1       | 2      | 1       | 7838.17 | 9996.00 | 8750.00 | 7499.00 | 7499.00   |
+| #1    | 5.00   | 1.00    | 2.00   | 2.00    | 7843.62 | 9996.00 | 8750.00 | 7499.00 | 7499.00   |
+| #2    | 5.00   | 1.00    | 3.00   | 1.00    | 7844.24 | 9996.00 | 8750.00 | 7499.00 | 7499.00   |
+| #3    | 5.00   | 1.00    | 3.00   | 2.00    | 7842.75 | 9996.00 | 8750.00 | 7499.00 | 7499.00   |
+| #4    | 5.00   | 2.00    | 2.00   | 1.00    | 7837.92 | 9996.00 | 8750.00 | 7499.00 | 7499.00   |
+| #5    | 5.00   | 2.00    | 2.00   | 2.00    | 7840.84 | 9996.00 | 8750.00 | 7499.00 | 7499.00   |
+| #6    | 5.00   | 2.00    | 3.00   | 1.00    | 7839.62 | 9996.00 | 8750.00 | 7499.00 | 7499.00   |
+| #7    | 5.00   | 2.00    | 3.00   | 2.00    | 7842.05 | 9996.00 | 8750.00 | 7499.00 | 7499.00   |
+| #8    | 10.00  | 1.00    | 2.00   | 1.00    | 7840.60 | 9996.00 | 8750.00 | 7499.00 | 7499.00   |
+| #9    | 10.00  | 1.00    | 2.00   | 2.00    | 7838.57 | 9996.00 | 8750.00 | 7499.00 | 7499.00   |
+| #10   | 10.00  | 1.00    | 3.00   | 1.00    | 7839.71 | 9996.00 | 8750.00 | 7499.00 | 7499.00   |
+| #11   | 10.00  | 1.00    | 3.00   | 2.00    | 7843.91 | 9996.00 | 8750.00 | 7499.00 | 7499.00   |
+| #12   | 10.00  | 2.00    | 2.00   | 1.00    | 7838.49 | 9996.00 | 8750.00 | 7499.00 | 7499.00   |
+| #13   | 10.00  | 2.00    | 2.00   | 2.00    | 7841.27 | 9996.00 | 8750.00 | 7499.00 | 7499.00   |
+| #14   | 10.00  | 2.00    | 3.00   | 1.00    | 7840.98 | 9996.00 | 8750.00 | 7499.00 | 7499.00   |
+| #15   | 10.00  | 2.00    | 3.00   | 2.00    | 7841.68 | 9996.00 | 8750.00 | 7499.00 | 7499.00   |
++--------+---------+----------+---------+----------+----------+----------+----------+----------+-----------+
+
+--- Detailed Analysis of Configurations ---
+
+--- Best for Random Adversary ---
+  Configuration #2: {5.00, 1.00, 3.00, 1.00}
+  Scores -> Random: 7844.24 | MinMax: 9996.00 | MinAvg: 8750.00 | GapAvg: 7499.00 | Min Score: 7499.00
+
+--- Most Robust (Highest Minimum Score) ---
+  Configuration #0: {5.00, 1.00, 2.00, 1.00}
+  Scores -> Random: 7838.17 | MinMax: 9996.00 | MinAvg: 8750.00 | GapAvg: 7499.00 | Min Score: 7499.00
+
+--- Most Variable (Highest Score Variance) ---
+  Configuration #4: {5.00, 2.00, 2.00, 1.00}
+  Scores -> Random: 7837.92 | MinMax: 9996.00 | MinAvg: 8750.00 | GapAvg: 7499.00 | Min Score: 7499.00
+

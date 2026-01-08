@@ -443,15 +443,26 @@ with the intention of minimizing the players score.
 For this policy we use once again value iteration, but this time we minimize the expected cumulative 
 discounted reward over time from the available actions. The policy chooses the tromino piece that 
 leads to the lowest expected score for the player.
-We have the same states (reachable states), actions, transition function and reward function as in Section~\ref{sec:question1},
-the only change is the value iteration equation.
+We have the same states (reachable states) and reward function as in Section~\ref{sec:question1}.
+{\renewcommand\labelitemi{}
+\begin {itemize}
+    \item \textbf{Actions}\\
+    The actions for the adversary correspond to the choice of the next tromino piece for the player to place on the grid.\\
+    A := \{I, L\}
+    \item \textbf{Transition Function}\\
+    The transition function for the adversary is defined as :\\
+    \[P(s' | s, a, t) := 1/|A_t(s)|\]
+    where $A_t(s)$ is the set of available actions for the player given the current state $s$ and the chosen tromino piece $t$,  
+    with the assumption of a uniform distribution over the player's possible actions for the given piece.
+\end {itemize}
+}
 % \[
 % V(s) = \min_{a \in A} \sum_{s' \in S} P(s' | s, a) \cdot \left( R(s, a, s') + \lambda V(s') \right)
 % \]
 The player will still use the optimal policy computed in Section~\ref{sec:question1} to play the game.
 
 \subsubsection{Choosing the Tromino Piece}
-\quad We considered two different heuristic approaches for choosing the tromino piece:
+\quad We considered two different heuristic approaches for choosing the tromino piece, their value iterations are defined as:
 \begin{itemize}
     \item \textbf{Lowest Maximal Expected Reward}: The policy chooses the tromino piece that leads to the lowest maximal 
     expected reward for the player.

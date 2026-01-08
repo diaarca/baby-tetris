@@ -148,10 +148,10 @@ int main()
     std::cout << "Launching " << std::thread::hardware_concurrency()
               << " concurrent threads if available." << std::endl;
 
-    const std::vector<double> line_weights = {0.0, 10.0, 20.0};
-    const std::vector<double> height_weights = {0.0, 1.0};
-    const std::vector<double> score_weights = {1.0, 4.0};
-    const std::vector<double> gap_reduction_weights = {0.0, 1.0, 1.5};
+    const std::vector<double> line_weights = {0.0};
+    const std::vector<double> height_weights = {0.0};
+    const std::vector<double> score_weights = {1.0};
+    const std::vector<double> gap_reduction_weights = {0.0};
 
     std::vector<std::future<RunResult>> futures;
     int config_idx = 0;
@@ -296,6 +296,32 @@ int main()
         print_result_summary("Best Overall (Average across all Adversaries)",
                              best_overall);
     }
+
+    std::unordered_map<State, Action> robustPolicyMaxMin =
+        master_mdp.robustActionValueIterationMaxMin(EPSILON, MAX_IT,
+                                                    ACTION_POLICY_LAMBDA);
+
+    std::cout << std::endl
+              << std::endl
+              << "In comparison, the MaxMin VI got these performances:"
+              << std::endl;
+
+    std::cout << "vs Random: "
+              << master_mdp.playPolicy(master_game, robustPolicyMaxMin,
+                                       g_rand_tromino)
+              << std::endl;
+    std::cout << "vs MinMax: "
+              << master_mdp.playPolicy(master_game, robustPolicyMaxMin,
+                                       g_minmax_tromino)
+              << std::endl;
+    std::cout << "vs MinAvg: "
+              << master_mdp.playPolicy(master_game, robustPolicyMaxMin,
+                                       g_minavg_tromino)
+              << std::endl;
+    std::cout << "vs GapAvg: "
+              << master_mdp.playPolicy(master_game, robustPolicyMaxMin,
+                                       g_gapavg_tromino)
+              << std::endl;
 
     return 0;
 }

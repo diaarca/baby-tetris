@@ -3,8 +3,8 @@
 #include "Game.h"
 #include <algorithm>
 #include <cstddef>
-#include <limits>
 #include <float.h>
+#include <limits>
 #include <memory>
 #include <numeric>
 #include <sstream>
@@ -27,8 +27,16 @@ class MDP
         : width_(width), height_(height), s0_(std::move(s0)) {};
     ~MDP() = default;
 
-    std::unordered_map<State, Action>
-    actionValueIteration(double lambda, double line_weight, double height_weight, double score_weight, double gap_reduction, double epsilon, int maxIteration);
+    std::unordered_map<State, Action> actionValueIteration(double lambda,
+                                                           double line_weight,
+                                                           double height_weight,
+                                                           double score_weight,
+                                                           double gap_reduction,
+                                                           double epsilon,
+                                                           int maxIteration);
+
+    std::unordered_map<State, Action> robustActionValueIterationMaxMin(
+        double epsilon, int maxIteration, double lambda);
 
     std::unordered_map<State, std::unique_ptr<Tromino>>
     trominoValueIterationMinMax(double epsilon,
@@ -42,8 +50,8 @@ class MDP
 
     std::unordered_map<State, std::unique_ptr<Tromino>>
     trominoValueIterationGapAvg(double epsilon,
-                             int maxIteration,
-                             double lambda);
+                                int maxIteration,
+                                double lambda);
 
     std::unordered_map<State, double> generateReachableStates(State s0);
 
@@ -53,8 +61,6 @@ class MDP
         const std::unordered_map<State, std::unique_ptr<Tromino>>& advPolicy);
 
     void prettyPrint(State& curr, State placed, State after);
-
-
 
   private:
     int getMaxHeight(const Field& field) const;

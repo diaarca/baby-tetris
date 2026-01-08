@@ -18,12 +18,10 @@ class MDP
     int width_;
     int height_;
     State s0_;
-    std::array<int, 3> config_;
 
   public:
-    MDP(int width, int height, State s0, const std::array<int, 3>& config)
-        : width_(width), height_(height), s0_(std::move(s0)),
-          config_(config) {};
+    MDP(int width, int height, State s0)
+        : width_(width), height_(height), s0_(std::move(s0)) {};
     ~MDP() = default;
 
     std::unordered_map<State, Action>
@@ -48,11 +46,12 @@ class MDP
 
     void prettyPrint(State& curr, State placed, State after);
 
-    std::unordered_map<State, Action> lineAndHeightPolicy(double lambda,
-                                                            double line_weight,
-                                                            double height_weight,
-                                                            double epsilon,
-                                                            int maxIteration);
+    std::unordered_map<State, Action> fullFeaturePolicy(double lambda,
+                                                          double line_weight,
+                                                          double height_weight,
+                                                          double score_weight,
+                                                          double epsilon,
+                                                          int maxIteration);
 
   private:
     int getMaxHeight(const Field& field) const;

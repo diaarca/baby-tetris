@@ -56,7 +56,7 @@ MDP::actionValueIteration(double epsilon, int maxIteration, double lambda)
 
                     rewards[k] +=
                         PROBA_I_PIECE *
-                        (placedState.evaluate(config_) + lambda * vAfter);
+                        (placedState.evaluate() + lambda * vAfter);
                 }
             }
             vPrime = *std::max_element(rewards.begin(), rewards.end());
@@ -142,7 +142,7 @@ MDP::trominoValueIterationMinMax(double epsilon,
                     }
                     vAfter = it->second;
 
-                    reward = placedState.evaluate(config_) + lambda * vAfter;
+                    reward = placedState.evaluate() + lambda * vAfter;
 
                     const Tromino* t = &afterState.getNextTromino();
                     if (dynamic_cast<const LPiece*>(t) != nullptr)
@@ -241,7 +241,7 @@ MDP::trominoValueIterationMinAvg(double epsilon,
                     }
                     vAfter = it->second;
 
-                    reward = placedState.evaluate(config_) + lambda * vAfter;
+                    reward = placedState.evaluate() + lambda * vAfter;
 
                     const Tromino* t = &afterState.getNextTromino();
                     if (dynamic_cast<const LPiece*>(t) != nullptr)
@@ -418,7 +418,7 @@ int MDP::playPolicy(
 
         // prettyPrint(curr, placed.clone(), after.clone());
 
-        gain = placed.evaluate(config_);
+        gain = placed.evaluate();
 
         game.setScore(game.getScore() + gain);
 
@@ -510,15 +510,16 @@ int MDP::getMaxHeight(const Field& field) const
 }
 
 // New value iteration policy with a custom reward function
-std::unordered_map<State, Action> MDP::lineAndHeightPolicy(double lambda,
-                                                           double line_weight,
-                                                           double height_weight,
-                                                           double epsilon,
-                                                           int maxIteration)
+std::unordered_map<State, Action> MDP::fullFeaturePolicy(double lambda,
+                                                         double line_weight,
+                                                         double height_weight,
+                                                         double score_weight,
+                                                         double epsilon,
+                                                         int maxIteration)
 {
     if (DEBUG)
     {
-        std::cout << "Line and Height Policy Value Iteration" << std::endl;
+        std::cout << "Full Feature Policy Value Iteration" << std::endl;
     }
     std::unordered_map<State, double> V = generateReachableStates(s0_.clone());
     std::unordered_map<State, Action> A;
@@ -550,7 +551,7 @@ std::unordered_map<State, Action> MDP::lineAndHeightPolicy(double lambda,
                     auto it = V.find(afterState);
                     if (it == V.end())
                     {
-                        std::cerr << "ERROR (lineAndHeightPolicy): the "
+                        std::cerr << "ERROR (fullFeaturePolicy): the "
                                      "state cannot be derived into "
                                      "a non-reachable state"
                                   << std::endl;
@@ -560,7 +561,8 @@ std::unordered_map<State, Action> MDP::lineAndHeightPolicy(double lambda,
 
                     double immediate_reward =
                         (line_weight * placedState.nbCompleteLines()) -
-                        (height_weight * getMaxHeight(placedState.getField()));
+                        (height_weight * getMaxHeight(placedState.getField())) +
+                        (score_weight * placedState.evaluate());
 
                     rewards[k] +=
                         PROBA_I_PIECE * (immediate_reward + lambda * vAfter);

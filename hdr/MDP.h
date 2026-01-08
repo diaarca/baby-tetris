@@ -1,6 +1,9 @@
 #pragma once
 
 #include "Game.h"
+#include <algorithm>
+#include <cstddef>
+#include <limits>
 #include <float.h>
 #include <memory>
 #include <numeric>
@@ -25,7 +28,7 @@ class MDP
     ~MDP() = default;
 
     std::unordered_map<State, Action>
-    actionValueIteration(double eps, int maxIteration, double lambda);
+    actionValueIteration(double lambda, double line_weight, double height_weight, double score_weight, double gap_reduction, double epsilon, int maxIteration);
 
     std::unordered_map<State, std::unique_ptr<Tromino>>
     trominoValueIterationMinMax(double epsilon,
@@ -51,13 +54,7 @@ class MDP
 
     void prettyPrint(State& curr, State placed, State after);
 
-    std::unordered_map<State, Action> fullFeaturePolicy(double lambda,
-                                                          double line_weight,
-                                                          double height_weight,
-                                                          double score_weight,
-                                                          double gap_reduction,
-                                                          double epsilon,
-                                                          int maxIteration);
+
 
   private:
     int getMaxHeight(const Field& field) const;

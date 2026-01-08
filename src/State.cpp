@@ -210,40 +210,24 @@ int State::gapCheck() const
     const auto& grid = field_.getGrid();
     int rows = field_.getHeight();
     int cols = field_.getWidth();
+    int holes = 0;
 
-    int gaps = 0;
     for (int c = 0; c < cols; ++c)
-    {   
-        int lineStart = 0;
+    {
+        bool roof = false;
         for (int r = 0; r < rows; ++r)
         {
-            int empty = 1;
             if (grid[r][c])
             {
-                lineStart++;
+                roof = true;
             }
-            else if (lineStart > 0 && !grid[r][c]) //if line has started and we find an empty cell
+            else if (roof)
             {
-                for (int k = r; k > 0; --k)
-                {
-                    if (grid[k - 1][c])
-                    {
-                        gaps+=empty;
-                        break;
-                    }
-                    else
-                    {
-                        empty++;
-                    }
-                }
+                holes++;
             }
         }
-        // if (lineStart > 0 && lineStart != rows) //if gap before line starts
-        // {
-        //     gaps += (rows - lineStart); 
-        // }
     }
-    return gaps; 
+    return holes; 
 }
 
 

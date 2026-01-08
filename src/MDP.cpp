@@ -6,14 +6,13 @@
 #include <limits>
 
 std::unordered_map<State, Action>
-MDP::actionValueIteration(double epsilon, int maxIteration, double lambda)
+MDP::actionValueIteration(double lambda, double line_weight, double height_weight, double score_weight, double gap_reduction, double epsilon, int maxIteration)
 {
     if (DEBUG)
     {
-        std::cout << "Exploration Value Iteration" << std::endl;
+        std::cout << "Full Feature Policy Value Iteration" << std::endl;
     }
     std::unordered_map<State, double> V = generateReachableStates(s0_.clone());
-
     std::unordered_map<State, Action> A;
 
     double vAfter, vPrime, delta;
@@ -25,17 +24,14 @@ MDP::actionValueIteration(double epsilon, int maxIteration, double lambda)
         for (auto& [currState, currValue] : V)
         {
             std::vector<Action> actions = currState.getAvailableActions();
-
-            int nbActions = actions.size();
-
-            std::vector<double> rewards(nbActions);
-
-            if (nbActions == 0)
+            if (actions.empty())
             {
                 continue;
             }
 
-            for (int k = 0; k < nbActions; k++)
+            std::vector<double> rewards(actions.size());
+
+            for (size_t k = 0; k < actions.size(); k++)
             {
                 rewards[k] = 0.0;
                 for (State& placedState :
@@ -46,7 +42,7 @@ MDP::actionValueIteration(double epsilon, int maxIteration, double lambda)
                     auto it = V.find(afterState);
                     if (it == V.end())
                     {
-                        std::cerr << "ERROR (actionValueIteration): the "
+                        std::cerr << "ERROR (fullFeaturePolicy): the "
                                      "state cannot be derived into "
                                      "a non-reachable state"
                                   << std::endl;
@@ -54,14 +50,19 @@ MDP::actionValueIteration(double epsilon, int maxIteration, double lambda)
                     }
                     vAfter = it->second;
 
+                    double immediate_reward =
+                        (line_weight * placedState.nbCompleteLines()) -
+                        (height_weight * getMaxHeight(placedState.getField())) +
+                        (score_weight * placedState.evaluate()) -
+                        (gap_reduction * placedState.gapCheck());
+
                     rewards[k] +=
-                        PROBA_I_PIECE *
-                        (placedState.evaluate() + lambda * vAfter);
+                        PROBA_I_PIECE * (immediate_reward + lambda * vAfter);
                 }
             }
             vPrime = *std::max_element(rewards.begin(), rewards.end());
 
-            for (int k = 0; k < nbActions; k++)
+            for (size_t k = 0; k < actions.size(); k++)
             {
                 if (vPrime == rewards[k])
                 {
@@ -80,13 +81,13 @@ MDP::actionValueIteration(double epsilon, int maxIteration, double lambda)
         }
     }
 
-    double sum = 0;
-    for (std::pair<const State, double>& item : V)
-    {
-        sum += item.second;
-    }
     if (DEBUG)
     {
+        double sum = 0;
+        for (std::pair<const State, double>& item : V)
+        {
+            sum += item.second;
+        }
         std::cout << "\naverage over final V " << sum / V.size() << std::endl;
     }
 
@@ -604,97 +605,4 @@ int MDP::getMaxHeight(const Field& field) const
     return maxHeight;
 }
 
-// New value iteration policy with a custom reward function
-std::unordered_map<State, Action> MDP::fullFeaturePolicy(double lambda,
-                                                         double line_weight,
-                                                         double height_weight,
-                                                         double score_weight,
-                                                         double gap_reduction,
-                                                         double epsilon,
-                                                         int maxIteration)
-{
-    if (DEBUG)
-    {
-        std::cout << "Full Feature Policy Value Iteration" << std::endl;
-    }
-    std::unordered_map<State, double> V = generateReachableStates(s0_.clone());
-    std::unordered_map<State, Action> A;
 
-    double vAfter, vPrime, delta;
-    delta = DBL_MAX;
-
-    for (int i = 0; i < maxIteration && delta > epsilon; i++)
-    {
-        delta = 0.0;
-        for (auto& [currState, currValue] : V)
-        {
-            std::vector<Action> actions = currState.getAvailableActions();
-            if (actions.empty())
-            {
-                continue;
-            }
-
-            std::vector<double> rewards(actions.size());
-
-            for (size_t k = 0; k < actions.size(); k++)
-            {
-                rewards[k] = 0.0;
-                for (State& placedState :
-                     currState.genAllStatesFromAction(actions[k]))
-                {
-                    State afterState = placedState.completeLines();
-
-                    auto it = V.find(afterState);
-                    if (it == V.end())
-                    {
-                        std::cerr << "ERROR (fullFeaturePolicy): the "
-                                     "state cannot be derived into "
-                                     "a non-reachable state"
-                                  << std::endl;
-                        exit(1);
-                    }
-                    vAfter = it->second;
-
-                    double immediate_reward =
-                        (line_weight * placedState.nbCompleteLines()) -
-                        (height_weight * getMaxHeight(placedState.getField())) +
-                        (score_weight * placedState.evaluate()) -
-                        (gap_reduction * placedState.gapCheck());
-
-                    rewards[k] +=
-                        PROBA_I_PIECE * (immediate_reward + lambda * vAfter);
-                }
-            }
-            vPrime = *std::max_element(rewards.begin(), rewards.end());
-
-            for (size_t k = 0; k < actions.size(); k++)
-            {
-                if (vPrime == rewards[k])
-                {
-                    A.insert_or_assign(currState.clone(), actions[k]);
-                    break;
-                }
-            }
-
-            delta = std::max(delta, std::abs(vPrime - currValue));
-            V.insert_or_assign(currState.clone(), vPrime);
-        }
-
-        if (DEBUG)
-        {
-            std::cout << "i = " << i << " and delta = " << delta << std::endl;
-        }
-    }
-
-    if (DEBUG)
-    {
-        double sum = 0;
-        for (std::pair<const State, double>& item : V)
-        {
-            sum += item.second;
-        }
-        std::cout << "\naverage over final V " << sum / V.size() << std::endl;
-    }
-
-    return A;
-}

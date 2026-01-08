@@ -1,15 +1,13 @@
 #include "Action.h"
 #include "MDP.h"
 #include "State.h"
-#include <algorithm> // For std::sort
+#include <algorithm>
+#include <array>
 #include <cstdlib>
 #include <fstream>
-#include <functional>
-#include <future>
-#include <iomanip> // For std::fixed, std::setprecision
+#include <iomanip>
 #include <iostream>
 #include <memory>
-#include <thread>
 #include <unordered_map>
 #include <vector>
 
@@ -19,137 +17,31 @@
 #define MAX_IT 1000
 #define ACTION_POLICY_LAMBDA 0.9
 #define TROMINO_POLICY_LAMBDA 0.1
-#define NB_SIMU 10
+#define NB_SIMU 100
 
-// Struct to hold the result of a single grid search evaluation
-struct GridSearchResult
+// Struct to hold the results for one configuration
+struct RunResult
 {
-    double avg_score;
-    double line_weight;
-    double height_weight;
-    double score_weight;
+    int config_index;
+    std::array<double, 4> params;
+    double random_score;
+    double minmax_score;
+    double minavg_score;
+    double gapavg_score;
 };
-
-// Self-contained function to evaluate a set of weights.
-// It creates its own MDP and Game objects to be thread-safe.
-GridSearchResult evaluate_weights(double lw, double hw, double sw, State s0)
-{
-    Field field(WIDTH, HEIGHT);
-    Game game(field);
-    MDP mdp(WIDTH, HEIGHT, s0.clone());
-    std::unordered_map<State, std::unique_ptr<Tromino>> rand_tromino;
-
-    std::unordered_map<State, Action> temp_ff_policy = mdp.fullFeaturePolicy(
-        ACTION_POLICY_LAMBDA, lw, hw,0, sw, EPSILON, MAX_IT);
-
-    double current_avg_score = 0;
-    for (int i = 0; i < NB_SIMU; ++i)
-    {
-        current_avg_score += mdp.playPolicy(game, temp_ff_policy, rand_tromino);
-    }
-    current_avg_score /= NB_SIMU;
-
-    return {current_avg_score, lw, hw, sw};
-}
 
 int main()
 {
     // initialize pseudo random generator
     srand((time(NULL) & 0xFFFF));
 
-    std::cout << "\n";
-
-    // Create a master MDP to get the initial state and run final comparisons
+    // Initializing the game and the MDP
     Field master_field(WIDTH, HEIGHT);
     Game master_game(master_field);
     MDP master_mdp(WIDTH, HEIGHT, master_game.getState().clone());
-    State s0 = master_game.getState().clone();
 
-    // --- Hyperparameter Grid Search ---
-    // std::cout << "--- Starting Parallel Grid Search for Full Feature Policy "
-    //              "Weights ---"
-    //           << std::endl;
-    // std::cout << "Launching " << std::thread::hardware_concurrency()
-    //           << " concurrent threads if available." << std::endl;
-    //
-    // std::vector<double> line_weights_to_test = {5.0, 10.0, 20.0};
-    // std::vector<double> height_weights_to_test = {1.0, 2.0, 4.0};
-    // std::vector<double> score_weights_to_test = {0.5, 1.0, 2.0};
-    //
-    // std::vector<std::future<GridSearchResult>> futures;
-    //
-    // for (double lw : line_weights_to_test)
-    // {
-    //     for (double hw : height_weights_to_test)
-    //     {
-    //         for (double sw : score_weights_to_test)
-    //         {
-    //             futures.push_back(std::async(std::launch::async,
-    //                                          evaluate_weights, lw, hw, sw,
-    //                                          s0.clone()));
-    //         }
-    //     }
-    // }
-    //
-    // std::vector<GridSearchResult> all_results;
-    // for (auto& fut : futures)
-    // {
-    //     all_results.push_back(fut.get());
-    // }
-    //
-    // // Sort results from best to worst
-    // std::sort(all_results.begin(), all_results.end(),
-    //           [](const GridSearchResult& a, const GridSearchResult& b)
-    //           { return a.avg_score > b.avg_score; });
-    //
-    // std::cout << "\n--- Grid Search Complete ---" << std::endl;
-    // std::cout
-    //     << "+---------------+----------------+---------------+---------------+"
-    //     << std::endl;
-    // std::cout
-    //     << "|  Line Weight  | Height Weight  |  Score Weight | Average Score |"
-    //     << std::endl;
-    // std::cout
-    //     << "+---------------+----------------+---------------+---------------+"
-    //     << std::endl;
-    // for (const auto& result : all_results)
-    // {
-    //     std::cout << "| " << std::setw(13) << std::left << result.line_weight
-    //               << "| " << std::setw(14) << std::left << result.height_weight
-    //               << "| " << std::setw(13) << std::left << result.score_weight
-    //               << "| " << std::setw(13) << std::left << std::fixed
-    //               << std::setprecision(2) << result.avg_score << " |"
-    //               << std::endl;
-    // }
-    // std::cout
-    //     << "+---------------+----------------+---------------+---------------+"
-    //     << std::endl;
-    //
-    // double best_line_weight = all_results[0].line_weight;
-    // double best_height_weight = all_results[0].height_weight;
-    // double best_score_weight = all_results[0].score_weight;
-
-    double best_line_weight = 0;
-    double best_height_weight = 0;
-    double best_score_weight = 1;
-    double gap_reduction = 1;
-
-    // std::cout << "\nBest Combination:" << std::endl;
-    // std::cout << "Best LINE_WEIGHT: " << best_line_weight << std::endl;
-    // std::cout << "Best HEIGHT_WEIGHT: " << best_height_weight << std::endl;
-    // std::cout << "Best SCORE_WEIGHT: " << best_score_weight << std::endl;
-    // std::cout << "Best Average Score: " << all_results[0].avg_score << std::endl
-    //           << std::endl;
-
-    // --- Final Comparison with Best Weights ---
-    std::cout << "--- Running Final Comparison with Best Weights ---"
-              << std::endl;
-
-    std::unordered_map<State, Action> best_ff_policy =
-        master_mdp.fullFeaturePolicy(ACTION_POLICY_LAMBDA, best_line_weight,
-                                     best_height_weight, best_score_weight, gap_reduction,
-                                     EPSILON, MAX_IT);
-
+    // --- Adversary Policy Computations ---
+    std::cout << "Computing adversary policies..." << std::endl;
     std::unordered_map<State, std::unique_ptr<Tromino>> rand_tromino;
     std::unordered_map<State, std::unique_ptr<Tromino>> minmax_tromino =
         master_mdp.trominoValueIterationMinMax(EPSILON, MAX_IT,
@@ -160,28 +52,84 @@ int main()
     std::unordered_map<State, std::unique_ptr<Tromino>> gapavg_tromino =
         master_mdp.trominoValueIterationGapAvg(EPSILON, MAX_IT,
                                                TROMINO_POLICY_LAMBDA);
+    std::cout << "Adversary policies computed." << std::endl << std::endl;
 
-    double final_rand_score = 0;
-    for (int i = 0; i < NB_SIMU * 5;
-         ++i) // Run more simulations for the final result
+    // --- Configuration Exploration ---
+    std::cout << "--- Starting Configuration Exploration ---" << std::endl;
+
+    // table of configurations to test [line_weight, height_weight,
+    // score_weight, gap_reduction]
+    const std::vector<std::array<double, 4>> configurations = {
+        {10.0, 2.0, 1.0, 0.5}, {20.0, 2.0, 1.0, 0.5}, {10.0, 4.0, 1.0, 0.5},
+        {10.0, 2.0, 2.0, 0.5}, {10.0, 2.0, 1.0, 1.0}, {5.0, 1.0, 1.0, 1.0}};
+
+    std::vector<RunResult> all_results;
+    int config_idx = 0;
+
+    for (const auto& config : configurations)
     {
-        final_rand_score +=
-            master_mdp.playPolicy(master_game, best_ff_policy, rand_tromino);
-    }
-    double final_minmax_score =
-        master_mdp.playPolicy(master_game, best_ff_policy, minmax_tromino);
-    double final_minavg_score =
-        master_mdp.playPolicy(master_game, best_ff_policy, minavg_tromino);
-    double final_gapavg_score =
-        master_mdp.playPolicy(master_game, best_ff_policy, minavg_tromino);
+        double line_w = config[0];
+        double height_w = config[1];
+        double score_w = config[2];
+        double gap_r = config[3];
 
-    std::cout << "\n--- Final Results for Best Full Feature Policy ---"
+        std::cout << "Running configuration #" << config_idx << "/"
+                  << configurations.size() << ": {" << line_w << ", "
+                  << height_w << ", " << score_w << ", " << gap_r << "}"
+                  << std::endl;
+
+        std::unordered_map<State, Action> policy =
+            master_mdp.actionValueIteration(ACTION_POLICY_LAMBDA, line_w,
+                                            height_w, score_w, gap_r, EPSILON,
+                                            MAX_IT);
+
+        double rand_score_sum = 0;
+        for (int i = 0; i < NB_SIMU; ++i)
+        {
+            rand_score_sum +=
+                master_mdp.playPolicy(master_game, policy, rand_tromino);
+        }
+
+        all_results.push_back(
+            {config_idx, config, rand_score_sum / NB_SIMU,
+             (double)master_mdp.playPolicy(master_game, policy, minmax_tromino),
+             (double)master_mdp.playPolicy(master_game, policy, minavg_tromino),
+             (double)master_mdp.playPolicy(master_game, policy,
+                                           gapavg_tromino)});
+
+        config_idx++;
+    }
+
+    std::cout << "\n--- All Configurations Tested ---" << std::endl;
+
+    // --- Final Results Table ---
+    std::cout << "+--------+---------+----------+---------+----------+---------"
+                 "-+----------+----------+"
               << std::endl;
-    std::cout << "Random Adversary: " << final_rand_score / (NB_SIMU * 5)
+    std::cout << "| Config | Line W. | Height W.| Score W.| Gap Red. | Rand "
+                 "Avg | MinMax S.| MinAvg S.| GapAvg S.|"
               << std::endl;
-    std::cout << "MinMax Adversary: " << final_minmax_score << std::endl;
-    std::cout << "MinAvg Adversary: " << final_minavg_score << std::endl;
-    std::cout << "GapAvg Adversary: " << final_gapavg_score << std::endl;
+    std::cout << "+--------+---------+----------+---------+----------+---------"
+                 "-+----------+----------+----------+"
+              << std::endl;
+
+    for (const auto& result : all_results)
+    {
+        std::cout << "| #" << std::setw(5) << std::left << result.config_index
+                  << "| " << std::setw(7) << std::left << result.params[0]
+                  << "| " << std::setw(8) << std::left << result.params[1]
+                  << "| " << std::setw(7) << std::left << result.params[2]
+                  << "| " << std::setw(8) << std::left << result.params[3]
+                  << "| " << std::setw(8) << std::left << std::fixed
+                  << std::setprecision(2) << result.random_score << "| "
+                  << std::setw(8) << std::left << result.minmax_score << "| "
+                  << std::setw(8) << std::left << result.minavg_score << "| "
+                  << std::setw(8) << std::left << result.gapavg_score << " |"
+                  << std::endl;
+    }
+    std::cout << "+--------+---------+----------+---------+----------+---------"
+                 "-+----------+----------+----------+"
+              << std::endl;
 
     return 0;
 }

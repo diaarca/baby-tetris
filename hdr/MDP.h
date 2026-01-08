@@ -10,7 +10,7 @@
 #include <vector>
 
 #define MAX_ACTION 10000
-#define DEBUG 0
+#define DEBUG 1
 
 class MDP
 {
@@ -28,6 +28,9 @@ class MDP
 
     std::unordered_map<State, Action>
     actionValueIteration(double eps, int maxIteration, double lambda);
+
+    std::unordered_map<State, Action>
+    robustActionValueIteration(double eps, int maxIteration, double lambda);
 
     std::unordered_map<State, std::unique_ptr<Tromino>>
     trominoValueIterationMinMax(double epsilon,

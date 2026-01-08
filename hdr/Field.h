@@ -13,6 +13,8 @@ class Field
     int height_;
     std::vector<std::vector<bool>> grid_;
 
+    std::vector<int> getColumnHeights() const;
+
   public:
     // constructors
     Field(int width, int height) : width_(width), height_(height)
@@ -35,4 +37,10 @@ class Field
     std::vector<Point> getEmptyPositions() const;
     Field clone() const;
     friend std::ostream& operator<<(std::ostream& os, const Field& f);
+
+    // heuristics
+    int getAggregateHeight() const;
+    int getCompleteLines() const;
+    int getHoles() const;
+    int getBumpiness() const;
 };

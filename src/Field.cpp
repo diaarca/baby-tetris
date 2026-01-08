@@ -69,3 +69,85 @@ std::ostream& operator<<(std::ostream& os, const Field& f)
     }
     return os;
 }
+
+std::vector<int> Field::getColumnHeights() const
+{
+    std::vector<int> heights(width_, 0);
+    for (int c = 0; c < width_; ++c)
+    {
+        for (int r = 0; r < height_; ++r)
+        {
+            if (grid_[r][c])
+            {
+                heights[c] = height_ - r;
+                break;
+            }
+        }
+    }
+    return heights;
+}
+
+int Field::getAggregateHeight() const
+{
+    std::vector<int> heights = getColumnHeights();
+    int totalHeight = 0;
+    for (int h : heights)
+    {
+        totalHeight += h;
+    }
+    return totalHeight;
+}
+
+int Field::getCompleteLines() const
+{
+    int lines = 0;
+    for (int r = 0; r < height_; ++r)
+    {
+        bool isComplete = true;
+        for (int c = 0; c < width_; ++c)
+        {
+            if (!grid_[r][c])
+            {
+                isComplete = false;
+                break;
+            }
+        }
+        if (isComplete)
+        {
+            lines++;
+        }
+    }
+    return lines;
+}
+
+int Field::getHoles() const
+{
+    int holes = 0;
+    for (int c = 0; c < width_; ++c)
+    {
+        bool roof = false;
+        for (int r = 0; r < height_; ++r)
+        {
+            if (grid_[r][c])
+            {
+                roof = true;
+            }
+            else if (roof)
+            {
+                holes++;
+            }
+        }
+    }
+    return holes;
+}
+
+int Field::getBumpiness() const
+{
+    std::vector<int> heights = getColumnHeights();
+    int bumpiness = 0;
+    for (int c = 0; c < width_ - 1; ++c)
+    {
+        bumpiness += std::abs(heights[c] - heights[c + 1]);
+    }
+    return bumpiness;
+}

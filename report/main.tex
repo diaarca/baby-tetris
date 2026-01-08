@@ -698,40 +698,82 @@ Where \code{wl}, \code{wh}, \code{ws} and \code{wg} are respectively the weights
 the highest occupied cell's height, the produced score and the number of gaps obtained after the tromino placement.
 
 \subsection{Executions}
-BLABLABLA
+\quad The following table presents selected results from our grid search experiments for the parameterized policy and the performance of the dedicated Max-Min VI policy.
+
+\begin{table}[H]
+    \centering
+    \small
+    \begin{tabular}{|c|c|c|c|c|c|c|c|c|}
+        \hline
+        \textbf{L.W.} & \textbf{H.W.} & \textbf{S.W.} & \textbf{G.R.} & \textbf{Rand} & \textbf{MinMax} & \textbf{MinAvg} & \textbf{GapAvg} & \textbf{Min} \\
+        \hline
+        \multicolumn{4}{|c|}{\textbf{Max-Min VI (Fixed Parameters)}} & 10685 & 9999 & 9999 & 10356 & 9999 \\
+        \hline
+        0 & 0 & 3 & 0 & 11090.70 & 9999 & 10000 & 10622 & 9999 \\
+        0 & 0 & 1 & 1 & 10837.25 & 9999 & 10000 & 9999 & 9999 \\
+        10 & 0 & 4 & 0 & 10611.33 & 9998 & 10000 & 7500 & 7500 \\
+        10 & 0 & 3 & 1 & 9833.09 & 9998 & 11248 & 7500 & 7500 \\
+        20 & 0 & 4 & 1 & 9242.76 & 7499 & 10000 & 7499 & 7499 \\
+        0 & 1 & 4 & 0 & 10046.42 & 9999 & 10000 & 8749 & 8749 \\
+        0 & 1 & 4 & 1.5 & 9810.65 & 9999 & 10000 & 9999 & 9810.65 \\
+        10 & 2 & 1 & 0 & 7856.08 & 7499 & 8750 & 7499 & 7499 \\
+        20 & 2 & 3 & 1 & 7934.26 & 9996 & 8750 & 7499 & 7499 \\
+        0 & 2 & 1 & 1 & 0.05 & 0 & 0 & 0 & 0 \\
+        \hline
+    \end{tabular}
+    \caption{Selected Results from Parameter Grid Search and Max-Min VI}
+    \label{tab:grid_search_results}
+\end{table}
+
 \subsection{Observations}
-BLABLABLA
-\section{Usage}
-\quad Different constants can be adjusted by modifying the corresponding \code{\#define}
-statements in \code{src/Tetris.cpp}, \code{hdr/MDP.h} and \code{hdr/State.h}.
+\quad The grid search across the four parameters, alongside the dedicated Max-Min Value Iteration, revealed several key insights into what constitutes a robust and high-performing policy.
 
-In order to recompile and run the whole project, execute the following
-command:
-\begin{lstlisting}
-    make run
-\end{lstlisting}
+\begin{itemize}
+    \item \textbf{Height Weight is Critical}: The most dramatic results are seen with the \code{height\_weight}. Configurations where this parameter is greater than zero perform exceptionally poorly, often failing to achieve any significant score. This indicates that a strong penalty for increasing the board's height is counterproductive, as the agent becomes too conservative to clear lines effectively. The best-performing policies consistently had a \code{height\_weight} of 0.
 
-Unlike the textual output shown in Section~\ref{sec:executions}, in the
-submitted version of the code, there is an exhaustive description of the
-played game (evolution of the state at each action) as follows:
-\begin{lstlisting}
-    ....                .*..                  .*..
-    ..*.                ***.                  ***.
-    ***. --- LPiece --> ***. -- Completion -> ***.
-    ***.                ***.                  ***.
-    Current score: 734
+    \item \textbf{Score and Line Weights Matter}: High scores were achieved when the \code{score\_weight} was a dominant factor, especially when both \code{line\_weight} and \code{height\_weight} were zero. For instance, configuration \{0, 0, 3, 0\} showed strong performance, suggesting that directly optimizing for the game's intrinsic score (which is based on line clears) is a very effective strategy. A high \code{line\_weight} also performs well but can be less consistent against different adversaries if not balanced.
 
-    .*..                .***                  ....
-    ***.                ****                  .***
-    ***. --- LPiece --> ***. -- Completion -> ***.
-    ***.                ***.                  ***.
-    Current score: 735
+    \item \textbf{Max-Min VI Performance}: The \code{robustActionValueIterationMaxMin} achieved a commendable minimal score of 9999, matching some of the best grid-searched configurations. Its performance against the Random adversary was 10685, which is solid, though some parameter-tuned policies (e.g., \{0, 0, 3, 0\}) slightly surpassed it. Against MinMax and MinAvg adversaries, it consistently achieved 9999, indicating good inherent robustness. This confirms the effectiveness of the Max-Min approach as a baseline for robust play.
 
-    ....                ***.                  ***.
-    .***                .***                  .***
-    ***. --- IPiece --> ***. -- Completion -> ***.
-    ***.                ***.                  ***.
-    Current score: 735
-\end{lstlisting}
+    \item \textbf{Robustness vs. High Score}: Comparing the "Most Robust" policy from the parameter search (configuration \#0 \{0, 0, 1, 0\} with a min score of 9999) with the explicit Max-Min VI, both achieve the same minimal score against specific adversaries. However, the Max-Min VI exhibits a slightly higher average performance against the random adversary, making it a strong contender for overall robustness without requiring extensive parameter tuning.
+
+    \item \textbf{Variability}: Configurations that were highly variable (e.g., configuration \{10, 0, 3, 1\}) demonstrated policies specialized for certain adversaries (e.g., MinAvg) but with lower scores against others. This highlights the trade-off between a specialized, high-reward policy and a generally robust one.
+
+    \item \textbf{Gap Reduction}: The \code{gap\_reduction} parameter had a more subtle effect. While not as impactful as the other weights, a small penalty for gaps (e.g., a weight of 1.0) often helped stabilize the policy. However, a weight of 0 for this parameter was part of some of the best overall configurations, suggesting its importance is secondary to a strong line-clearing and scoring incentive, or its optimal value is very low.
+\end{itemize}
+
+\quad In conclusion, the experiments show that a robust policy for this game should primarily focus on maximizing the score derived from line completions while completely avoiding penalties for board height. The explicit Max-Min Value Iteration provides a strong robust baseline. Parameter tuning allows for fine-grained control and can yield slightly higher average scores against random adversaries, but the core principle of robustness against the worst-case remains paramount.
+% \section{Usage}
+% \quad Different constants can be adjusted by modifying the corresponding \code{\#define}
+% statements in \code{src/Tetris.cpp}, \code{hdr/MDP.h} and \code{hdr/State.h}.
+%
+% In order to recompile and run the whole project, execute the following
+% command:
+% \begin{lstlisting}
+%     make run
+% \end{lstlisting}
+%
+% Unlike the textual output shown in Section~\ref{sec:executions}, in the
+% submitted version of the code, there is an exhaustive description of the
+% played game (evolution of the state at each action) as follows:
+% \begin{lstlisting}
+%     ....                .*..                  .*..
+%     ..*.                ***.                  ***.
+%     ***. --- LPiece --> ***. -- Completion -> ***.
+%     ***.                ***.                  ***.
+%     Current score: 734
+%
+%     .*..                .***                  ....
+%     ***.                ****                  .***
+%     ***. --- LPiece --> ***. -- Completion -> ***.
+%     ***.                ***.                  ***.
+%     Current score: 735
+%
+%     ....                ***.                  ***.
+%     .***                .***                  .***
+%     ***. --- IPiece --> ***. -- Completion -> ***.
+%     ***.                ***.                  ***.
+%     Current score: 735
+% \end{lstlisting}
 
 \end{document}

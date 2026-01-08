@@ -3,6 +3,7 @@
 #include "Tromino.h"
 #include <algorithm>
 #include <cstddef>
+#include <limits>
 
 std::unordered_map<State, Action>
 MDP::actionValueIteration(double epsilon, int maxIteration, double lambda)
@@ -55,7 +56,7 @@ MDP::actionValueIteration(double epsilon, int maxIteration, double lambda)
 
                     rewards[k] +=
                         PROBA_I_PIECE *
-                        (placedState.evaluate(config_) + lambda * vAfter);
+                        (placedState.evaluate() + lambda * vAfter);
                 }
             }
             vPrime = *std::max_element(rewards.begin(), rewards.end());
@@ -141,7 +142,7 @@ MDP::trominoValueIterationMinMax(double epsilon,
                     }
                     vAfter = it->second;
 
-                    reward = placedState.evaluate(config_) + lambda * vAfter;
+                    reward = placedState.evaluate() + lambda * vAfter;
 
                     const Tromino* t = &afterState.getNextTromino();
                     if (dynamic_cast<const LPiece*>(t) != nullptr)
@@ -335,7 +336,7 @@ MDP::trominoValueIterationMinAvg(double epsilon,
                     }
                     vAfter = it->second;
 
-                    reward = placedState.evaluate(config_) + lambda * vAfter;
+                    reward = placedState.evaluate() + lambda * vAfter;
 
                     const Tromino* t = &afterState.getNextTromino();
                     if (dynamic_cast<const LPiece*>(t) != nullptr)
@@ -512,7 +513,7 @@ int MDP::playPolicy(
 
         // prettyPrint(curr, placed.clone(), after.clone());
 
-        gain = placed.evaluate(config_);
+        gain = placed.evaluate();
 
         game.setScore(game.getScore() + gain);
 
@@ -580,4 +581,118 @@ void MDP::prettyPrint(State& curr, State placed, State after)
 
         std::cout << l << conn1 << m << conn2 << rg << '\n';
     }
+}
+
+int MDP::getMaxHeight(const Field& field) const
+{
+    int maxHeight = 0;
+    for (int c = 0; c < field.getWidth(); ++c)
+    {
+        for (int r = 0; r < field.getHeight(); ++r)
+        {
+            if (field.getGrid()[r][c])
+            {
+                int height = field.getHeight() - r;
+                if (height > maxHeight)
+                {
+                    maxHeight = height;
+                }
+                break;
+            }
+        }
+    }
+    return maxHeight;
+}
+
+// New value iteration policy with a custom reward function
+std::unordered_map<State, Action> MDP::fullFeaturePolicy(double lambda,
+                                                         double line_weight,
+                                                         double height_weight,
+                                                         double score_weight,
+                                                         double epsilon,
+                                                         int maxIteration)
+{
+    if (DEBUG)
+    {
+        std::cout << "Full Feature Policy Value Iteration" << std::endl;
+    }
+    std::unordered_map<State, double> V = generateReachableStates(s0_.clone());
+    std::unordered_map<State, Action> A;
+
+    double vAfter, vPrime, delta;
+    delta = DBL_MAX;
+
+    for (int i = 0; i < maxIteration && delta > epsilon; i++)
+    {
+        delta = 0.0;
+        for (auto& [currState, currValue] : V)
+        {
+            std::vector<Action> actions = currState.getAvailableActions();
+            if (actions.empty())
+            {
+                continue;
+            }
+
+            std::vector<double> rewards(actions.size());
+
+            for (size_t k = 0; k < actions.size(); k++)
+            {
+                rewards[k] = 0.0;
+                for (State& placedState :
+                     currState.genAllStatesFromAction(actions[k]))
+                {
+                    State afterState = placedState.completeLines();
+
+                    auto it = V.find(afterState);
+                    if (it == V.end())
+                    {
+                        std::cerr << "ERROR (fullFeaturePolicy): the "
+                                     "state cannot be derived into "
+                                     "a non-reachable state"
+                                  << std::endl;
+                        exit(1);
+                    }
+                    vAfter = it->second;
+
+                    double immediate_reward =
+                        (line_weight * placedState.nbCompleteLines()) -
+                        (height_weight * getMaxHeight(placedState.getField())) +
+                        (score_weight * placedState.evaluate());
+
+                    rewards[k] +=
+                        PROBA_I_PIECE * (immediate_reward + lambda * vAfter);
+                }
+            }
+            vPrime = *std::max_element(rewards.begin(), rewards.end());
+
+            for (size_t k = 0; k < actions.size(); k++)
+            {
+                if (vPrime == rewards[k])
+                {
+                    A.insert_or_assign(currState.clone(), actions[k]);
+                    break;
+                }
+            }
+
+            delta = std::max(delta, std::abs(vPrime - currValue));
+            V.insert_or_assign(currState.clone(), vPrime);
+        }
+
+        if (DEBUG)
+        {
+            std::cout << "i = " << i << " and delta = " << delta << std::endl;
+        }
+    }
+
+    if (DEBUG)
+    {
+        double sum = 0;
+        for (std::pair<const State, double>& item : V)
+        {
+            sum += item.second;
+        }
+        std::cout << "\naverage over final V " << sum / V.size() << std::endl;
+    }
+
+    return A;
 }

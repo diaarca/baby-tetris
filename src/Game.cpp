@@ -2,8 +2,8 @@
 #include "State.h"
 #include <algorithm>
 
-Game::Game(const std::array<int, 3>& config, Field& field)
-    : state_(field, std::make_unique<IPiece>()), score_(0), config_(config)
+Game::Game(Field& field)
+    : state_(field, std::make_unique<IPiece>()), score_(0)
 {
     if ((rand() / (double)RAND_MAX) < PROBA_I_PIECE)
         state_ = State(field, std::make_unique<IPiece>());
@@ -29,11 +29,11 @@ void Game::playRandom()
             std::cout << "Action number " << i << std::endl;
             state_ = state_.applyAction(a);
             std::cout << state_;
-            gain = state_.evaluate(config_);
-
-            auto it = std::find(std::begin(config_), std::end(config_), gain);
-            lines = std::distance(std::begin(config_), it) + 1;
+            
+            lines = state_.nbCompleteLines();
+            gain = state_.evaluate();
             score_ += gain;
+
             if (lines > 0)
             {
                 std::cout << "Action completed " << lines << " lines\n";

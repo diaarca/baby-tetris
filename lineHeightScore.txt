@@ -1,0 +1,63 @@
+rm -rf obj bin
+mkdir -p obj
+g++ -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g -MMD -MP -c src/Action.cpp -o obj/Action.o
+g++ -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g -MMD -MP -c src/Field.cpp -o obj/Field.o
+g++ -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g -MMD -MP -c src/Game.cpp -o obj/Game.o
+g++ -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g -MMD -MP -c src/MDP.cpp -o obj/MDP.o
+g++ -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g -MMD -MP -c src/Point.cpp -o obj/Point.o
+g++ -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g -MMD -MP -c src/State.cpp -o obj/State.o
+g++ -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g -MMD -MP -c src/Tetris.cpp -o obj/Tetris.o
+g++ -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g -MMD -MP -c src/Tromino.cpp -o obj/Tromino.o
+mkdir -p bin
+g++ -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g -MMD -MP -o bin/tetris obj/Action.o obj/Field.o obj/Game.o obj/MDP.o obj/Point.o obj/State.o obj/Tetris.o obj/Tromino.o
+./bin/tetris
+Loaded config: [1, 3, 6]
+
+--- Starting Parallel Grid Search for Full Feature Policy Weights ---
+Launching 8 concurrent threads if available.
+
+--- Grid Search Complete ---
++---------------+----------------+---------------+---------------+
+|  Line Weight  | Height Weight  |  Score Weight | Average Score |
++---------------+----------------+---------------+---------------+
+| 10           | 1             | 2            | 7947.60       |
+| 5.00         | 1.00          | 2.00         | 7894.70       |
+| 20.00        | 4.00          | 0.50         | 7863.30       |
+| 10.00        | 2.00          | 0.50         | 7862.00       |
+| 10.00        | 2.00          | 1.00         | 7860.80       |
+| 5.00         | 1.00          | 0.50         | 7858.50       |
+| 5.00         | 1.00          | 1.00         | 7858.20       |
+| 5.00         | 2.00          | 1.00         | 7857.90       |
+| 10.00        | 4.00          | 2.00         | 7857.30       |
+| 20.00        | 4.00          | 2.00         | 7855.90       |
+| 10.00        | 2.00          | 2.00         | 7855.00       |
+| 5.00         | 2.00          | 2.00         | 7850.20       |
+| 20.00        | 2.00          | 0.50         | 7848.40       |
+| 20.00        | 2.00          | 1.00         | 7844.30       |
+| 20.00        | 1.00          | 2.00         | 7844.10       |
+| 20.00        | 4.00          | 1.00         | 7844.10       |
+| 10.00        | 1.00          | 1.00         | 7841.00       |
+| 20.00        | 1.00          | 1.00         | 7838.60       |
+| 20.00        | 1.00          | 0.50         | 7838.50       |
+| 10.00        | 1.00          | 0.50         | 7836.90       |
+| 20.00        | 2.00          | 2.00         | 7835.80       |
+| 10.00        | 4.00          | 1.00         | 1398.00       |
+| 5.00         | 2.00          | 0.50         | 728.00        |
+| 10.00        | 4.00          | 0.50         | 667.30        |
+| 5.00         | 4.00          | 2.00         | 1.00          |
+| 5.00         | 4.00          | 0.50         | 0.70          |
+| 5.00         | 4.00          | 1.00         | 0.40          |
++---------------+----------------+---------------+---------------+
+
+Best Combination:
+Best LINE_WEIGHT: 10.00
+Best HEIGHT_WEIGHT: 1.00
+Best SCORE_WEIGHT: 2.00
+Best Average Score: 7947.60
+
+--- Running Final Comparison with Best Weights ---
+
+--- Final Results for Best Full Feature Policy ---
+Random Adversary: 7942.20
+MinMax Adversary: 9996.00
+MinAvg Adversary: 8750.00

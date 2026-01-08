@@ -148,7 +148,41 @@ our implementation choices.
         that computes in reasonable time, even if the expected value vector is
         less qualitative than the $\epsilon$ margin we fixed
 \end{itemize}
-
+\newpage
+\subsubsection{Value Iteration Implementation For The Player}
+\quad The value iteration algorithm is implemented for the player by maintaining a value function 
+for each state and updating it based on the expected rewards from taking actions in that state. 
+The output is a policy that maps each state to the action that maximizes the expected cumulative discounted reward.
+\begin{lstlisting}[language=C++, caption={Lowest Maximal Expected Reward}, label={lst:minmax_diff_cpp}]
+// ... (within the loop over all reachable states)
+// for (auto& [currState, currValue] : V)
+    Action& action : currState.getAvailableActions()
+    for (int k = 0; k < nbActions; k++)
+    {
+        // rewards for action index k
+        rewards[k] = 0.0;
+        for (State& placedState : currState.genAllStatesFromAction(action))
+        {
+            State afterState = placedState.completeLines();
+            double vAfter = V.at(afterState);
+            double reward[k] = 0.5 * (placedState.evaluate(config_) + 
+                                lambda * vAfter);
+        }
+    }
+    vPrime = *std::max_element(rewards.begin(), rewards.end());
+    
+    for (int k = 0; k < nbActions; k++)
+    {
+        if (rewards[k] == vPrime)
+        {
+            // If we find a matching action, we add it to the policy
+            A.insert_or_assign(currState.clone(), 
+                                std::make_unique<Tromino>(k));
+            break;
+        }
+    }
+// ... (the rest of the loop updates delta and V[currState] with vPrime)
+\end{lstlisting}
 \subsection{Results}
 \quad Here, we will present multiple examples of execution of our
 implementation. In these executions we will use fixed values for:
@@ -480,101 +514,101 @@ Both approaches produce similar results, with no remarkable difference. However,
 adversary policy, where the tromino pieces are chosen randomly, the tromino value iteration, for both approaches, 
 successfully decreases the player's score.  \\
 
-\subsection{Implementation}
-\quad We add a new method in the \code{MDP} class that computes value iteration for the adversary policy. Both the \code{trominoValueIterationMinMax} and \code{trominoValueIterationMinAvg} methods share a common value iteration framework. They primarily differ in how the next tromino piece is chosen by the adversary, which in turn defines the update rule for the state value function $V(s)$. The common part involves an outer loop for value iteration convergence and an inner loop iterating through all reachable states via a map `V`.
+% \subsection{Implementation}
+% \quad We add a new method in the \code{MDP} class that computes value iteration for the adversary policy. Both the \code{trominoValueIterationMinMax} and \code{trominoValueIterationMinAvg} methods share a common value iteration framework. They primarily differ in how the next tromino piece is chosen by the adversary, which in turn defines the update rule for the state value function $V(s)$. The common part involves an outer loop for value iteration convergence and an inner loop iterating through all reachable states via a map `V`.
 
-\subsubsection{Lowest Maximal Expected Reward (\code{trominoValueIterationMinMax})}
-\quad In this approach, the adversary aims to minimize the maximum possible expected reward that the player can achieve. For each state, the algorithm computes the best outcome for the player for each potential next piece. The adversary then chooses the piece that leads to the lower of these two maximal rewards.
+% \subsubsection{Lowest Maximal Expected Reward (\code{trominoValueIterationMinMax})}
+% \quad In this approach, the adversary aims to minimize the maximum possible expected reward that the player can achieve. For each state, the algorithm computes the best outcome for the player for each potential next piece. The adversary then chooses the piece that leads to the lower of these two maximal rewards.
 
-\begin{lstlisting}[language=C++, caption={Lowest Maximal Expected Reward}, label={lst:minmax_diff_cpp}]
-// ... (within the loop over all reachable states)
-// for (auto& [currState, currValue] : V)
+% \begin{lstlisting}[language=C++, caption={Lowest Maximal Expected Reward}, label={lst:minmax_diff_cpp}]
+% // ... (within the loop over all reachable states)
+% // for (auto& [currState, currValue] : V)
 
-    double maxI = 0.0, maxL = 0.0;
-    for (const Action& action : currState.getAvailableActions())
-    {
-        // This inner loop evaluates outcomes for both next-piece possibilities
-        for (State& placedState : currState.genAllStatesFromAction(action))
-        {
-            State afterState = placedState.completeLines();
-            double vAfter = V.at(afterState);
-            double reward = 0.5 * (placedState.evaluate(config_) + lambda * vAfter);
+%     double maxI = 0.0, maxL = 0.0;
+%     for (const Action& action : currState.getAvailableActions())
+%     {
+%         // This inner loop evaluates outcomes for both next-piece possibilities
+%         for (State& placedState : currState.genAllStatesFromAction(action))
+%         {
+%             State afterState = placedState.completeLines();
+%             double vAfter = V.at(afterState);
+%             double reward = 0.5 * (placedState.evaluate(config_) + lambda * vAfter);
 
-            const Tromino* t = &afterState.getNextTromino();
-            if (dynamic_cast<const LPiece*>(t))
-            {
-                maxL = std::max(maxL, reward);
-            }
-            else if (dynamic_cast<const IPiece*>(t))
-            {
-                maxI = std::max(maxI, reward);
-            }
-        }
-    }
-    // The new state value (vPrime) is the minimum of the two maximal rewards
-    if (maxL < maxI)
-    {
-        T.insert_or_assign(currState.clone(), std::make_unique<LPiece>());
-        vPrime = maxL;
-    }
-    else
-    {
-        T.insert_or_assign(currState.clone(), std::make_unique<IPiece>());
-        vPrime = maxI;
-    }
-// ... (the rest of the loop updates delta and V[currState] with vPrime)
-\end{lstlisting}
+%             const Tromino* t = &afterState.getNextTromino();
+%             if (dynamic_cast<const LPiece*>(t))
+%             {
+%                 maxL = std::max(maxL, reward);
+%             }
+%             else if (dynamic_cast<const IPiece*>(t))
+%             {
+%                 maxI = std::max(maxI, reward);
+%             }
+%         }
+%     }
+%     // The new state value (vPrime) is the minimum of the two maximal rewards
+%     if (maxL < maxI)
+%     {
+%         T.insert_or_assign(currState.clone(), std::make_unique<LPiece>());
+%         vPrime = maxL;
+%     }
+%     else
+%     {
+%         T.insert_or_assign(currState.clone(), std::make_unique<IPiece>());
+%         vPrime = maxI;
+%     }
+% // ... (the rest of the loop updates delta and V[currState] with vPrime)
+% \end{lstlisting}
 
-\subsubsection{Lowest Average Expected Reward (\code{trominoValueIterationMinAvg})}
-\quad In this variant, the adversary selects the next tromino ('I' or 'L') that results in the lowest average expected reward for the player, averaged over all available actions.
+% \subsubsection{Lowest Average Expected Reward (\code{trominoValueIterationMinAvg})}
+% \quad In this variant, the adversary selects the next tromino ('I' or 'L') that results in the lowest average expected reward for the player, averaged over all available actions.
 
-\begin{lstlisting}[language=C++, caption={Lowest Average Expected Reward}, label={lst:minavg_diff_cpp}]
-// ... (within the loop over all reachable states)
-// for (auto& [currState, currValue] : V)
+% \begin{lstlisting}[language=C++, caption={Lowest Average Expected Reward}, label={lst:minavg_diff_cpp}]
+% // ... (within the loop over all reachable states)
+% // for (auto& [currState, currValue] : V)
 
-    double avgI = 0.0, avgL = 0.0;
-    int nbActions = currState.getAvailableActions().size();
+%     double avgI = 0.0, avgL = 0.0;
+%     int nbActions = currState.getAvailableActions().size();
 
-    for (const Action& action : currState.getAvailableActions())
-    {
-        // This inner loop evaluates outcomes for both next-piece possibilities
-        for (State& placedState : currState.genAllStatesFromAction(action))
-        {
-            State afterState = placedState.completeLines();
-            double vAfter = V.at(afterState);
-            double reward = 0.5 * (placedState.evaluate(config_) + lambda * vAfter);
+%     for (const Action& action : currState.getAvailableActions())
+%     {
+%         // This inner loop evaluates outcomes for both next-piece possibilities
+%         for (State& placedState : currState.genAllStatesFromAction(action))
+%         {
+%             State afterState = placedState.completeLines();
+%             double vAfter = V.at(afterState);
+%             double reward = 0.5 * (placedState.evaluate(config_) + lambda * vAfter);
 
-            const Tromino* t = &afterState.getNextTromino();
-            if (dynamic_cast<const LPiece*>(t))
-            {
-                avgL += reward;
-            }
-            else if (dynamic_cast<const IPiece*>(t))
-            {
-                avgI += reward;
-            }
-        }
-    }
-    // Normalize the sums to get the average reward per action
-    if (nbActions > 0) {
-        avgI /= nbActions;
-        avgL /= nbActions;
-    }
-    // The new state value (vPrime) is the minimum of the two average rewards
-    if (avgL < avgI)
-    {
-        T.insert_or_assign(currState.clone(), std::make_unique<LPiece>());
-        vPrime = avgL;
-    }
-    else
-    {
-        T.insert_or_assign(currState.clone(), std::make_unique<IPiece>());
-        vPrime = avgI;
-    }
-// ... (the rest of the loop updates delta and V[currState] with vPrime)
-\end{lstlisting}
+%             const Tromino* t = &afterState.getNextTromino();
+%             if (dynamic_cast<const LPiece*>(t))
+%             {
+%                 avgL += reward;
+%             }
+%             else if (dynamic_cast<const IPiece*>(t))
+%             {
+%                 avgI += reward;
+%             }
+%         }
+%     }
+%     // Normalize the sums to get the average reward per action
+%     if (nbActions > 0) {
+%         avgI /= nbActions;
+%         avgL /= nbActions;
+%     }
+%     // The new state value (vPrime) is the minimum of the two average rewards
+%     if (avgL < avgI)
+%     {
+%         T.insert_or_assign(currState.clone(), std::make_unique<LPiece>());
+%         vPrime = avgL;
+%     }
+%     else
+%     {
+%         T.insert_or_assign(currState.clone(), std::make_unique<IPiece>());
+%         vPrime = avgI;
+%     }
+% // ... (the rest of the loop updates delta and V[currState] with vPrime)
+% \end{lstlisting}
 
-\newpage
+% \newpage
 
 \subsection{Executions}
 \quad According to our implementation, we made the same executions in order to compare our adversary policies. Here we play the value iteration policy (from Section~/ref{sec:question1}) for the player on 3 adversary policies: random (based on \code{PROBA\_I\_PIECE}), Min-Max value iteration and Min-Avg iteration:
@@ -662,51 +696,6 @@ The idea is to use these parameters as weight in the reward function to adjust t
 \]
 Where \code{wl}, \code{wh}, \code{ws} and \code{wg} are respectively the weights for completed lines, 
 the highest occupied cell's height, the produced score and the number of gaps obtained after the tromino placement.
-
-\subsection{Implementation}
-\subsubsection{Max - Min Value Iteration (\code{robustActionValueIteration})}
-\quad In this variant, the adversary selects the next tromino ('I' or 'L') that results in the lowest average expected reward for the player, averaged over all available actions.
-
-\begin{lstlisting}[language=C++, caption={Lowest Average Expected Reward}, label={lst:minavg_diff_cpp}]
-// ... (within the loop over all reachable states)
-// for (auto& [currState, currValue] : V)
-std::vector<Action> actions = currState.getAvailableActions();
-int nbActions = actions.size();
-
-if (nbActions == 0) {
-    continue;
-}
-
-std::vector<double> robust_action_values(nbActions);
-
-for (int k = 0; k < nbActions; k++) {
-    double min_reward_for_action = DBL_MAX;
-
-    auto nextStates = currState.genAllStatesFromAction(actions[k]);
-    if (nextStates.empty()) {
-        continue;
-    }
-
-    for (State& placedState : nextStates) {
-        State afterState = placedState.completeLines();
-
-        auto it = V.find(afterState);
-        if (it == V.end()) {
-            std::cerr << "ERROR (robustActionValueIteration): the state cannot be derived into a non-reachable state" << std::endl;
-            exit(1);
-        }
-        double vAfter = it->second;
-        double reward = placedState.evaluate(config_) + lambda * vAfter;
-
-        if (reward < min_reward_for_action) {
-            min_reward_for_action = reward;
-        }
-    }
-    robust_action_values[k] = min_reward_for_action;
-}
-
-vPrime = *std::max_element(robust_action_values.begin(), robust_action_values.end());
-\end{lstlisting}
 
 \subsection{Executions}
 BLABLABLA

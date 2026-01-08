@@ -192,7 +192,7 @@ MDP::trominoValueIterationMinMax(double epsilon,
 }
 
 std::unordered_map<State, std::unique_ptr<Tromino>>
-MDP::trominoValueIterationGap(double epsilon,
+MDP::trominoValueIterationGapAvg(double epsilon,
                        int maxIteration,
                        double lambda)
 {
@@ -285,6 +285,7 @@ MDP::trominoValueIterationGap(double epsilon,
 
     return T;
 }
+
 std::unordered_map<State, std::unique_ptr<Tromino>>
 MDP::trominoValueIterationMinAvg(double epsilon,
                                  int maxIteration,

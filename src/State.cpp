@@ -207,25 +207,37 @@ int State::gapCheck() const
 
     int gaps = 0;
     for (int c = 0; c < cols; ++c)
-    {
+    {   
         int lineStart = 0;
         for (int r = 0; r < rows; ++r)
         {
+            int empty = 1;
             if (grid[r][c])
             {
                 lineStart++;
             }
             else if (lineStart > 0 && !grid[r][c]) //if line has started and we find an empty cell
             {
-                gaps++;
+                for (int k = r; k > 0; --k)
+                {
+                    if (grid[k - 1][c])
+                    {
+                        gaps+=empty;
+                        break;
+                    }
+                    else
+                    {
+                        empty++;
+                    }
+                }
             }
         }
-        if (lineStart != rows) //if gap before line starts
-        {
-            gaps += (rows - lineStart); 
-        }
+        // if (lineStart > 0 && lineStart != rows) //if gap before line starts
+        // {
+        //     gaps += (rows - lineStart); 
+        // }
     }
-    return gaps; // Negative score for gaps
+    return gaps; 
 }
 
 

@@ -78,7 +78,7 @@ int main()
     }
 
     std::unordered_map<State, std::unique_ptr<Tromino>> maxGapTrominos =
-        mdp.trominoValueIterationGap(EPSILON, MAX_IT, TROMINO_POLICY_LAMBDA);
+        mdp.trominoValueIterationGapAvg(EPSILON, MAX_IT, TROMINO_POLICY_LAMBDA);
 
     if (DEBUG)
     {
@@ -88,12 +88,11 @@ int main()
     // compute the optimal policy using the value iteration algorithm
     std::unordered_map<State, Action> actions =
         mdp.actionValueIteration(EPSILON, MAX_IT, ACTION_POLICY_LAMBDA);
-
     if (DEBUG)
     {
         std::cout << std::endl << std::endl;
     }
-
+    
     int rand = 0;
 
     for (int i = 0; i < NB_SIMU; i++)
@@ -106,12 +105,13 @@ int main()
     int minMax = mdp.playPolicy(game, actions, minMaxTrominos);
     int minAvg = mdp.playPolicy(game, actions, minAvgTrominos);
     int maxGap = mdp.playPolicy(game, actions, maxGapTrominos);
+    std::cout << "gap======================================================"
+              << std::endl;
     std::cout << "Average results:" << std::endl
               << "Random Adversary moves: " << (double)rand / (double)NB_SIMU
               << std::endl
               << "Min Max Adversary Moves: " << minMax << std::endl
               << "Min Avg Adversary Moves: " << minAvg << std::endl
               << "Max Gap Adversary Moves: " << maxGap << std::endl;
-
     return 0;
 }

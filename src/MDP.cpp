@@ -141,8 +141,7 @@ MDP::trominoValueIterationMinMax(double epsilon,
                     }
                     vAfter = it->second;
 
-                    reward = PROBA_I_PIECE *
-                             (placedState.evaluate(config_) + lambda * vAfter);
+                    reward = placedState.evaluate(config_) + lambda * vAfter;
 
                     const Tromino* t = &afterState.getNextTromino();
                     if (dynamic_cast<const LPiece*>(t) != nullptr)
@@ -241,8 +240,7 @@ MDP::trominoValueIterationMinAvg(double epsilon,
                     }
                     vAfter = it->second;
 
-                    reward = PROBA_I_PIECE *
-                             (placedState.evaluate(config_) + lambda * vAfter);
+                    reward = placedState.evaluate(config_) + lambda * vAfter;
 
                     const Tromino* t = &afterState.getNextTromino();
                     if (dynamic_cast<const LPiece*>(t) != nullptr)

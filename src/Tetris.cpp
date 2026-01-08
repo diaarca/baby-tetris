@@ -1,6 +1,6 @@
 #include "Action.h"
-#include "State.h"
 #include "MDP.h"
+#include "State.h"
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
@@ -8,7 +8,7 @@
 #include <unordered_map>
 
 #define WIDTH 4
-#define HEIGHT 5
+#define HEIGHT 4
 #define CONFIG_PATH "config.txt"
 #define EPSILON 0.00000001
 #define MAX_IT 1000
@@ -80,6 +80,11 @@ int main()
     // compute the optimal policy using the value iteration algorithm
     std::unordered_map<State, Action> actions =
         mdp.actionValueIteration(EPSILON, MAX_IT, ACTION_POLICY_LAMBDA);
+
+    if (DEBUG)
+    {
+        std::cout << std::endl << std::endl;
+    }
 
     int rand = 0;
 

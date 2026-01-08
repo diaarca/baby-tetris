@@ -639,6 +639,14 @@ successfully decreases the player's score.  \\
 
 Contrarily to the player value iteration we can remark that the $\lambda$ parameter doesn't affect the score of the game. This is due to the fact that the score is minimized in that case and then the factor with which we multiply the $V(s)$ will not change anything.
 
+\section{Question 3: Robust Policy For Player}
+\quad In this section, we study the case when the player do not make any
+assumption on the adversary policy by looking for policies that could suit with
+"any" adversary. Here we accept quite lower maximum score if it make
+the minimal score (over all adversary policies) is higher.
+
+Our first idea at this end is
+
 \section{Usage}
 \quad Different constants can be adjusted by modifying the corresponding \code{\#define} 
 statements in \code{src/Tetris.cpp}, \code{hdr/MDP.h} and \code{hdr/State.h}.

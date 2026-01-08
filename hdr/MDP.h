@@ -55,6 +55,7 @@ class MDP
                                                           double line_weight,
                                                           double height_weight,
                                                           double score_weight,
+                                                          double gap_reduction,
                                                           double epsilon,
                                                           int maxIteration);
 

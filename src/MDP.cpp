@@ -609,6 +609,7 @@ std::unordered_map<State, Action> MDP::fullFeaturePolicy(double lambda,
                                                          double line_weight,
                                                          double height_weight,
                                                          double score_weight,
+                                                         double gap_reduction,
                                                          double epsilon,
                                                          int maxIteration)
 {
@@ -657,7 +658,8 @@ std::unordered_map<State, Action> MDP::fullFeaturePolicy(double lambda,
                     double immediate_reward =
                         (line_weight * placedState.nbCompleteLines()) -
                         (height_weight * getMaxHeight(placedState.getField())) +
-                        (score_weight * placedState.evaluate());
+                        (score_weight * placedState.evaluate()) -
+                        (gap_reduction * placedState.gapCheck());
 
                     rewards[k] +=
                         PROBA_I_PIECE * (immediate_reward + lambda * vAfter);

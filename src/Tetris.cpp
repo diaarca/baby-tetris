@@ -40,7 +40,7 @@ GridSearchResult evaluate_weights(double lw, double hw, double sw, State s0)
     std::unordered_map<State, std::unique_ptr<Tromino>> rand_tromino;
 
     std::unordered_map<State, Action> temp_ff_policy = mdp.fullFeaturePolicy(
-        ACTION_POLICY_LAMBDA, lw, hw, sw, EPSILON, MAX_IT);
+        ACTION_POLICY_LAMBDA, lw, hw,0, sw, EPSILON, MAX_IT);
 
     double current_avg_score = 0;
     for (int i = 0; i < NB_SIMU; ++i)
@@ -129,9 +129,10 @@ int main()
     // double best_height_weight = all_results[0].height_weight;
     // double best_score_weight = all_results[0].score_weight;
 
-    double best_line_weight = 10.0;
-    double best_height_weight = 1;
-    double best_score_weight = 2;
+    double best_line_weight = 0;
+    double best_height_weight = 0;
+    double best_score_weight = 1;
+    double gap_reduction = 1;
 
     // std::cout << "\nBest Combination:" << std::endl;
     // std::cout << "Best LINE_WEIGHT: " << best_line_weight << std::endl;
@@ -146,7 +147,7 @@ int main()
 
     std::unordered_map<State, Action> best_ff_policy =
         master_mdp.fullFeaturePolicy(ACTION_POLICY_LAMBDA, best_line_weight,
-                                     best_height_weight, best_score_weight,
+                                     best_height_weight, best_score_weight, gap_reduction,
                                      EPSILON, MAX_IT);
 
     std::unordered_map<State, std::unique_ptr<Tromino>> rand_tromino;
@@ -155,6 +156,9 @@ int main()
                                                TROMINO_POLICY_LAMBDA);
     std::unordered_map<State, std::unique_ptr<Tromino>> minavg_tromino =
         master_mdp.trominoValueIterationMinAvg(EPSILON, MAX_IT,
+                                               TROMINO_POLICY_LAMBDA);
+    std::unordered_map<State, std::unique_ptr<Tromino>> gapavg_tromino =
+        master_mdp.trominoValueIterationGapAvg(EPSILON, MAX_IT,
                                                TROMINO_POLICY_LAMBDA);
 
     double final_rand_score = 0;
@@ -168,6 +172,8 @@ int main()
         master_mdp.playPolicy(master_game, best_ff_policy, minmax_tromino);
     double final_minavg_score =
         master_mdp.playPolicy(master_game, best_ff_policy, minavg_tromino);
+    double final_gapavg_score =
+        master_mdp.playPolicy(master_game, best_ff_policy, minavg_tromino);
 
     std::cout << "\n--- Final Results for Best Full Feature Policy ---"
               << std::endl;
@@ -175,6 +181,7 @@ int main()
               << std::endl;
     std::cout << "MinMax Adversary: " << final_minmax_score << std::endl;
     std::cout << "MinAvg Adversary: " << final_minavg_score << std::endl;
+    std::cout << "GapAvg Adversary: " << final_gapavg_score << std::endl;
 
     return 0;
 }

@@ -2,7 +2,7 @@ CC = g++
 
 DEPFLAGS = -MMD -MP
 
-CFLAGS = -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g -fsanitize=address,undefined $(DEPFLAGS)
+CFLAGS = -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g $(DEPFLAGS)
 
 SRCDIR = src
 OBJDIR = obj

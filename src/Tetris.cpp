@@ -148,10 +148,10 @@ int main()
     std::cout << "Launching " << std::thread::hardware_concurrency()
               << " concurrent threads if available." << std::endl;
 
-    const std::vector<double> line_weights = {0, 10.0, 20.0};
-    const std::vector<double> height_weights = {0, 2.0};
-    const std::vector<double> score_weights = {1, 2.0, 3.0};
-    const std::vector<double> gap_reduction_weights = {0, 1.0};
+    const std::vector<double> line_weights = {0.0, 10.0, 20.0};
+    const std::vector<double> height_weights = {0.0, 1.0};
+    const std::vector<double> score_weights = {1.0, 4.0};
+    const std::vector<double> gap_reduction_weights = {0.0, 1.0, 1.5};
 
     std::vector<std::future<RunResult>> futures;
     int config_idx = 0;

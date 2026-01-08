@@ -1,0 +1,143 @@
+rm -rf obj bin
+mkdir -p obj
+g++ -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g -MMD -MP -c src/Action.cpp -o obj/Action.o
+g++ -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g -MMD -MP -c src/Field.cpp -o obj/Field.o
+g++ -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g -MMD -MP -c src/Game.cpp -o obj/Game.o
+g++ -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g -MMD -MP -c src/MDP.cpp -o obj/MDP.o
+g++ -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g -MMD -MP -c src/Point.cpp -o obj/Point.o
+g++ -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g -MMD -MP -c src/State.cpp -o obj/State.o
+g++ -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g -MMD -MP -c src/Tetris.cpp -o obj/Tetris.o
+g++ -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g -MMD -MP -c src/Tromino.cpp -o obj/Tromino.o
+mkdir -p bin
+g++ -std=c++17 -O2 -Wall -Wextra -Werror -Wpedantic -I./hdr -g -MMD -MP -o bin/tetris obj/Action.o obj/Field.o obj/Game.o obj/MDP.o obj/Point.o obj/State.o obj/Tetris.o obj/Tromino.o
+./bin/tetris
+Computing adversary policies...
+Adversary policies computed.
+
+--- Starting Parallel Configuration Exploration ---
+Launching 8 concurrent threads if available.
+Running configuration #1: {0, 0, 1, 1}
+Running configuration #0: {0, 0, 1, 0}
+Running configuration #4: {0, 0, 4, 1}
+Running configuration #2: {0, 0, 1, 1.5}
+Running configuration #9: {0, 1, 4, 0}
+Running configuration #12: {10, 0, 1, 0}
+Running configuration #15: {10, 0, 4, 0}
+Running configuration #16: {10, 0, 4, 1}
+Running configuration #5: {0, 0, 4, 1.5}
+Running configuration #19: {10, 1, 1, 1}
+Running configuration #21: {10, 1, 4, 0}
+Running configuration #22: {10, 1, 4, 1}
+Running configuration #23: {10, 1, 4, 1.5}
+Running configuration #24: {20, 0, 1, 0}
+Running configuration #10: {0, 1, 4, 1}
+Running configuration #7: {0, 1, 1, 1}
+Running configuration #27: {20, 0, 4, 0}
+Running configuration #28: {20, 0, 4, 1}
+Running configuration #29: {20, 0, 4, 1.5}
+Running configuration #11: {0, 1, 4, 1.5}
+Running configuration #13: {10, 0, 1, 1}
+Running configuration #30: {20, 1, 1, 0}
+Running configuration #31: {20, 1, 1, 1}
+Running configuration #3: {0, 0, 4, 0}
+Running configuration #32: {20, 1, 1, 1.5}
+Running configuration #33: {20, 1, 4, 0}
+Running configuration #14: {10, 0, 1, 1.5}
+Running configuration #34: {20, 1, 4, 1}
+Running configuration #35: {20, 1, 4, 1.5}
+Running configuration #8: {0, 1, 1, 1.5}
+Running configuration #17: {10, 0, 4, 1.5}
+Running configuration #18: {10, 1, 1, 0}
+Running configuration #20: {10, 1, 1, 1.5}
+Running configuration #6: {0, 1, 1, 0}
+Running configuration #25: {20, 0, 1, 1}
+Running configuration #26: {20, 0, 1, 1.5}
+
+--- All Configurations Tested ---
++--------+---------+----------+---------+----------+----------+----------+----------+----------+-----------+
+| Config | Line W. | Height W.| Score W.| Gap Red. | Rand Avg | MinMax S.| MinAvg S.| GapAvg S.| Min Score |
++--------+---------+----------+---------+----------+----------+----------+----------+----------+-----------+
+| #0    | 0      | 0       | 1      | 0       | 11088.54| 9999.00 | 10000.00| 10622.00| 9999.00   |
+| #1    | 0.00   | 0.00    | 1.00   | 1.00    | 10837.09| 9999.00 | 10000.00| 9999.00 | 9999.00   |
+| #2    | 0.00   | 0.00    | 1.00   | 1.50    | 10698.15| 9999.00 | 10000.00| 9999.00 | 9999.00   |
+| #3    | 0.00   | 0.00    | 4.00   | 0.00    | 11087.59| 9999.00 | 10000.00| 10622.00| 9999.00   |
+| #4    | 0.00   | 0.00    | 4.00   | 1.00    | 11004.08| 9999.00 | 10000.00| 9999.00 | 9999.00   |
+| #5    | 0.00   | 0.00    | 4.00   | 1.50    | 11005.91| 9999.00 | 10000.00| 9999.00 | 9999.00   |
+| #6    | 0.00   | 1.00    | 1.00   | 0.00    | 0.62    | 0.00    | 0.00    | 0.00    | 0.00      |
+| #7    | 0.00   | 1.00    | 1.00   | 1.00    | 3.02    | 0.00    | 0.00    | 0.00    | 0.00      |
+| #8    | 0.00   | 1.00    | 1.00   | 1.50    | 3.79    | 0.00    | 10000.00| 0.00    | 0.00      |
+| #9    | 0.00   | 1.00    | 4.00   | 0.00    | 10046.42| 9999.00 | 10000.00| 8749.00 | 8749.00   |
+| #10   | 0.00   | 1.00    | 4.00   | 1.00    | 9815.69 | 9999.00 | 10000.00| 9999.00 | 9815.69   |
+| #11   | 0.00   | 1.00    | 4.00   | 1.50    | 9810.65 | 9999.00 | 10000.00| 9999.00 | 9810.65   |
+| #12   | 10.00  | 0.00    | 1.00   | 0.00    | 7779.55 | 9996.00 | 8750.00 | 7499.00 | 7499.00   |
+| #13   | 10.00  | 0.00    | 1.00   | 1.00    | 9075.06 | 7499.00 | 10000.00| 7499.00 | 7499.00   |
+| #14   | 10.00  | 0.00    | 1.00   | 1.50    | 9083.33 | 7499.00 | 10000.00| 7499.00 | 7499.00   |
+| #15   | 10.00  | 0.00    | 4.00   | 0.00    | 10613.04| 9998.00 | 10000.00| 7500.00 | 7500.00   |
+| #16   | 10.00  | 0.00    | 4.00   | 1.00    | 10538.12| 9998.00 | 9999.00 | 7500.00 | 7500.00   |
+| #17   | 10.00  | 0.00    | 4.00   | 1.50    | 10502.02| 9998.00 | 10000.00| 7500.00 | 7500.00   |
+| #18   | 10.00  | 1.00    | 1.00   | 0.00    | 7841.00 | 9996.00 | 8750.00 | 7499.00 | 7499.00   |
+| #19   | 10.00  | 1.00    | 1.00   | 1.00    | 8101.68 | 9996.00 | 9167.00 | 7499.00 | 7499.00   |
+| #20   | 10.00  | 1.00    | 1.00   | 1.50    | 8421.28 | 7499.00 | 8749.00 | 7499.00 | 7499.00   |
+| #21   | 10.00  | 1.00    | 4.00   | 0.00    | 9220.70 | 7499.00 | 10000.00| 7499.00 | 7499.00   |
+| #22   | 10.00  | 1.00    | 4.00   | 1.00    | 9216.93 | 7499.00 | 10000.00| 7499.00 | 7499.00   |
+| #23   | 10.00  | 1.00    | 4.00   | 1.50    | 9216.45 | 7499.00 | 10000.00| 7499.00 | 7499.00   |
+| #24   | 20.00  | 0.00    | 1.00   | 0.00    | 7653.12 | 9996.00 | 7499.00 | 7499.00 | 7499.00   |
+| #25   | 20.00  | 0.00    | 1.00   | 1.00    | 8474.26 | 7499.00 | 8749.00 | 7499.00 | 7499.00   |
+| #26   | 20.00  | 0.00    | 1.00   | 1.50    | 8475.05 | 7499.00 | 8749.00 | 7499.00 | 7499.00   |
+| #27   | 20.00  | 0.00    | 4.00   | 0.00    | 9297.93 | 9997.00 | 10000.00| 7499.00 | 7499.00   |
+| #28   | 20.00  | 0.00    | 4.00   | 1.00    | 9237.59 | 7499.00 | 10000.00| 7499.00 | 7499.00   |
+| #29   | 20.00  | 0.00    | 4.00   | 1.50    | 9237.36 | 7499.00 | 10000.00| 7499.00 | 7499.00   |
+| #30   | 20.00  | 1.00    | 1.00   | 0.00    | 7840.52 | 9996.00 | 8750.00 | 7499.00 | 7499.00   |
+| #31   | 20.00  | 1.00    | 1.00   | 1.00    | 7936.88 | 9996.00 | 8750.00 | 7499.00 | 7499.00   |
+| #32   | 20.00  | 1.00    | 1.00   | 1.50    | 8098.23 | 9996.00 | 9167.00 | 7499.00 | 7499.00   |
+| #33   | 20.00  | 1.00    | 4.00   | 0.00    | 7931.13 | 9996.00 | 8750.00 | 7499.00 | 7499.00   |
+| #34   | 20.00  | 1.00    | 4.00   | 1.00    | 8966.91 | 7499.00 | 10000.00| 7499.00 | 7499.00   |
+| #35   | 20.00  | 1.00    | 4.00   | 1.50    | 9213.55 | 7499.00 | 10000.00| 7499.00 | 7499.00   |
++--------+---------+----------+---------+----------+----------+----------+----------+----------+-----------+
+
+--- Detailed Analysis of Configurations ---
+
+--- Best for Random Adversary ---
+  Configuration #0: {0.00, 0.00, 1.00, 0.00}
+  Scores -> Random: 11088.54 | MinMax: 9999.00 | MinAvg: 10000.00 | GapAvg: 10622.00 | Min Score: 9999.00
+
+--- Worst for Random Adversary ---
+  Configuration #6: {0.00, 1.00, 1.00, 0.00}
+  Scores -> Random: 0.62 | MinMax: 0.00 | MinAvg: 0.00 | GapAvg: 0.00 | Min Score: 0.00
+
+--- Best for MinMax Adversary ---
+  Configuration #0: {0.00, 0.00, 1.00, 0.00}
+  Scores -> Random: 11088.54 | MinMax: 9999.00 | MinAvg: 10000.00 | GapAvg: 10622.00 | Min Score: 9999.00
+
+--- Worst for MinMax Adversary ---
+  Configuration #6: {0.00, 1.00, 1.00, 0.00}
+  Scores -> Random: 0.62 | MinMax: 0.00 | MinAvg: 0.00 | GapAvg: 0.00 | Min Score: 0.00
+
+--- Best for MinAvg Adversary ---
+  Configuration #0: {0.00, 0.00, 1.00, 0.00}
+  Scores -> Random: 11088.54 | MinMax: 9999.00 | MinAvg: 10000.00 | GapAvg: 10622.00 | Min Score: 9999.00
+
+--- Worst for MinAvg Adversary ---
+  Configuration #6: {0.00, 1.00, 1.00, 0.00}
+  Scores -> Random: 0.62 | MinMax: 0.00 | MinAvg: 0.00 | GapAvg: 0.00 | Min Score: 0.00
+
+--- Best for GapAvg Adversary ---
+  Configuration #0: {0.00, 0.00, 1.00, 0.00}
+  Scores -> Random: 11088.54 | MinMax: 9999.00 | MinAvg: 10000.00 | GapAvg: 10622.00 | Min Score: 9999.00
+
+--- Worst for GapAvg Adversary ---
+  Configuration #6: {0.00, 1.00, 1.00, 0.00}
+  Scores -> Random: 0.62 | MinMax: 0.00 | MinAvg: 0.00 | GapAvg: 0.00 | Min Score: 0.00
+
+--- Most Robust (Highest Minimum Score) ---
+  Configuration #0: {0.00, 0.00, 1.00, 0.00}
+  Scores -> Random: 11088.54 | MinMax: 9999.00 | MinAvg: 10000.00 | GapAvg: 10622.00 | Min Score: 9999.00
+
+--- Most Variable (Highest Score Variance) ---
+  Configuration #8: {0.00, 1.00, 1.00, 1.50}
+  Scores -> Random: 3.79 | MinMax: 0.00 | MinAvg: 10000.00 | GapAvg: 0.00 | Min Score: 0.00
+
+--- Best Overall (Average across all Adversaries) ---
+  Configuration #0: {0.00, 0.00, 1.00, 0.00}
+  Scores -> Random: 11088.54 | MinMax: 9999.00 | MinAvg: 10000.00 | GapAvg: 10622.00 | Min Score: 9999.00
+

@@ -1,4 +1,4 @@
-FILE = main
+FILE = report
 
 .PHONY: $(FILE).pdf all clean distclean
 

@@ -1,0 +1,302 @@
+\documentclass[aspectratio=169]{beamer}
+\usetheme{Madrid}
+
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{amsmath}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{hyperref}
+
+\setbeamertemplate{navigation symbols}{}
+
+\newcommand{\code}[1]{\textbf{\textit{\texttt{#1}}}}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+  backgroundcolor=\color{backcolour},
+  commentstyle=\color{codegreen},
+  keywordstyle=\color{magenta},
+  numberstyle=\tiny\color{white},
+  stringstyle=\color{codepurple},
+  basicstyle=\ttfamily\tiny,
+  breakatwhitespace=false,
+  breaklines=true,
+  captionpos=b,
+  keepspaces=true,
+  numbers=left,
+  numbersep=5pt,
+  showspaces=false,
+  showstringspaces=false,
+  showtabs=false,
+  tabsize=2
+}
+
+\lstset{style=mystyle}
+
+\title{Baby Tetris}
+\author[Yağmur and Dylan]{ERGIN Seçkin Yağmur and GROUSSON Dylan}
+\date{\today}
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\begin{frame}
+  \frametitle{Introduction}
+  \begin{block}{Project Goal}
+    This project explores optimal strategies for playing "Baby
+    Tetris" using Markov Decision Processes (MDPs).
+  \end{block}
+  \begin{enumerate}
+    \item \textbf{Player's Optimal Policy}: Find the best strategy
+      for a player assuming a random opponent.
+    \item \textbf{Adversarial Policy}: Design an opponent that
+      actively tries to minimize the player's score.
+    \item \textbf{Robust Player Policy}: Develop a player strategy
+      that performs well against any type of opponent.
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Player's Discounted MDP Model}
+  \begin{block}{MDP Components}
+    \begin{itemize}
+      \item \textbf{States}: $S := (\text{current grid}, \text{next
+        piece to place})$
+      \item \textbf{Actions}: $A := (\text{position}, \text{orientation})$
+      \item \textbf{Transition}: $P(s' | s, a) := 1/2$ (uniform
+        distribution for I or L piece)
+      \item \textbf{Reward}: $R(s, a, s') := \text{coeff} \times
+        \text{lines cleared}$
+    \end{itemize}
+  \end{block}
+  \begin{block}{Value Function (Bellman Equation)}
+    The optimal policy is found using value iteration to solve for $V(s)$:
+    \\
+    \begin{equation*}
+      V(s) = \max_{a \in A} \sum_{s' \in S} P(s' | s, a) \cdot \left(
+      R(s, a, s') + \lambda V(s') \right)
+    \end{equation*}
+  \end{block}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Implementation Choices}
+  \begin{itemize}
+    \item \textbf{Pieces teleported}: To reduce intermediate states,
+      pieces are placed directly in their final position and
+      orientation. This simplifies the state space.
+
+    \item \textbf{Reward Calculation}: The reward is calculated based
+      on the number of completed lines in the state \textit{after} a
+      piece is placed.
+
+    \item \textbf{Game Ending}: The game terminates when there are no
+      available (i.e., valid) actions for the current state.
+
+    \item \textbf{Max Iteration Bound}: A maximum number of
+      iterations is set for the value iteration algorithm. This
+      ensures termination even if the convergence to the specified
+      $\epsilon$ is slow.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Optimization: Reachable States Algorithm}
+  \begin{algorithm}[H]
+    \caption{Generate Reachable States}
+    \begin{algorithmic}[1]
+      \State $Q$: a queue; $H$: a hashMap
+      \State $s \gets s_0$; $Q.\text{push}(s)$
+      \While{$Q.\text{isNotEmpty}()$}
+      \State $s \gets Q.\text{pop}()$
+      \For{$a$: \text{availableActions}$(s)$}
+      \State $s_{\text{After}} \gets \text{applyAction}(s,
+      a).\text{completeLines}()$
+      \If{$Q, H \text{ do not contain } s_{\text{After}}$}
+      \State $Q.\text{push}(s_{\text{After}})$
+      \EndIf
+      \EndFor
+      \State $H.\text{push}(s)$
+      \EndWhile
+      \State \Return $H$
+    \end{algorithmic}
+  \end{algorithm}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Executions (With Reachable States)}
+  \begin{columns}
+    \column{.24\linewidth}
+    \begin{lstlisting}[title=height: 4 and $\lambda$: 0.1]
+    i=0, delta=6.10288
+    i=1, delta=0.352625
+    i=2, delta=0.0250445
+    i=3, delta=0.0010013
+    i=4, delta=4.28143e-05
+    i=5, delta=1.79071e-06
+    i=6, delta=4.8676e-08
+    i=7, delta=1.07541e-09
+
+    Score: 7632
+    in 10000 actions
+    ____________________
+    Exec in    7.69 secs
+    \end{lstlisting}
+
+    \column{.24\linewidth}
+    \begin{lstlisting}[title=height: 4 and $\lambda$: 0.9]
+    i=0, delta=8.36976
+    i=1, delta=5.32365
+    i=2, delta=3.54512
+    ...
+    i=87, delta=1.33224e-08
+    i=88, delta=1.0733e-08
+    i=89, delta=8.64692e-09
+
+    Score: 11118
+    in 10000 actions
+    ____________________
+    Exec in   26.53 secs
+    \end{lstlisting}
+
+    \column{.24\linewidth}
+    \begin{lstlisting}[title=height: 5 and $\lambda$: 0.1]
+    i=0, delta=6.20552
+    i=1, delta=0.477762
+    i=2, delta=0.0334845
+    i=3, delta=0.00181086
+    i=4, delta=6.29689e-05
+    i=5, delta=2.6382e-06
+    i=6, delta=1.32337e-07
+    i=7, delta=6.63914e-09
+
+    Score: 7620
+    in 10000 actions
+    ____________________
+    Exec in   46.73 secs
+    \end{lstlisting}
+
+    \column{.24\linewidth}
+    \begin{lstlisting}[title=height: 5 and $\lambda$: 0.9]
+    i=0, delta=9.7563
+    i=1, delta=6.7369
+    i=2, delta=4.43912
+    ...
+    i=88, delta=1.44415e-08
+    i=89, delta=1.16674e-08
+    i=90, delta=9.42616e-09
+
+    Score: 13305
+    in 10000 actions
+    ____________________
+    Exec in  402.82 secs
+    \end{lstlisting}
+  \end{columns}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Adversarial MDP Model}
+  \begin{block}{Adversary MDP}
+    \begin{itemize}
+      \item \textbf{Actions}: $A_{adv} := \{I, L\}$ (Choice of the next piece).
+      \item \textbf{Transition}: $P(s' | s, a, t) := 1/|A_t(s)|$,
+        assuming a uniform player response.
+    \end{itemize}
+  \end{block}
+  \begin{block}{Adversary Value Functions}
+    \begin{itemize}
+      \item \textbf{Lowest Maximal Reward (Min-Max)}:
+        \\
+        \begin{equation*}\tiny
+          V(s) = \min_{t \in \{I,L\}} \max_{a \in A_t(s)} \sum_{s'}
+          P(s'|s,a,t) \cdot \left( R(s') + \lambda V(s') \right)
+        \end{equation*}
+      \item \textbf{Lowest Average Reward (Min-Avg)}:
+        \\
+        \begin{equation*}\tiny
+          V(s) = \min_{t \in \{I,L\}} \frac{1}{|A_t(s)|} \sum_{a \in
+          A_t(s)} \sum_{s'} P(s'|s,a,t) \cdot \left( R(s') + \lambda
+          V(s') \right)
+        \end{equation*}
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Robust Policy Model}
+  \begin{block}{Approach 1: Max-Min Value Iteration}
+    Player maximizes their reward assuming the adversary makes the
+    worst possible choice for them.
+    \\
+    \begin{equation*}
+      V(s) = \max_{a \in A} \min_{t \in \{I,L\}} P(s' | s, a, t)
+      \cdot \left( R(s, a, s') + \lambda V(s') \right)
+    \end{equation*}
+  \end{block}
+  \begin{block}{Approach 2: Parameterized Reward Function}
+    Adjust weights for different reward components to tune behavior.
+    \\
+    \begin{equation*}\small
+      R(s') := \text{lw} \cdot \text{lines} -
+      \text{hw} \cdot \text{height} +
+      \text{sw} \cdot \text{score} -
+      \text{gr} \cdot \text{gaps}
+    \end{equation*}
+  \end{block}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Results and Observations}
+  \begin{table}
+    \centering
+    \footnotesize
+    \begin{tabular}{|c|c|c|c|c|c|c|c|c|}
+      \hline
+      \textbf{L.W.} & \textbf{H.W.} & \textbf{S.W.} & \textbf{G.R.} &
+      \textbf{Rand} & \textbf{MinMax} & \textbf{MinAvg} &
+      \textbf{GapAvg} & \textbf{Min} \\
+      \hline
+      \multicolumn{4}{|c|}{\textbf{Max-Min VI (Fixed Parameters)}} &
+      10685 & 9999 & 9999 & 10356 & 9999 \\
+      \hline
+      0 & 0 & 3 & 0 & 11090.70 & 9999 & 10000 & 10622 & 9999 \\
+      0 & 0 & 1 & 1 & 10837.25 & 9999 & 10000 & 9999 & 9999 \\
+      10 & 0 & 4 & 0 & 10611.33 & 9998 & 10000 & 7500 & 7500 \\
+      0 & 1 & 4 & 1.5 & 9810.65 & 9999 & 10000 & 9999 & 9810.65 \\
+      0 & 2 & 1 & 1 & 0.05 & 0 & 0 & 0 & 0 \\
+      \hline
+    \end{tabular}
+  \end{table}
+  \begin{block}{Observations}
+    \begin{itemize}
+      \item Height Weight is Critical
+      \item Score and Line Weights Matter
+      \item Max-Min VI Performance
+      \item Robustness vs. High Score
+      \item Variability
+      \item Gap Reduction
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Conclusion}
+  \begin{itemize}
+    \item Developed MDP models and value iteration for player, adversary, and robust Baby Tetris policies.
+    \item Improved efficiency with reachable states, enhancing policy analysis.
+    \item Robust policies provide strong performance against various adversaries.
+    \item Key drivers for good policy: prioritize line clears/score and avoid height penalties.
+  \end{itemize}
+\end{frame}
+
+\end{document}

@@ -218,8 +218,8 @@
       \item \textbf{Lowest Maximal Reward (Min-Max)}:
         \\
         \begin{equation*}\tiny
-          V(s) = \min_{t \in \{I,L\}} \max_{a \in A_t(s)} \sum_{s'}
-          P(s'|s,a,t) \cdot \left( R(s') + \lambda V(s') \right)
+          V(s) = \min_{t \in \{I,L\}} \max_{a \in A_t(s)} \left(
+          R(s') + \lambda V(s') \right)
         \end{equation*}
       \item \textbf{Lowest Average Reward (Min-Avg)}:
         \\
@@ -239,8 +239,8 @@
     worst possible choice for them.
     \\
     \begin{equation*}
-      V(s) = \max_{a \in A} \min_{t \in \{I,L\}} P(s' | s, a, t)
-      \cdot \left( R(s, a, s') + \lambda V(s') \right)
+      V(s) = \max_{a \in A} \min_{t \in \{I,L\}} \left( R(s, a, s')
+      + \lambda V(s') \right)
     \end{equation*}
   \end{block}
   \begin{block}{Approach 2: Parameterized Reward Function}
@@ -282,23 +282,10 @@
   \begin{block}{Observations}
     \begin{itemize}
       \item Robustness vs. High Score
-      \item Score and Line Weights Matter
       \item Max-Min VI Performance
       \item Variability
-      % \item Height Weight is Critical
-      % \item Gap Reduction
     \end{itemize}
   \end{block}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Conclusion}
-  \begin{itemize}
-    \item Developed MDP models and value iteration for player, adversary, and robust Baby Tetris policies.
-    \item Improved efficiency with reachable states, enhancing policy analysis.
-    \item Robust policies provide strong performance against various adversaries.
-    \item Key drivers for good policy: prioritize line clears/score and avoid height penalties.
-  \end{itemize}
 \end{frame}
 
 \end{document}
